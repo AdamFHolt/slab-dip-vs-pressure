@@ -1,4 +1,4 @@
-# compositional
+# slab dip vs. pressure 
 
 Tools and data products for 2D compositional subduction experiments (ASPECT).
 

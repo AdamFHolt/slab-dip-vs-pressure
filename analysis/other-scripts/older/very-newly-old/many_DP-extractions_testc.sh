@@ -1,7 +1,7 @@
 #!/bin/bash
 
 depth="300.0e3"
-script="extract_propertiesD.py"
+script="extract_properties_testc.py"
 
 #--
 

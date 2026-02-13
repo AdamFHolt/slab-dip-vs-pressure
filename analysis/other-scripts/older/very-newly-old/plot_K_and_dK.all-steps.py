@@ -257,7 +257,7 @@ misfit_color = 'gold'
 # # axis stuff
 # plt.ylim(-20,  20); 
 # #plt.xlim(-150, 800); plot_forcecomponent_KN
-# plt.xlim(-15, 65);plot_force-components.all-stepsB.py
+# plt.xlim(-15, 65);plot_force-components.all-steps.variant.py
 # plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
 # plt.xlabel(r'$\eta K V_{C}$   [MPa]')
 # ax.set_xticks([-10, 0, 10, 20, 30, 40, 50, 60])

@@ -1,0 +1,306 @@
+#!/bin/python
+import numpy as np
+import matplotlib
+import matplotlib as mpl
+matplotlib.use('Agg')
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from scipy.interpolate import griddata
+from matplotlib.gridspec import GridSpec
+import sys, os, subprocess
+from scipy.signal import savgol_filter
+from scipy.interpolate import splrep, splev
+from functions import get_misfit_mean_and_stdev, get_curvature_mean_and_stdev, get_misfit_mean_and_stdev_nondim
+from functions_plotting import plot_forcecomponent_fullstressmisfit, plot_forcecomponent_dpmisfit
+from functions_plotting import plot_forcecomponent_dqds, plot_forcecomponent_KN
+from functions_plotting import plot_forcecomponent_dqds_vsK, plot_forcecomponent_dqds_vsVc, plot_forcecomponent_dqds_vsVisc
+
+
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+
+mpl.rcParams['font.family'] = 'Myriad Pro'  # Now it should work if properly installed!
+mpl.rcParams['font.size'] = 7
+mpl.rcParams['axes.labelsize'] = 7
+mpl.rcParams['axes.labelpad'] = 1.25
+mpl.rcParams['xtick.labelsize'] = 6
+mpl.rcParams['ytick.labelsize'] = 6
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 2.5
+mpl.rcParams['ytick.major.size'] = 2.5
+mpl.rcParams['xtick.minor.size'] = 1.25
+mpl.rcParams['ytick.minor.size'] = 1.25
+
+analysis_depth  = float(sys.argv[1]) 
+analysis_depth_dz = float(sys.argv[2])     # m (depth for DP extraction and central point of shear stress derivative)
+ds = float(sys.argv[3])                 # m (distance from slab to pull out DP)
+dz = float(sys.argv[4])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
+
+tactual_min = 11 # first time step to use
+tmin = tactual_min - 8
+
+plot_name_png = ''.join(['plots/DP-comparisons/compilations/force-components-all-vs-scaling.z',str(analysis_depth/1.e3),'shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.tmin',str(tmin),'.SUPP-SHEAR.png'])
+plot_name_pdf = ''.join(['plots/DP-comparisons/compilations/force-components-all-vs-scaling.z',str(analysis_depth/1.e3),'shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.tmin',str(tmin),'.SUPP-SHEAR.pdf'])
+
+# 50
+name1_bothfree 	= "2D_compositional_subd_lower-res_new_50plates"
+name1_fixedSP  	= "2D_compositional_subd_lower-res_new_FixedSP_50plates"
+name1_fixedOP  	= "2D_compositional_subd_lower-res_new_FixedOP_50plates"
+# 250
+name3_bothfree 	= "2D_compositional_subd_lower-res_new_250plates"
+name3_fixedSP  	= "2D_compositional_subd_lower-res_new_FixedSP_250plates"
+name3_fixedOP  	= "2D_compositional_subd_lower-res_new_FixedOP_250plates"
+# 500
+name4_bothfree 	= "2D_compositional_subd_lower-res_new2"
+name4_fixedSP  	= "2D_compositional_subd_FixedSP_lower-res_new2"
+name4_fixedOP  	= "2D_compositional_subd_FixedOP_lower-res_new"
+# 1000
+name5_bothfree = "2D_compositional_subd_lower-res_new_1000plates"
+name5_fixedSP  = "2D_compositional_subd_lower-res_new_FixedSP_1000plates2"
+name5_fixedOP  = "2D_compositional_subd_lower-res_new_FixedOP_1000plates"
+# 375
+name7_bothfree 	= "2D_compositional_subd_lower-res_new_375plates"
+name7_fixedSP  	= "2D_compositional_subd_lower-res_new_FixedSP_375plates"
+name7_fixedOP  	= "2D_compositional_subd_lower-res_new_FixedOP_375plates"
+
+
+# text files
+text50_bothfree 		= ''.join(['text_files/',name1_bothfree,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text50_fixedSP  		= ''.join(['text_files/',name1_fixedSP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text50_fixedOP  		= ''.join(['text_files/',name1_fixedOP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text250_bothfree    	= ''.join(['text_files/',name3_bothfree,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text250_fixedSP     	= ''.join(['text_files/',name3_fixedSP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text250_fixedOP		    = ''.join(['text_files/',name3_fixedOP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text500_bothfree 		= ''.join(['text_files/',name4_bothfree,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text500_fixedSP  		= ''.join(['text_files/',name4_fixedSP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text500_fixedOP  		= ''.join(['text_files/',name4_fixedOP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text1000_bothfree		= ''.join(['text_files/',name5_bothfree,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text1000_fixedSP  		= ''.join(['text_files/',name5_fixedSP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text1000_fixedOP  		= ''.join(['text_files/',name5_fixedOP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text375_bothfree    	= ''.join(['text_files/',name7_bothfree,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text375_fixedSP     	= ''.join(['text_files/',name7_fixedSP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+text375_fixedOP	    	= ''.join(['text_files/',name7_fixedOP,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+
+# load in models
+m50_bothfree 	= np.loadtxt((text50_bothfree)) 
+m50_fixedSP  	= np.loadtxt((text50_fixedSP))
+m50_fixedOP  	= np.loadtxt((text50_fixedOP))
+m250_bothfree 	= np.loadtxt((text250_bothfree)) 
+m250_fixedSP 	= np.loadtxt((text250_fixedSP))
+m250_fixedOP 	= np.loadtxt((text250_fixedOP))
+m500_bothfree 	= np.loadtxt((text500_bothfree)) 
+m500_fixedSP  	= np.loadtxt((text500_fixedSP))
+m500_fixedOP  	= np.loadtxt((text500_fixedOP))
+m1000_bothfree 	= np.loadtxt((text1000_bothfree)) 
+m1000_fixedSP  	= np.loadtxt((text1000_fixedSP))
+m1000_fixedOP  	= np.loadtxt((text1000_fixedOP))
+m375_bothfree 	= np.loadtxt((text375_bothfree)) 
+m375_fixedSP 	= np.loadtxt((text375_fixedSP))
+m375_fixedOP 	= np.loadtxt((text375_fixedOP))
+# --
+
+K_ind    = 11
+ss_ind   = 17
+sn_ind   = 6
+anal_ind = 4
+DP_ind   = 3
+dip_ind  = 5
+vc_ind   = 19
+vs_ind   = 20
+
+x_ind = vs_ind
+x_label = "V K visc [Pa]"
+
+s_to_yr = 1./(365.25*24*3600)
+cmyr_to_ms = 0.01/(365.25*24*3600)
+
+mant_visc = 2.5e20
+m50_bothfree[:,vs_ind] 	=  m50_bothfree[:,K_ind]    * 50 * mant_visc   * m50_bothfree[:,vc_ind]   * cmyr_to_ms * 1e-6
+m50_fixedSP[:,vs_ind] 	=  m50_fixedSP[:,K_ind]     * 50 * mant_visc   * m50_fixedSP[:,vc_ind]    * cmyr_to_ms * 1e-6
+m50_fixedOP[:,vs_ind] 	=  m50_fixedOP[:,K_ind]     * 50 * mant_visc   * m50_fixedOP[:,vc_ind]    * cmyr_to_ms * 1e-6
+m250_bothfree[:,vs_ind] 	=  m250_bothfree[:,K_ind]   * 250 * mant_visc  * m250_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m250_fixedSP[:,vs_ind] 	=  m250_fixedSP[:,K_ind]    * 250 * mant_visc  * m250_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m250_fixedOP[:,vs_ind] 	=  m250_fixedOP[:,K_ind]    * 250 * mant_visc  * m250_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m375_bothfree[:,vs_ind] 	=  m375_bothfree[:,K_ind]   * 375 * mant_visc  * m375_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m375_fixedSP[:,vs_ind] 	=  m375_fixedSP[:,K_ind]    * 375 * mant_visc  * m375_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m375_fixedOP[:,vs_ind] 	=  m375_fixedOP[:,K_ind]    * 375 * mant_visc  * m375_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m500_bothfree[:,vs_ind] 	=  m500_bothfree[:,K_ind]   * 500 * mant_visc  * m500_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m500_fixedSP[:,vs_ind] 	=  m500_fixedSP[:,K_ind]    * 500 * mant_visc  * m500_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m500_fixedOP[:,vs_ind] 	=  m500_fixedOP[:,K_ind]    * 500 * mant_visc  * m500_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m1000_bothfree[:,vs_ind] =  m1000_bothfree[:,K_ind]  * 1000 * mant_visc * m1000_bothfree[:,vc_ind] * cmyr_to_ms * 1e-6
+m1000_fixedSP[:,vs_ind] 	=  m1000_fixedSP[:,K_ind]   * 1000 * mant_visc * m1000_fixedSP[:,vc_ind]  * cmyr_to_ms * 1e-6
+m1000_fixedOP[:,vs_ind] 	=  m1000_fixedOP[:,K_ind]   * 1000 *mant_visc  *  m1000_fixedOP[:,vc_ind] * cmyr_to_ms * 1e-6
+
+gs=GridSpec(2,3) 
+
+#### SCATTER PLOTS ####
+def fixed_aspect_ratio(ratio):
+    '''
+    Set a fixed aspect ratio on matplotlib plots 
+    regardless of axis units
+    '''
+    xvals,yvals = plt.gca().axes.get_xlim(),plt.gca().axes.get_ylim()
+
+    xrange = xvals[1]-xvals[0]
+    yrange = yvals[1]-yvals[0]
+    plt.gca().set_aspect(ratio*(xrange/yrange), adjustable='box')
+
+fig=plt.figure()
+
+curve_thresh = 0.0015
+misfit_color = 'gold'
+
+
+
+
+# plot dQ/dS vs. K
+ax=fig.add_subplot(gs[0,0])
+
+plot_forcecomponent_dqds_vsK(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m50_fixedOP,curve_thresh,x_ind,'tan','^',misfit_color)
+
+plot_forcecomponent_dqds_vsK(tmin,m250_fixedSP,curve_thresh,x_ind,'peru','v',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m250_bothfree,curve_thresh,x_ind,'peru','o',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_color)
+
+plot_forcecomponent_dqds_vsK(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+
+plot_forcecomponent_dqds_vsK(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m500_fixedOP,curve_thresh,x_ind,'maroon','^',misfit_color)
+
+plot_forcecomponent_dqds_vsK(tmin,m1000_fixedSP,curve_thresh,x_ind,'black','v',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m1000_bothfree,curve_thresh,x_ind,'black','o',misfit_color)
+plot_forcecomponent_dqds_vsK(tmin,m1000_fixedOP,curve_thresh,x_ind,'black','^',misfit_color)
+
+# axis stuff
+plt.ylim(-10,  20); 
+plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.xlim(-0.001,  0.003); 
+plt.xlabel(r'$K$    [1/km]')
+ax.xaxis.set_minor_locator(plt.MultipleLocator(0.0005))
+ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
+plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+fixed_aspect_ratio(1)
+
+
+
+# plot dQ/dS vs. vc
+ax=fig.add_subplot(gs[0,1])
+
+plot_forcecomponent_dqds_vsVc(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m50_fixedOP,curve_thresh,x_ind,'tan','^',misfit_color)
+
+plot_forcecomponent_dqds_vsVc(tmin,m250_fixedSP,curve_thresh,x_ind,'peru','v',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m250_bothfree,curve_thresh,x_ind,'peru','o',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_color)
+
+plot_forcecomponent_dqds_vsVc(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+
+plot_forcecomponent_dqds_vsVc(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m500_fixedOP,curve_thresh,x_ind,'maroon','^',misfit_color)
+
+plot_forcecomponent_dqds_vsVc(tmin,m1000_fixedSP,curve_thresh,x_ind,'black','v',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m1000_bothfree,curve_thresh,x_ind,'black','o',misfit_color)
+plot_forcecomponent_dqds_vsVc(tmin,m1000_fixedOP,curve_thresh,x_ind,'black','^',misfit_color)
+
+# axis stuff
+plt.ylim(-10,  20); 
+plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.xlim(1,  4); 
+plt.xlabel(r'$V_{C}$    [cm/yr]')
+ax.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
+ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
+plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+fixed_aspect_ratio(1)
+
+
+# plot dQ/dS vs. Visc
+ax=fig.add_subplot(gs[1,0])
+
+plot_forcecomponent_dqds_vsVisc(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color,50*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color,50*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m50_fixedOP,curve_thresh,x_ind,'tan','^',misfit_color,50*mant_visc)
+
+plot_forcecomponent_dqds_vsVisc(tmin,m250_fixedSP,curve_thresh,x_ind,'peru','v',misfit_color,250*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m250_bothfree,curve_thresh,x_ind,'peru','o',misfit_color,250*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_color,250*mant_visc)
+
+plot_forcecomponent_dqds_vsVisc(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color,375*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color,375*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color,375*mant_visc)
+
+plot_forcecomponent_dqds_vsVisc(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color,500*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color,500*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m500_fixedOP,curve_thresh,x_ind,'maroon','^',misfit_color,500*mant_visc)
+
+plot_forcecomponent_dqds_vsVisc(tmin,m1000_fixedSP,curve_thresh,x_ind,'black','v',misfit_color,1000*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m1000_bothfree,curve_thresh,x_ind,'black','o',misfit_color,1000*mant_visc)
+plot_forcecomponent_dqds_vsVisc(tmin,m1000_fixedOP,curve_thresh,x_ind,'black','^',misfit_color,1000*mant_visc)
+
+# # axis stuff
+plt.ylim(-10,  20); 
+plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+# plt.xlim(21,  25); 
+plt.xlabel(r'$\eta$')
+ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
+plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+fixed_aspect_ratio(1)
+
+
+# plot dQ/dS vs. x-axis variable
+ax=fig.add_subplot(gs[1,1])
+
+plot_forcecomponent_dqds(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
+plot_forcecomponent_dqds(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
+plot_forcecomponent_dqds(tmin,m50_fixedOP,curve_thresh,x_ind,'tan','^',misfit_color)
+
+plot_forcecomponent_dqds(tmin,m250_fixedSP,curve_thresh,x_ind,'peru','v',misfit_color)
+plot_forcecomponent_dqds(tmin,m250_bothfree,curve_thresh,x_ind,'peru','o',misfit_color)
+plot_forcecomponent_dqds(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_color)
+
+plot_forcecomponent_dqds(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
+plot_forcecomponent_dqds(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
+plot_forcecomponent_dqds(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+
+plot_forcecomponent_dqds(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
+plot_forcecomponent_dqds(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
+plot_forcecomponent_dqds(tmin,m500_fixedOP,curve_thresh,x_ind,'maroon','^',misfit_color)
+
+plot_forcecomponent_dqds(tmin,m1000_fixedSP,curve_thresh,x_ind,'black','v',misfit_color)
+plot_forcecomponent_dqds(tmin,m1000_bothfree,curve_thresh,x_ind,'black','o',misfit_color)
+plot_forcecomponent_dqds(tmin,m1000_fixedOP,curve_thresh,x_ind,'black','^',misfit_color)
+
+# axis stuff
+plt.ylim(-10,  20); 
+plt.xlim(-150, 800); 
+plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.xlabel(r'$\eta K V_{C}$   [MPa]')
+ax.set_xticks([0, 200, 400, 600, 800])
+ax.set_xticklabels([0, 200, 400, 600, 800])
+ax.xaxis.set_minor_locator(plt.MultipleLocator(100))
+ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
+plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
+fixed_aspect_ratio(1)
+
+
+plt.subplots_adjust(wspace=0.5)
+
+plt.savefig(plot_name_png, bbox_inches='tight', format='png', dpi=600)
+plt.savefig(plot_name_pdf, format='pdf', bbox_inches='tight')

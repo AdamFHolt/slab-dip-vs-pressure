@@ -23,3 +23,8 @@ analysis/text_files/
 input_geometries/gmt.history
 analysis/other-scripts/**/__pycache__/
 analysis/observations/**/__pycache__/
+
+# Large reference rasters (keep local)
+analysis/observations/data/Muller2008/age.3.2.img
+analysis/observations/data/Muller2008/age.3.2.nc
+analysis/observations/data/Muller2008/age.3.6.xyz

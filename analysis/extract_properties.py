@@ -20,6 +20,26 @@ from functions import get_curvature_slab_midplane, get_curvature_at_certain_dept
 from functions import get_platevels_from_horiz_prof, get_slabvisc_from_horiz_prof
 from functions import get_stress_at_certain_depth, get_farfieldP
 
+def get_vs_near_slab_center(horiz_prof, x_center, y_center_km, ymax, x_col, y_col, vx_col, vy_col, dip_deg):
+    """
+    Extract slab-parallel velocity at the point in a horizontal profile nearest
+    the slab-center location (x_center, y_center_km depth).
+    """
+    if len(horiz_prof) == 0:
+        return np.nan, np.nan, np.nan
+
+    y_center_model = ymax - (y_center_km * 1.e3)
+    dists = np.sqrt((horiz_prof[:, x_col] - x_center) ** 2 + (horiz_prof[:, y_col] - y_center_model) ** 2)
+    i_near = np.argmin(dists)
+
+    vx_near = horiz_prof[i_near, vx_col]
+    vy_near = horiz_prof[i_near, vy_col]
+    dip_rad = np.deg2rad(dip_deg)
+    vs_near = vx_near * np.cos(dip_rad) - vy_near * np.sin(dip_rad)
+
+    return vs_near, vx_near, vy_near
+
+
 model_name=str(sys.argv[1])            
 max_time=int(sys.argv[2])   # largest number in csv_outputs/ filenames
 analysis_depth = float(sys.argv[3])     # m (depth for DP extraction and central point of shear stress derivative)
@@ -38,7 +58,8 @@ models_loc =  'raw_outputs/'
 stats_file = ''.join([models_loc,str(model_name),'/statistics'])
 model_output_dt  = 50 # output dt as set in ASPECT .prm file (for getting the dimensional time)
 num_header_lines = 16 # num header lines in stats_files (for getting the dimensional time)
-saved_stresses_name = ''.join(['text_files/TESTD/',model_name,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+saved_stresses_name = ''.join(['text_files/TESTC/',model_name,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+os.makedirs(os.path.dirname(saved_stresses_name), exist_ok=True)
 print(saved_stresses_name)
 
 # where to put the plots
@@ -62,7 +83,7 @@ ymin_plot2=ymax-600.e3; grid_res2=0.25e3
 X_low2, Y_low2 = create_grid(xmin_plot2,xmax_plot2,ymin_plot2,ymax,grid_res2)
 
 first_time=8
-saved_stresses = np.zeros(((max_time-first_time),21)) 
+saved_stresses = np.zeros(((max_time-first_time),30)) 
                                                      
 ind = 0 
 
@@ -219,6 +240,37 @@ for time in range(first_time,max_time,1):
 
     print("slab shear stress term = %.2f MPa (others: %.2f, %.2f)" % (slab_stress_term/1.e6,slab_stress_term_b/1.e6,slab_stress_term_c/1.e6))
 
+    # velocity- and curvature-length scales for dQ/ds scaling:
+    # dQ/ds ~ eta H K v_s (2/L_v + 1/L_K), with
+    # L_v = |v_s / (dv_s/ds)| and L_K = |K / (dK/ds)|
+    vs_mid, vx_mid, vy_mid = get_vs_near_slab_center(midmant_prof, x_center, y_center, ymax, x_col, y_col, vx_col, vy_col, dip_midmant)
+    vs_shall, vx_shall, vy_shall = get_vs_near_slab_center(midmant_prof_shall, x_center_shall, y_center_shall, ymax, x_col, y_col, vx_col, vy_col, dip_midmant_shall)
+    vs_deep, vx_deep, vy_deep = get_vs_near_slab_center(midmant_prof_deep, x_center_deep, y_center_deep, ymax, x_col, y_col, vx_col, vy_col, dip_midmant_deep)
+
+    dvs_ds = (vs_deep - vs_shall) / (ds_shall + ds_deep)
+
+    eps = 1.e-30
+    if np.abs(dvs_ds) > eps and np.abs(vs_mid) > eps:
+        Lv = np.abs(vs_mid / dvs_ds)
+    else:
+        Lv = np.nan
+
+    if np.abs(dK_midmant) > eps and np.abs(K_midmant) > eps:
+        Lk = np.abs(K_midmant / dK_midmant)
+    else:
+        Lk = np.nan
+
+    slab_visc_mid, slab_visc_x_km, slab_visc_y_km = get_slabvisc_from_horiz_prof(midmant_prof, x_col, y_col, visc_col, x_center, y_center, ymax)
+
+    if np.isfinite(Lv) and np.isfinite(Lk) and Lv > 0 and Lk > 0:
+        L_total_inv = (2.0 / Lv) + (1.0 / Lk)
+        dQds_scaling_splitL = slab_visc_mid * slabnorm_thick * (K_midmant * vs_mid) * L_total_inv
+    else:
+        L_total_inv = np.nan
+        dQds_scaling_splitL = np.nan
+
+    print("L_v = %.1f km, L_K = %.1f km, scaled dQ/ds = %.2f MPa" % (Lv/1.e3, Lk/1.e3, dQds_scaling_splitL/1.e6))
+
     # integrate normal stresses through the slab
     slabnorm_stress                 = trapz(slab_norm_devstress_cut[:,0],       profile_cut[:,2]*1.e3) 
     slabnorm_stress_fullterm        = slabnorm_stress * K_midmant
@@ -231,7 +283,8 @@ for time in range(first_time,max_time,1):
 
     saved_stresses[ind,:] = time, DP_mod_shall, DP_mod_deep, DP_mod, DP_anal, dip_midmant, slab_stress_term, slab_stress_term_b,  \
                             slab_stress_term_c,  slabnorm_thick, Snorm_contrib, K_midmant, dK_midmant, K_midmant_shall, K_midmant_deep, \
-                            Pleft, Pright, slabnorm_stress_fullterm, slabnorm_stress_fullterm_TEST, vc, vsp
+                            Pleft, Pright, slabnorm_stress_fullterm, slabnorm_stress_fullterm_TEST, vc, vsp, \
+                            vs_mid, dvs_ds, Lv, Lk, dQds_scaling_splitL, slab_visc_mid, slab_visc_x_km, slab_visc_y_km, L_total_inv
     ind = ind + 1
 
     ###################### plotting - 1 #########################

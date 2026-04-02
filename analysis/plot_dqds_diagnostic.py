@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 """
-dQ/ds diagnostic script.
+dQ/ds diagnostic script — L_eff framing.
 
-Tests the direct Equation 8 computation (Supporting Text S1):
+The scaling law is expressed as:
 
-    dQ/ds ≈ ηH [2K (dvs/ds) + vs (dK/ds)]
+    dQ/ds  =  η H K v_c / L_eff
 
-against:
-  - The measured dQ/ds (col 6, negated to paper sign convention)
-  - The paper's empirical Eq. 11:  dQ/ds ≈ 0.1 η K v_c
+where L_eff is the effective length scale implied by the data:
 
-Produces two figures:
-  fig1_formula_comparison  — Eq.8 full, velocity term alone, Eq.11 vs measured
-  fig2_calibration         — prefactor vs K, K-filtered histogram, calibrated scatter
+    L_eff  =  η H K v_c / |dQ/ds_meas|
 
-Sign convention throughout: paper's dQ/ds > 0 = force resisting slab-normal buoyancy.
+Key questions:
+  1. Is L_eff approximately constant across models/timesteps?
+  2. How well does η H K v_c / L_eff_median predict measured dQ/ds?
+
+L_eff is the quantity to carry forward to the Earth application section:
+  dQ/ds / DP_anal  =  H K v_c / (L_eff · Δρ g cos θ)
+
+Sign convention: paper's dQ/ds > 0 = force resisting slab-normal buoyancy.
   code col 6 (slab_stress_term) = -dQ/ds_paper, so meas_paper = -col6.
 
 Usage (run from analysis/):
@@ -33,137 +36,94 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # ── Column indices (extract_properties.py, 30 cols, 0-indexed) ───────────────
-COL_TIME    = 0
-COL_DP_MOD  = 3    # Pa   — measured across-slab ΔP
-COL_DP_ANAL = 4    # Pa   — analytical buoyancy term
 COL_DIP     = 5    # deg  — slab dip at analysis depth
 COL_DQDS    = 6    # Pa   — slab_stress_term = -dQ/ds_paper
 COL_H       = 9    # m    — slab-normal thickness
 COL_K       = 11   # rad/m
-COL_DK_SG   = 12   # rad/m²  — SG-smoothed dK/ds from full profile
-COL_K_SHALL = 13   # rad/m   — K at analysis_depth - dz
-COL_K_DEEP  = 14   # rad/m   — K at analysis_depth + dz
-COL_VC      = 19   # cm/yr   — convergence velocity
-COL_VS      = 21   # m/yr    — slab-parallel velocity at depth
-COL_DVDS    = 22   # yr⁻¹    — dvs/ds  (m/yr)/m
-COL_LV      = 23   # m       — L_v = |vs / (dvs/ds)|
-COL_LK      = 24   # m       — L_K = |K / (dK/ds)|  from SG
-COL_ETA     = 26   # Pa·s    — slab viscosity at depth
+COL_K_SHALL = 13   # rad/m
+COL_K_DEEP  = 14   # rad/m
+COL_VC      = 19   # cm/yr
+COL_VS      = 21   # m/yr
+COL_DVDS    = 22   # yr⁻¹
+COL_LV      = 23   # m
+COL_LK      = 24   # m
+COL_ETA     = 26   # Pa·s
 
-SPY = 365.25 * 24.0 * 3600.0          # seconds per year
-CMYR_TO_MS = 0.01 / SPY               # cm/yr  → m/s
+SPY        = 365.25 * 24.0 * 3600.0
+CMYR_TO_MS = 0.01 / SPY
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-def ensure_2d(arr):
-    return arr.reshape(1, -1) if arr.ndim == 1 else arr
+def ensure_2d(a):
+    return a.reshape(1, -1) if a.ndim == 1 else a
 
 
 def parse_shear_dz_km(fpath):
-    """Extract analysis_depth_dz in km from filename token  shear-dz<value>."""
     m = re.search(r'shear-dz([\d.]+?)\.(?:ds|km|[a-zA-Z])', os.path.basename(fpath))
     return float(m.group(1)) if m else None
 
 
-# ── Data loading ─────────────────────────────────────────────────────────────
+# ── Data loading ──────────────────────────────────────────────────────────────
 
 def load_records(files):
-    """
-    Return list of per-timestep dicts with all quantities needed for diagnostics.
-    """
     records = []
     for fpath in files:
         dz_km = parse_shear_dz_km(fpath)
         if dz_km is None:
-            print(f"  skip (no shear-dz in name): {fpath}")
-            continue
+            print(f"  skip (no shear-dz token): {fpath}"); continue
         dz_m = dz_km * 1e3
 
         try:
             data = ensure_2d(np.loadtxt(fpath))
         except Exception as e:
-            print(f"  skip (load error): {fpath} — {e}")
-            continue
-
+            print(f"  skip (load error): {fpath} — {e}"); continue
         if data.shape[1] < 27:
-            print(f"  skip (only {data.shape[1]} cols): {fpath}")
-            continue
+            print(f"  skip ({data.shape[1]} cols): {fpath}"); continue
 
-        model_label = os.path.basename(fpath).replace('.txt', '')
-        for prefix in ('2D_compositional_subd_lower-res_',
-                       '2D_compositional_subd_'):
-            if model_label.startswith(prefix):
-                model_label = model_label[len(prefix):]
-                break
-        model_label = re.sub(r'\.z[\d.]+\.shear.*', '', model_label)
+        label = os.path.basename(fpath).replace('.txt', '')
+        for pfx in ('2D_compositional_subd_lower-res_', '2D_compositional_subd_'):
+            if label.startswith(pfx):
+                label = label[len(pfx):]; break
+        label = re.sub(r'\.z[\d.]+\.shear.*', '', label)
 
         for row in data:
-            dip_deg = row[COL_DIP]
-            dip_rad = np.deg2rad(dip_deg)
+            dip_rad = np.deg2rad(row[COL_DIP])
             if dip_rad <= 0 or not np.isfinite(dip_rad):
                 continue
 
-            H        = row[COL_H]
-            K        = row[COL_K]
-            dK_sg    = row[COL_DK_SG]
-            K_shall  = row[COL_K_SHALL]
-            K_deep   = row[COL_K_DEEP]
-            vs_myr   = row[COL_VS]
-            dvds_yr  = row[COL_DVDS]
-            eta      = row[COL_ETA]
-            vc_cmyr  = row[COL_VC]
-            dqds_col = row[COL_DQDS]
-            Lv       = row[COL_LV]
-            Lk_sg    = row[COL_LK]
+            H       = row[COL_H]
+            K       = row[COL_K]
+            eta     = row[COL_ETA]
+            vc_si   = row[COL_VC]  * CMYR_TO_MS
+            vs_si   = row[COL_VS]  / SPY
+            meas_pa = -row[COL_DQDS]   # paper sign: +ve resists buoyancy
 
-            vs_si   = vs_myr  / SPY
-            dvds_si = dvds_yr / SPY
-            vc_si   = vc_cmyr * CMYR_TO_MS
-
-            meas_pa = -dqds_col   # paper sign: +ve = resists buoyancy
-
-            # 3-point dK/ds from K_shall / K_deep
-            ds_total = 2.0 * dz_m / np.sin(dip_rad)
-            if (ds_total > 0
-                    and np.isfinite(K_deep) and np.isfinite(K_shall)
-                    and np.abs(K_deep - K_shall) < 1e6):
-                dK_3pt = (K_deep - K_shall) / ds_total
+            # L_eff = η H K v_c / |dQ/ds|  (only where meas is positive and K > 0)
+            denom = np.abs(meas_pa)
+            if (K > 0 and np.isfinite(K) and np.isfinite(eta)
+                    and np.isfinite(H) and np.isfinite(vc_si)
+                    and denom > 1e3 and meas_pa > 0):
+                L_eff = eta * H * K * vc_si / denom   # m
             else:
-                dK_3pt = np.nan
-
-            # Eq. 8 terms
-            t_vel    = 2.0 * K * dvds_si
-            t_dK_sg  = vs_si * dK_sg
-            t_dK_3pt = vs_si * dK_3pt
-
-            pred_sg_pa  = eta * H * (t_vel + t_dK_sg)
-            term_vel_pa = eta * H * t_vel
-
-            # Eq. 11
-            pred_eq11_pa = 0.1 * eta * K * vc_si
+                L_eff = np.nan
 
             records.append(dict(
-                model        = model_label,
-                meas_pa      = meas_pa,
-                pred_sg_pa   = pred_sg_pa,
-                pred_eq11_pa = pred_eq11_pa,
-                term_vel_pa  = term_vel_pa,
-                K            = K,
-                H            = H,
-                eta          = eta,
-                vs_si        = vs_si,
-                vc_si        = vc_si,
-                Lv           = Lv,
-                Lk_sg        = Lk_sg,
+                model   = label,
+                meas_pa = meas_pa,
+                K       = K,
+                H       = H,
+                eta     = eta,
+                vc_si   = vc_si,
+                vs_si   = vs_si,
+                L_eff   = L_eff,
+                Lv      = row[COL_LV],
             ))
 
     return records
 
 
-# ── Plotting helpers ──────────────────────────────────────────────────────────
-
-K_THRESH = 0.0      # rad/m — exclude negative/zero curvature (unphysical slab states)
+# ── Plotting helpers ───────────────────────────────────────────────────────────
 
 MPa = 1e6
 
@@ -173,24 +133,23 @@ def arr(records, key):
 
 
 def model_colors(records):
-    models = [r['model'] for r in records]
-    unique = sorted(set(models))
-    cmap   = matplotlib.colormaps.get_cmap('tab20').resampled(len(unique))
+    models   = [r['model'] for r in records]
+    unique   = sorted(set(models))
+    cmap     = matplotlib.colormaps.get_cmap('tab20').resampled(len(unique))
     color_of = {m: cmap(i) for i, m in enumerate(unique)}
     return models, unique, color_of
 
 
 def corr_str(x, y):
     ok = np.isfinite(x) & np.isfinite(y)
-    if np.sum(ok) < 3:
+    if ok.sum() < 3:
         return "r=n/a"
-    return f"N={np.sum(ok)}\nr={np.corrcoef(x[ok], y[ok])[0,1]:.2f}"
+    return f"N={ok.sum()}\nr={np.corrcoef(x[ok], y[ok])[0,1]:.2f}"
 
 
-def one_to_one(ax, xdata, ydata, pad=0.05):
-    both = np.concatenate([xdata[np.isfinite(xdata)], ydata[np.isfinite(ydata)]])
-    if len(both) == 0:
-        return
+def one_to_one(ax, x, y, pad=0.05):
+    both = np.concatenate([x[np.isfinite(x)], y[np.isfinite(y)]])
+    if len(both) == 0: return
     lo, hi = np.nanpercentile(both, 1), np.nanpercentile(both, 99)
     span = hi - lo
     lo -= pad * span; hi += pad * span
@@ -204,174 +163,204 @@ def label_box(ax, txt):
 
 
 def _save(fig, out_dir, stem):
-    for ext in ("png", "pdf"):
-        path = os.path.join(out_dir, f"dqds_diag.{stem}.{ext}")
-        fig.savefig(path, dpi=200, bbox_inches='tight')
-        print(f"  saved: {path}")
+    for ext in ('png', 'pdf'):
+        p = os.path.join(out_dir, f"dqds_diag.{stem}.{ext}")
+        fig.savefig(p, dpi=200, bbox_inches='tight')
+        print(f"  saved: {p}")
     plt.close(fig)
 
 
-# ── Figures ───────────────────────────────────────────────────────────────────
+# ── Figure 1: L_eff distribution ──────────────────────────────────────────────
 
-def make_figure_comparison(records, out_dir):
-    """2-panel: Eq.11 uncalibrated then calibrated vs measured (per-model colored).
-    Left shows systematic ~3x overprediction; right shows calibrated r=0.86 result."""
+def make_figure_Leff(records, out_dir):
+    """3-panel: L_eff histogram, L_eff vs K (coloured by model), per-model box."""
     models, unique, color_of = model_colors(records)
 
-    meas_pa = arr(records, "meas_pa")
-    eq11_pa = arr(records, "pred_eq11_pa")
-    K_a     = arr(records, "K")
+    L_eff_km = arr(records, 'L_eff') / 1e3      # m → km
+    K_um     = arr(records, 'K')     * 1e6       # rad/m → ×10⁻⁶
+    c_pts    = np.array([color_of[m] for m in models])
 
-    # derive calibrated coefficient from K>0, same-sign subset
-    ok_cal = (np.isfinite(meas_pa) & np.isfinite(eq11_pa)
-              & (np.abs(eq11_pa) > 1e4)
-              & (np.sign(meas_pa) == np.sign(eq11_pa))
-              & (K_a > 0.0))
-    med         = np.nanmedian(meas_pa[ok_cal] / eq11_pa[ok_cal])
-    calib_coeff = 0.1 * med
+    ok = np.isfinite(L_eff_km) & (L_eff_km > 0)
 
-    meas     = meas_pa    / MPa
-    eq11     = eq11_pa    / MPa
-    eq11_cal = eq11 * med
+    fig, axes = plt.subplots(1, 3, figsize=(14, 5))
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+    # ── (a) histogram ────────────────────────────────────────────────────
+    ax = axes[0]
+    v = L_eff_km[ok]
+    p2, p98 = np.nanpercentile(v, 2), np.nanpercentile(v, 98)
+    v_clip = v[(v > p2) & (v < p98) & (v < 10000)]
+    ax.hist(v_clip, bins=40, color='steelblue', edgecolor='none', alpha=0.75)
+    med = np.nanmedian(v)
+    ax.axvline(med, color='k', lw=1.8, label=f'median = {med:.0f} km')
+    ax.set_xlabel("L_eff  [km]")
+    ax.set_ylabel("count")
+    ax.set_xlim(0, 10000)
+    ax.set_title(f"L_eff distribution  (K > 0,  N = {ok.sum()})")
+    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
+    label_box(ax, f"L_eff = ηHKv_c / dQ/ds\nmedian = {med:.0f} km")
+
+    # ── (b) L_eff vs K with linear fit ───────────────────────────────────
+    ax = axes[1]
+    ax.scatter(K_um[ok], L_eff_km[ok],
+               s=10, alpha=0.5, c=c_pts[ok], edgecolors='none', zorder=3)
+    # linear fit through origin: L_eff = slope * K
+    Kv  = (arr(records, 'K') * 1e6)[ok]          # ×10⁻⁶ rad/m
+    Lv  = L_eff_km[ok]
+    fin = np.isfinite(Kv) & np.isfinite(Lv) & (Lv < 10000)
+    slope = np.sum(Kv[fin] * Lv[fin]) / np.sum(Kv[fin] ** 2)  # OLS through origin
+    xfit  = np.linspace(0, K_um[ok].max(), 200)
+    ax.plot(xfit, slope * xfit, 'k-', lw=1.5,
+            label=f'fit: L_eff = {slope:.0f}·K  (×10⁶ m)')
+    ax.axhline(med, color='k', lw=1.0, ls='--', alpha=0.4)
+    ax.set_xlabel("K  [×10⁻⁶ rad/m]")
+    ax.set_ylabel("L_eff  [km]")
+    ax.set_title("L_eff vs K\n(if L_eff ∝ K → dQ/ds independent of K)")
+    ax.set_ylim(0, 10000)
+    r_val = np.corrcoef(Kv[fin], Lv[fin])[0, 1]
+    label_box(ax, f"r = {r_val:.2f}\nslope = {slope:.0f} ×10⁶ m")
+    ax.legend(fontsize=7); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
+
+    # ── (c) per-model L_eff — sorted by median, with IQR bars ───────────
+    ax = axes[2]
+    # collect per-model stats and sort by median
+    model_stats = []
+    for m in unique:
+        idx  = np.array([j for j, r in enumerate(records) if r['model'] == m])
+        vals = L_eff_km[idx]
+        vals = vals[np.isfinite(vals) & (vals > 0)]
+        if len(vals) == 0:
+            continue
+        model_stats.append((np.median(vals), m, vals))
+    model_stats.sort(key=lambda x: x[0])
+
+    for i, (med_m, m, vals) in enumerate(model_stats):
+        q25, q75 = np.percentile(vals, 25), np.percentile(vals, 75)
+        col = color_of[m]
+        # individual points (jittered)
+        jitter = (np.random.default_rng(i).random(len(vals)) - 0.5) * 0.4
+        ax.scatter(i + jitter, vals, s=8, alpha=0.35, color=col, edgecolors='none', zorder=2)
+        # IQR bar
+        ax.plot([i, i], [q25, q75], color=col, lw=3, solid_capstyle='round', zorder=3)
+        # median tick
+        ax.plot([i - 0.35, i + 0.35], [med_m, med_m],
+                color=col, lw=2.5, solid_capstyle='round', zorder=4)
+
+    ax.axhline(med, color='k', lw=1.2, ls='--', label=f'overall median = {med:.0f} km')
+    sorted_labels = [m for _, m, _ in model_stats]
+    ax.set_xticks(range(len(sorted_labels)))
+    ax.set_xticklabels(sorted_labels, rotation=55, ha='right', fontsize=6)
+    ax.set_ylabel("L_eff  [km]")
+    ax.set_ylim(0, 10000)
+    ax.set_title("L_eff per model  (sorted by median)\nbar = IQR, line = median")
+    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4, axis='y')
+
+    fig.suptitle("Effective length scale  L_eff = ηHKv_c / dQ/ds",
+                 fontsize=10, fontweight='bold')
+    fig.tight_layout()
+    _save(fig, out_dir, "fig1_Leff_distribution")
+
+
+# ── Figure 2: prediction using L_eff_median ───────────────────────────────────
+
+def make_figure_prediction(records, out_dir):
+    """2-panel: K-based prediction (all same-sign) vs no-K prediction (ηHvc/α).
+    Tests whether K actually belongs in the scaling law."""
+    models, unique, color_of = model_colors(records)
+
+    meas_pa = arr(records, 'meas_pa')
+    K_a     = arr(records, 'K')
+    H_a     = arr(records, 'H')
+    eta_a   = arr(records, 'eta')
+    vc_a    = arr(records, 'vc_si')
+    L_eff_a = arr(records, 'L_eff')
+
+    # median L_eff (K>0, positive dQ/ds)
+    ok_Leff = np.isfinite(L_eff_a) & (L_eff_a > 0)
+    L_med   = np.nanmedian(L_eff_a[ok_Leff])
+
+    # α = median(L_eff / K)  — slope of L_eff ∝ K fit (units m²)
+    L_eff_km = L_eff_a / 1e3
+    K_um     = K_a * 1e6
+    fin      = ok_Leff & np.isfinite(K_um) & (L_eff_km < 10000)
+    alpha    = np.sum(K_um[fin] * L_eff_km[fin]) / np.sum(K_um[fin] ** 2)
+    # alpha in units (km / (×10⁻⁶ rad/m)) = km * m / (10⁻⁶) = 10⁶ km·m = 10⁹ m²
+    # convert: α_m2 so that dQ/ds = η H vc / α_m2
+    # L_eff [m] = alpha_scaled * K [m⁻¹]  → alpha_scaled [m²]
+    alpha_m2 = (alpha * 1e3) / 1e-6    # km→m, ×10⁻⁶→m⁻¹
+
+    pred_K_pa    = eta_a * H_a * K_a * vc_a / L_med    # with K
+    pred_noK_pa  = eta_a * H_a * vc_a / alpha_m2        # no K
+
+    meas_mpa     = meas_pa    / MPa
+    pred_K_mpa   = pred_K_pa  / MPa
+    pred_noK_mpa = pred_noK_pa / MPa
+
+    ok_all_K   = (np.isfinite(meas_mpa) & np.isfinite(pred_K_mpa)
+                  & (np.sign(meas_pa) == np.sign(pred_K_mpa)))
+    ok_all_noK = (np.isfinite(meas_mpa) & np.isfinite(pred_noK_mpa)
+                  & (np.sign(meas_pa) == np.sign(pred_noK_mpa)))
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
     panels = [
-        (axes[0], eq11,     "0.1 · η · K · v_c  [MPa]",
-         "Eq. 11 (uncalibrated)"),
-        (axes[1], eq11_cal, f"{calib_coeff:.4f} · η · K · v_c  [MPa]",
-         f"Eq. 11 calibrated  (coeff = {calib_coeff:.4f})"),
+        (axes[0], pred_K_mpa,   ok_all_K,
+         f"η H K v_c / L_eff  [MPa]\n(L_eff = {L_med/1e3:.0f} km)"),
+        (axes[1], pred_noK_mpa, ok_all_noK,
+         f"η H v_c / α  [MPa]\n(α = {alpha_m2/1e12:.2f} ×10¹² m²,  no K)"),
     ]
 
     handles = []
-    for ax, pred, xlabel, title in panels:
+    for ax, pred, mask, xlabel in panels:
         for m in unique:
             idx = np.array([i for i, r in enumerate(records) if r['model'] == m])
-            ok  = np.isfinite(pred[idx]) & np.isfinite(meas[idx])
-            h = ax.scatter(pred[idx][ok], meas[idx][ok],
+            ok  = mask[idx]
+            h = ax.scatter(pred[idx][ok], meas_mpa[idx][ok],
                            s=10, alpha=0.55, color=color_of[m],
                            edgecolors='none', label=m, zorder=3)
-            if ax is axes[0]:
+            if ax is axes[0] and h not in handles:
                 handles.append(h)
-        all_ok = np.isfinite(pred) & np.isfinite(meas)
-        one_to_one(ax, pred[all_ok], meas[all_ok])
+        one_to_one(ax, pred[mask], meas_mpa[mask])
         ax.axhline(0, color='0.7', lw=0.5); ax.axvline(0, color='0.7', lw=0.5)
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Measured  dQ/ds  [MPa]")
-        ax.set_title(title)
         ax.grid(True, ls='--', lw=0.4, alpha=0.4)
-        label_box(ax, corr_str(pred, meas))
+        label_box(ax, corr_str(pred[mask], meas_mpa[mask]))
 
     fig.legend(handles, unique, title='Model', fontsize=6.5,
                loc='lower center', ncol=min(len(unique), 5),
                bbox_to_anchor=(0.5, -0.02))
-    fig.suptitle("dQ/ds scaling law  (paper sign convention)",
+    fig.suptitle("Does K belong in the dQ/ds scaling?  (panel 3: no-K formula)",
                  fontsize=10, fontweight='bold')
     fig.tight_layout(rect=[0, 0.10, 1, 1])
-    _save(fig, out_dir, "fig1_scaling_law")
+    _save(fig, out_dir, "fig2_Leff_prediction")
 
 
-def make_figure_calibration(records, out_dir):
-    """3-panel: prefactor vs K (motivates stability filter),
-    K-filtered prefactor histogram, calibrated Eq.11 vs measured."""
-    models, unique, color_of = model_colors(records)
-
-    meas  = arr(records, "meas_pa")
-    eq11  = arr(records, "pred_eq11_pa")
-    K_a   = arr(records, "K")
-
-    # prefactor: same-sign, non-trivial eq11 only
-    ok_base = (np.isfinite(meas) & np.isfinite(eq11)
-               & (np.abs(eq11) > 1e4)
-               & (np.sign(meas) == np.sign(eq11)))
-    pf = np.where(ok_base, meas / eq11, np.nan)
-
-    ok_filt = ok_base & (K_a > 0.0)
-
-    fig, axes = plt.subplots(1, 3, figsize=(14, 5))
-    c_pts = np.array([color_of[m] for m in models])
-
-    # ── (a) prefactor vs K ───────────────────────────────────────────────
-    ax = axes[0]
-    valid = ok_base & np.isfinite(pf)
-    ax.scatter(K_a[valid] * 1e6, pf[valid],
-               s=10, alpha=0.5, c=c_pts[valid], edgecolors='none', zorder=3)
-    ax.axvline(0.0, color='k', lw=1.4, ls='--', label='K = 0')
-    ax.axhline(1.0, color='gray', lw=1.0, ls='--')
-    ax.set_ylim(-0.2, np.nanpercentile(pf[valid], 97) * 1.3)
-    ax.set_xlabel("K  [×10⁻⁶ rad/m]")
-    ax.set_ylabel("meas  /  (0.1 η K v_c)")
-    ax.set_title("Eq. 11 prefactor vs K\n(dashed = K > 0 filter)")
-    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
-    r_kpf = np.corrcoef(K_a[valid], pf[valid])[0, 1]
-    label_box(ax, f"r = {r_kpf:.2f}")
-
-    # ── (b) K-filtered prefactor histogram ──────────────────────────────
-    ax = axes[1]
-    v = pf[np.isfinite(pf) & ok_filt]
-    p2, p98 = np.nanpercentile(v, 2), np.nanpercentile(v, 98)
-    ax.hist(v[(v > p2) & (v < p98)], bins=35,
-            color='steelblue', edgecolor='none', alpha=0.75)
-    med = np.nanmedian(v)
-    ax.axvline(med, color='k',    lw=1.8, label=f'median = {med:.3f}')
-    ax.axvline(1.0, color='gray', lw=1.0, ls='--', label='1:1')
-    ax.set_xlabel("meas  /  (0.1 η K v_c)")
-    ax.set_ylabel("count")
-    ax.set_title(f"Prefactor  (K > 0,  N = {len(v)})")
-    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
-    calib_coeff = 0.1 * med
-    label_box(ax, f"median = {med:.3f}\n→ coeff = {calib_coeff:.4f}")
-
-    # ── (c) calibrated scatter ───────────────────────────────────────────
-    ax = axes[2]
-    pred_calib = eq11 * med / MPa
-    meas_mpa   = meas / MPa
-    handles = []
-    for m in unique:
-        idx = np.array([i for i, r in enumerate(records) if r['model'] == m])
-        ok  = ok_filt[idx] & np.isfinite(pred_calib[idx]) & np.isfinite(meas_mpa[idx])
-        h = ax.scatter(pred_calib[idx][ok], meas_mpa[idx][ok],
-                       s=12, alpha=0.6, color=color_of[m],
-                       edgecolors='none', label=m, zorder=3)
-        handles.append(h)
-    all_ok = ok_filt & np.isfinite(pred_calib) & np.isfinite(meas_mpa)
-    one_to_one(ax, pred_calib[all_ok], meas_mpa[all_ok])
-    ax.axhline(0, color='0.7', lw=0.5); ax.axvline(0, color='0.7', lw=0.5)
-    ax.set_xlabel(f"{calib_coeff:.4f} · η · K · v_c  [MPa]")
-    ax.set_ylabel("Measured  dQ/ds  [MPa]")
-    ax.set_title("Calibrated Eq. 11 vs measured\n(K-filtered)")
-    ax.grid(True, ls='--', lw=0.4, alpha=0.5)
-    label_box(ax, corr_str(pred_calib[ok_filt], meas_mpa[ok_filt]))
-
-    fig.legend(handles=handles, title='Model', fontsize=6.5,
-               loc='lower center', ncol=min(len(unique), 5),
-               bbox_to_anchor=(0.5, -0.02))
-    fig.suptitle("Eq. 11 calibration",
-                 fontsize=10, fontweight='bold')
-    fig.tight_layout(rect=[0, 0.10, 1, 1])
-    _save(fig, out_dir, "fig2_calibration")
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    files = args if args else sorted(glob.glob("text_files/TESTC/*.txt"))
+    args  = [a for a in sys.argv[1:] if not a.startswith('--')]
+    files = args if args else sorted(glob.glob('text_files/TESTC/*.txt'))
     if not files:
         print("No input files. Run from analysis/ or pass file paths.")
         sys.exit(1)
 
-    out_dir = "plots/tmp"
+    out_dir = 'plots/tmp'
     os.makedirs(out_dir, exist_ok=True)
     print(f"Loading {len(files)} file(s)...")
     records = load_records(files)
-    print(f"  {len(records)} valid timestep records")
+    print(f"  {len(records)} valid records")
     if not records:
-        print("No valid records found — check file paths and column count.")
+        print("No valid records — check paths and column count.")
         sys.exit(1)
 
-    print("Making figures...")
-    make_figure_comparison(records, out_dir)
-    make_figure_calibration(records, out_dir)
+    L_vals = arr(records, 'L_eff')
+    ok     = np.isfinite(L_vals) & (L_vals > 0)
+    print(f"\n  L_eff  median = {np.nanmedian(L_vals[ok])/1e3:.0f} km"
+          f"  (N={ok.sum()}, from K>0 and dQ/ds>0 timesteps)")
+
+    print("\nMaking figures...")
+    make_figure_Leff(records, out_dir)
+    make_figure_prediction(records, out_dir)
     print("Done.")
 
 

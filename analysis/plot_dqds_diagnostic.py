@@ -63,6 +63,15 @@ OVERTURNED_MODELS = {
     'FixedOP_lower-res_new',  # η' = 500,  fixed OP
 }
 
+# Canonical model order: fixed SP / free / fixed OP, grouped by η'
+MODEL_ORDER = [
+    'new_FixedSP_50plates',    'new_50plates',    'new_FixedOP_50plates',
+    'new_FixedSP_250plates',   'new_250plates',   'new_FixedOP_250plates',
+    'new_FixedSP_375plates',   'new_375plates',   'new_FixedOP_375plates',
+    'FixedSP_lower-res_new2',  'new2',            'FixedOP_lower-res_new',
+    'new_FixedSP_1000plates2', 'new_1000plates',  'new_FixedOP_1000plates',
+]
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -248,10 +257,6 @@ def make_figure_Leff(records, out_dir):
     xfit  = np.linspace(0, K_um[ok].max(), 200)
     ax.plot(xfit, slope * xfit, 'k-', lw=1.5,
             label=f'fit (normal): L_eff = {slope:.0f}·K  (×10⁶ m)')
-    ax.axhline(med_norm, color='steelblue', lw=1.0, ls='-',  alpha=0.6,
-               label=f'median normal = {med_norm:.0f} km')
-    ax.axhline(med_all,  color='k',         lw=1.0, ls='--', alpha=0.5,
-               label=f'median all = {med_all:.0f} km')
     r_val = np.corrcoef(Kv[fin], Lv[fin])[0, 1]
     label_box(ax, f"r = {r_val:.2f}  (normal only)\nslope = {slope:.0f} ×10⁶ m")
     ax.set_xlabel("K  [×10⁻⁶ rad/m]")
@@ -262,8 +267,13 @@ def make_figure_Leff(records, out_dir):
 
     # ── (c) per-model L_eff — sorted by median, with IQR bars ───────────
     ax = axes[2]
+    # order by canonical model sequence (η' group × BC type)
+    present = set(unique)
+    ordered = [m for m in MODEL_ORDER if m in present]
+    ordered += sorted(present - set(MODEL_ORDER))   # any unlisted models appended
+
     model_stats = []
-    for m in unique:
+    for m in ordered:
         idx  = np.array([j for j, r in enumerate(records) if r['model'] == m])
         vals = L_eff_km[idx]
         vals = vals[np.isfinite(vals) & (vals > 0)]
@@ -271,7 +281,6 @@ def make_figure_Leff(records, out_dir):
             continue
         is_ov = m in OVERTURNED_MODELS
         model_stats.append((np.median(vals), m, vals, is_ov))
-    model_stats.sort(key=lambda x: x[0])
 
     for i, (med_m, m, vals, is_ov) in enumerate(model_stats):
         q25, q75 = np.percentile(vals, 25), np.percentile(vals, 75)
@@ -301,7 +310,7 @@ def make_figure_Leff(records, out_dir):
     ax.set_xticklabels(sorted_labels, rotation=55, ha='right', fontsize=6)
     ax.set_ylabel("L_eff  [km]")
     ax.set_ylim(0, 10000)
-    ax.set_title("L_eff per model  (sorted by median)\ndashed = overturned")
+    ax.set_title("L_eff per model  (fixedSP / free / fixedOP  ×  η')\ndashed = overturned")
     ax.legend(fontsize=7); ax.grid(True, ls='--', lw=0.4, alpha=0.4, axis='y')
 
     fig.suptitle("Effective length scale  L_eff = ηHKv_c / dQ/ds",

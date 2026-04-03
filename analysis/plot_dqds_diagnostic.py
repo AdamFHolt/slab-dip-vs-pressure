@@ -20,6 +20,9 @@ L_eff is the quantity to carry forward to the Earth application section:
 Sign convention: paper's dQ/ds > 0 = force resisting slab-normal buoyancy.
   code col 6 (slab_stress_term) = -dQ/ds_paper, so meas_paper = -col6.
 
+Overturned (rollover) slab models are tagged and shown as hollow symbols.
+L_eff calibration uses non-overturned models only.
+
 Usage (run from analysis/):
     python3 plot_dqds_diagnostic.py [text_files/TESTC/*.txt ...]
 
@@ -40,6 +43,7 @@ COL_DIP     = 5    # deg  — slab dip at analysis depth
 COL_DQDS    = 6    # Pa   — slab_stress_term = -dQ/ds_paper
 COL_H       = 9    # m    — slab-normal thickness
 COL_K       = 11   # rad/m
+COL_DK      = 12   # rad/m² — dK/ds
 COL_K_SHALL = 13   # rad/m
 COL_K_DEEP  = 14   # rad/m
 COL_VC      = 19   # cm/yr
@@ -51,6 +55,13 @@ COL_ETA     = 26   # Pa·s
 
 SPY        = 365.25 * 24.0 * 3600.0
 CMYR_TO_MS = 0.01 / SPY
+
+# Models with overturned (rollover) slab geometry — shown hollow, excluded from calibration
+OVERTURNED_MODELS = {
+    'new_1000plates',         # η' = 1000, free plates
+    'new_FixedOP_1000plates', # η' = 1000, fixed OP
+    'FixedOP_lower-res_new',  # η' = 500,  fixed OP
+}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -72,7 +83,6 @@ def load_records(files):
         dz_km = parse_shear_dz_km(fpath)
         if dz_km is None:
             print(f"  skip (no shear-dz token): {fpath}"); continue
-        dz_m = dz_km * 1e3
 
         try:
             data = ensure_2d(np.loadtxt(fpath))
@@ -87,6 +97,8 @@ def load_records(files):
                 label = label[len(pfx):]; break
         label = re.sub(r'\.z[\d.]+\.shear.*', '', label)
 
+        overturned = label in OVERTURNED_MODELS
+
         for row in data:
             dip_rad = np.deg2rad(row[COL_DIP])
             if dip_rad <= 0 or not np.isfinite(dip_rad):
@@ -94,6 +106,7 @@ def load_records(files):
 
             H       = row[COL_H]
             K       = row[COL_K]
+            dKds    = row[COL_DK]
             eta     = row[COL_ETA]
             vc_si   = row[COL_VC]  * CMYR_TO_MS
             vs_si   = row[COL_VS]  / SPY
@@ -109,15 +122,17 @@ def load_records(files):
                 L_eff = np.nan
 
             records.append(dict(
-                model   = label,
-                meas_pa = meas_pa,
-                K       = K,
-                H       = H,
-                eta     = eta,
-                vc_si   = vc_si,
-                vs_si   = vs_si,
-                L_eff   = L_eff,
-                Lv      = row[COL_LV],
+                model      = label,
+                overturned = overturned,
+                meas_pa    = meas_pa,
+                K          = K,
+                dKds       = dKds,
+                H          = H,
+                eta        = eta,
+                vc_si      = vc_si,
+                vs_si      = vs_si,
+                L_eff      = L_eff,
+                Lv         = row[COL_LV],
             ))
 
     return records
@@ -140,11 +155,13 @@ def model_colors(records):
     return models, unique, color_of
 
 
-def corr_str(x, y):
+def corr_str(x, y, label=''):
     ok = np.isfinite(x) & np.isfinite(y)
     if ok.sum() < 3:
         return "r=n/a"
-    return f"N={ok.sum()}\nr={np.corrcoef(x[ok], y[ok])[0,1]:.2f}"
+    r = np.corrcoef(x[ok], y[ok])[0, 1]
+    prefix = f"{label}\n" if label else ""
+    return f"{prefix}N={ok.sum()},  r={r:.2f}"
 
 
 def one_to_one(ax, x, y, pad=0.05):
@@ -158,7 +175,7 @@ def one_to_one(ax, x, y, pad=0.05):
 
 
 def label_box(ax, txt):
-    ax.text(0.04, 0.96, txt, transform=ax.transAxes, va='top', fontsize=8,
+    ax.text(0.04, 0.96, txt, transform=ax.transAxes, va='top', fontsize=7.5,
             bbox=dict(fc='white', ec='none', alpha=0.75))
 
 
@@ -170,59 +187,81 @@ def _save(fig, out_dir, stem):
     plt.close(fig)
 
 
+def _scatter(ax, x, y, color, overturned, s=10, alpha=0.55):
+    """Plot normal points filled, overturned points as hollow circles."""
+    norm = ~overturned
+    if norm.any():
+        ax.scatter(x[norm], y[norm], s=s, alpha=alpha,
+                   color=color[norm], edgecolors='none', zorder=3)
+    if overturned.any():
+        ax.scatter(x[overturned], y[overturned], s=s+4, alpha=alpha+0.1,
+                   facecolors='none', edgecolors=color[overturned],
+                   linewidths=0.8, zorder=4)
+
+
 # ── Figure 1: L_eff distribution ──────────────────────────────────────────────
 
 def make_figure_Leff(records, out_dir):
-    """3-panel: L_eff histogram, L_eff vs K (coloured by model), per-model box."""
+    """3-panel: L_eff histogram, L_eff vs K, per-model box.
+    Overturned models shown as hollow symbols; calibration uses normal models only."""
     models, unique, color_of = model_colors(records)
 
-    L_eff_km = arr(records, 'L_eff') / 1e3      # m → km
-    K_um     = arr(records, 'K')     * 1e6       # rad/m → ×10⁻⁶
-    c_pts    = np.array([color_of[m] for m in models])
+    L_eff_km  = arr(records, 'L_eff') / 1e3
+    K_um      = arr(records, 'K')     * 1e6
+    is_over   = arr(records, 'overturned').astype(bool)
+    c_pts     = np.array([color_of[m] for m in models])
 
-    ok = np.isfinite(L_eff_km) & (L_eff_km > 0)
+    ok      = np.isfinite(L_eff_km) & (L_eff_km > 0)
+    ok_norm = ok & ~is_over
+    ok_over = ok &  is_over
+
+    med_all  = np.nanmedian(L_eff_km[ok])
+    med_norm = np.nanmedian(L_eff_km[ok_norm])
 
     fig, axes = plt.subplots(1, 3, figsize=(14, 5))
 
     # ── (a) histogram ────────────────────────────────────────────────────
     ax = axes[0]
-    v = L_eff_km[ok]
-    p2, p98 = np.nanpercentile(v, 2), np.nanpercentile(v, 98)
-    v_clip = v[(v > p2) & (v < p98) & (v < 10000)]
-    ax.hist(v_clip, bins=40, color='steelblue', edgecolor='none', alpha=0.75)
-    med = np.nanmedian(v)
-    ax.axvline(med, color='k', lw=1.8, label=f'median = {med:.0f} km')
+    clip = lambda v: v[(v > np.nanpercentile(v, 2)) & (v < 10000)]
+    ax.hist(clip(L_eff_km[ok_norm]), bins=35, color='steelblue',
+            edgecolor='none', alpha=0.75, label=f'normal  (median = {med_norm:.0f} km)')
+    ax.hist(clip(L_eff_km[ok_over]), bins=15, histtype='step',
+            edgecolor='tomato', linewidth=1.5, alpha=0.9,
+            label=f'overturned  (median = {med_all:.0f} km all)')
+    ax.axvline(med_norm, color='steelblue', lw=1.8, ls='-')
+    ax.axvline(med_all,  color='k',         lw=1.2, ls='--')
     ax.set_xlabel("L_eff  [km]")
     ax.set_ylabel("count")
     ax.set_xlim(0, 10000)
-    ax.set_title(f"L_eff distribution  (K > 0,  N = {ok.sum()})")
-    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
-    label_box(ax, f"L_eff = ηHKv_c / dQ/ds\nmedian = {med:.0f} km")
+    ax.set_title(f"L_eff distribution\nfilled: normal (N={ok_norm.sum()}), "
+                 f"hollow: overturned (N={ok_over.sum()})")
+    ax.legend(fontsize=7); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
 
-    # ── (b) L_eff vs K with linear fit ───────────────────────────────────
+    # ── (b) L_eff vs K with linear fit (normal only) ─────────────────────
     ax = axes[1]
-    ax.scatter(K_um[ok], L_eff_km[ok],
-               s=10, alpha=0.5, c=c_pts[ok], edgecolors='none', zorder=3)
-    # linear fit through origin: L_eff = slope * K
-    Kv  = (arr(records, 'K') * 1e6)[ok]          # ×10⁻⁶ rad/m
-    Lv  = L_eff_km[ok]
+    _scatter(ax, K_um[ok], L_eff_km[ok], c_pts[ok], is_over[ok])
+    # OLS fit through origin on normal models only
+    Kv  = K_um[ok_norm]
+    Lv  = L_eff_km[ok_norm]
     fin = np.isfinite(Kv) & np.isfinite(Lv) & (Lv < 10000)
-    slope = np.sum(Kv[fin] * Lv[fin]) / np.sum(Kv[fin] ** 2)  # OLS through origin
+    slope = np.sum(Kv[fin] * Lv[fin]) / np.sum(Kv[fin] ** 2)
     xfit  = np.linspace(0, K_um[ok].max(), 200)
     ax.plot(xfit, slope * xfit, 'k-', lw=1.5,
-            label=f'fit: L_eff = {slope:.0f}·K  (×10⁶ m)')
-    ax.axhline(med, color='k', lw=1.0, ls='--', alpha=0.4)
+            label=f'fit (normal): L_eff = {slope:.0f}·K  (×10⁶ m)')
+    ax.axhline(med_norm, color='steelblue', lw=1.0, ls='-',  alpha=0.6,
+               label=f'median normal = {med_norm:.0f} km')
+    ax.axhline(med_all,  color='k',         lw=1.0, ls='--', alpha=0.5,
+               label=f'median all = {med_all:.0f} km')
+    r_val = np.corrcoef(Kv[fin], Lv[fin])[0, 1]
+    label_box(ax, f"r = {r_val:.2f}  (normal only)\nslope = {slope:.0f} ×10⁶ m")
     ax.set_xlabel("K  [×10⁻⁶ rad/m]")
     ax.set_ylabel("L_eff  [km]")
-    ax.set_title("L_eff vs K\n(if L_eff ∝ K → dQ/ds independent of K)")
+    ax.set_title("L_eff vs K\n(hollow = overturned)")
     ax.set_ylim(0, 10000)
-    r_val = np.corrcoef(Kv[fin], Lv[fin])[0, 1]
-    label_box(ax, f"r = {r_val:.2f}\nslope = {slope:.0f} ×10⁶ m")
     ax.legend(fontsize=7); ax.grid(True, ls='--', lw=0.4, alpha=0.4)
 
     # ── (c) per-model L_eff — sorted by median, with IQR bars ───────────
     ax = axes[2]
-    # collect per-model stats and sort by median
     model_stats = []
     for m in unique:
         idx  = np.array([j for j, r in enumerate(records) if r['model'] == m])
@@ -230,29 +269,40 @@ def make_figure_Leff(records, out_dir):
         vals = vals[np.isfinite(vals) & (vals > 0)]
         if len(vals) == 0:
             continue
-        model_stats.append((np.median(vals), m, vals))
+        is_ov = m in OVERTURNED_MODELS
+        model_stats.append((np.median(vals), m, vals, is_ov))
     model_stats.sort(key=lambda x: x[0])
 
-    for i, (med_m, m, vals) in enumerate(model_stats):
+    for i, (med_m, m, vals, is_ov) in enumerate(model_stats):
         q25, q75 = np.percentile(vals, 25), np.percentile(vals, 75)
         col = color_of[m]
-        # individual points (jittered)
         jitter = (np.random.default_rng(i).random(len(vals)) - 0.5) * 0.4
-        ax.scatter(i + jitter, vals, s=8, alpha=0.35, color=col, edgecolors='none', zorder=2)
-        # IQR bar
-        ax.plot([i, i], [q25, q75], color=col, lw=3, solid_capstyle='round', zorder=3)
-        # median tick
-        ax.plot([i - 0.35, i + 0.35], [med_m, med_m],
-                color=col, lw=2.5, solid_capstyle='round', zorder=4)
+        if is_ov:
+            ax.scatter(i + jitter, vals, s=8, alpha=0.35,
+                       facecolors='none', edgecolors=col, linewidths=0.6, zorder=2)
+            ax.plot([i, i], [q25, q75], color=col, lw=2, ls='--',
+                    solid_capstyle='round', zorder=3)
+            ax.plot([i - 0.35, i + 0.35], [med_m, med_m],
+                    color=col, lw=2, ls='--', solid_capstyle='round', zorder=4)
+        else:
+            ax.scatter(i + jitter, vals, s=8, alpha=0.35,
+                       color=col, edgecolors='none', zorder=2)
+            ax.plot([i, i], [q25, q75], color=col, lw=3,
+                    solid_capstyle='round', zorder=3)
+            ax.plot([i - 0.35, i + 0.35], [med_m, med_m],
+                    color=col, lw=2.5, solid_capstyle='round', zorder=4)
 
-    ax.axhline(med, color='k', lw=1.2, ls='--', label=f'overall median = {med:.0f} km')
-    sorted_labels = [m for _, m, _ in model_stats]
+    ax.axhline(med_norm, color='steelblue', lw=1.2, ls='-',
+               label=f'normal median = {med_norm:.0f} km')
+    ax.axhline(med_all,  color='k',         lw=1.2, ls='--',
+               label=f'all median = {med_all:.0f} km')
+    sorted_labels = [m for _, m, _, _ in model_stats]
     ax.set_xticks(range(len(sorted_labels)))
     ax.set_xticklabels(sorted_labels, rotation=55, ha='right', fontsize=6)
     ax.set_ylabel("L_eff  [km]")
     ax.set_ylim(0, 10000)
-    ax.set_title("L_eff per model  (sorted by median)\nbar = IQR, line = median")
-    ax.legend(fontsize=8); ax.grid(True, ls='--', lw=0.4, alpha=0.4, axis='y')
+    ax.set_title("L_eff per model  (sorted by median)\ndashed = overturned")
+    ax.legend(fontsize=7); ax.grid(True, ls='--', lw=0.4, alpha=0.4, axis='y')
 
     fig.suptitle("Effective length scale  L_eff = ηHKv_c / dQ/ds",
                  fontsize=10, fontweight='bold')
@@ -263,73 +313,105 @@ def make_figure_Leff(records, out_dir):
 # ── Figure 2: prediction using L_eff_median ───────────────────────────────────
 
 def make_figure_prediction(records, out_dir):
-    """2-panel: K-based prediction (all same-sign) vs no-K prediction (ηHvc/α).
-    Tests whether K actually belongs in the scaling law."""
+    """3-panel: K-based (L_eff), no-K (α), and direct ηHvs·dK/ds prediction.
+    L_eff calibrated from normal (non-overturned) models only.
+    Overturned points shown as hollow circles."""
     models, unique, color_of = model_colors(records)
 
-    meas_pa = arr(records, 'meas_pa')
-    K_a     = arr(records, 'K')
-    H_a     = arr(records, 'H')
-    eta_a   = arr(records, 'eta')
-    vc_a    = arr(records, 'vc_si')
-    L_eff_a = arr(records, 'L_eff')
+    meas_pa  = arr(records, 'meas_pa')
+    K_a      = arr(records, 'K')
+    dKds_a   = arr(records, 'dKds')
+    H_a      = arr(records, 'H')
+    eta_a    = arr(records, 'eta')
+    vc_a     = arr(records, 'vc_si')
+    vs_a     = arr(records, 'vs_si')
+    L_eff_a  = arr(records, 'L_eff')
+    is_over  = arr(records, 'overturned').astype(bool)
+    c_pts    = np.array([color_of[m] for m in models])
 
-    # median L_eff (K>0, positive dQ/ds)
-    ok_Leff = np.isfinite(L_eff_a) & (L_eff_a > 0)
-    L_med   = np.nanmedian(L_eff_a[ok_Leff])
+    # calibrate L_eff and α from normal models only
+    ok_Leff      = np.isfinite(L_eff_a) & (L_eff_a > 0)
+    ok_Leff_norm = ok_Leff & ~is_over
+    L_med_norm   = np.nanmedian(L_eff_a[ok_Leff_norm])
+    L_med_all    = np.nanmedian(L_eff_a[ok_Leff])
 
-    # α = median(L_eff / K)  — slope of L_eff ∝ K fit (units m²)
     L_eff_km = L_eff_a / 1e3
     K_um     = K_a * 1e6
-    fin      = ok_Leff & np.isfinite(K_um) & (L_eff_km < 10000)
+    fin      = ok_Leff_norm & np.isfinite(K_um) & (L_eff_km < 10000)
     alpha    = np.sum(K_um[fin] * L_eff_km[fin]) / np.sum(K_um[fin] ** 2)
-    # alpha in units (km / (×10⁻⁶ rad/m)) = km * m / (10⁻⁶) = 10⁶ km·m = 10⁹ m²
-    # convert: α_m2 so that dQ/ds = η H vc / α_m2
-    # L_eff [m] = alpha_scaled * K [m⁻¹]  → alpha_scaled [m²]
-    alpha_m2 = (alpha * 1e3) / 1e-6    # km→m, ×10⁻⁶→m⁻¹
+    alpha_m2 = (alpha * 1e3) / 1e-6
 
-    pred_K_pa    = eta_a * H_a * K_a * vc_a / L_med    # with K
-    pred_noK_pa  = eta_a * H_a * vc_a / alpha_m2        # no K
+    pred_K_pa    = eta_a * H_a * K_a * vc_a / L_med_norm
+    pred_noK_pa  = eta_a * H_a * vc_a / alpha_m2
+    pred_dKds_pa = eta_a * H_a * vs_a * dKds_a
 
-    meas_mpa     = meas_pa    / MPa
-    pred_K_mpa   = pred_K_pa  / MPa
-    pred_noK_mpa = pred_noK_pa / MPa
+    meas_mpa      = meas_pa      / MPa
+    pred_K_mpa    = pred_K_pa    / MPa
+    pred_noK_mpa  = pred_noK_pa  / MPa
+    pred_dKds_mpa = pred_dKds_pa / MPa
 
-    ok_all_K   = (np.isfinite(meas_mpa) & np.isfinite(pred_K_mpa)
-                  & (np.sign(meas_pa) == np.sign(pred_K_mpa)))
-    ok_all_noK = (np.isfinite(meas_mpa) & np.isfinite(pred_noK_mpa)
-                  & (np.sign(meas_pa) == np.sign(pred_noK_mpa)))
+    ok_K    = np.isfinite(meas_mpa) & np.isfinite(pred_K_mpa)    & (np.sign(meas_pa) == np.sign(pred_K_pa))
+    ok_noK  = np.isfinite(meas_mpa) & np.isfinite(pred_noK_mpa)  & (np.sign(meas_pa) == np.sign(pred_noK_pa))
+    ok_dK   = np.isfinite(meas_mpa) & np.isfinite(pred_dKds_mpa) & (np.sign(meas_pa) == np.sign(pred_dKds_pa))
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
     panels = [
-        (axes[0], pred_K_mpa,   ok_all_K,
-         f"η H K v_c / L_eff  [MPa]\n(L_eff = {L_med/1e3:.0f} km)"),
-        (axes[1], pred_noK_mpa, ok_all_noK,
+        (axes[0], pred_K_mpa,    ok_K,
+         f"η H K v_c / L_eff  [MPa]\n(L_eff = {L_med_norm/1e3:.0f} km, normal only)"),
+        (axes[1], pred_noK_mpa,  ok_noK,
          f"η H v_c / α  [MPa]\n(α = {alpha_m2/1e12:.2f} ×10¹² m²,  no K)"),
+        (axes[2], pred_dKds_mpa, ok_dK,
+         "η H v_s · dK/ds  [MPa]\n(dominant term, Eq. 8)"),
     ]
 
-    handles = []
+    legend_handles = []
     for ax, pred, mask, xlabel in panels:
         for m in unique:
-            idx = np.array([i for i, r in enumerate(records) if r['model'] == m])
-            ok  = mask[idx]
-            h = ax.scatter(pred[idx][ok], meas_mpa[idx][ok],
-                           s=10, alpha=0.55, color=color_of[m],
-                           edgecolors='none', label=m, zorder=3)
-            if ax is axes[0] and h not in handles:
-                handles.append(h)
-        one_to_one(ax, pred[mask], meas_mpa[mask])
+            idx  = np.array([i for i, r in enumerate(records) if r['model'] == m])
+            ok_m = mask[idx]
+            col  = np.array([color_of[m]] * ok_m.sum())
+            ov   = is_over[idx][ok_m]
+            x    = pred[idx][ok_m]
+            y    = meas_mpa[idx][ok_m]
+            _scatter(ax, x, y, col, ov)
+            if ax is axes[0]:
+                # one proxy handle per model for legend
+                h = ax.scatter([], [], s=10, color=color_of[m], label=m)
+                legend_handles.append(h)
+
+        if ax is axes[2]:
+            m_lo = np.nanpercentile(meas_mpa[mask], 1)
+            m_hi = np.nanpercentile(meas_mpa[mask], 99)
+            span = m_hi - m_lo
+            ax.set_xlim(m_lo - 0.05*span, m_hi + 0.05*span)
+            ax.set_ylim(m_lo - 0.05*span, m_hi + 0.05*span)
+            ax.plot([m_lo, m_hi], [m_lo, m_hi], 'k--', lw=0.9, zorder=0)
+        else:
+            one_to_one(ax, pred[mask], meas_mpa[mask])
+
         ax.axhline(0, color='0.7', lw=0.5); ax.axvline(0, color='0.7', lw=0.5)
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Measured  dQ/ds  [MPa]")
         ax.grid(True, ls='--', lw=0.4, alpha=0.4)
-        label_box(ax, corr_str(pred[mask], meas_mpa[mask]))
 
-    fig.legend(handles, unique, title='Model', fontsize=6.5,
-               loc='lower center', ncol=min(len(unique), 5),
+        # stats for normal and all subsets
+        norm_mask = mask & ~is_over
+        all_mask  = mask
+        s_norm = corr_str(pred[norm_mask], meas_mpa[norm_mask], 'excl. overturned')
+        s_all  = corr_str(pred[all_mask],  meas_mpa[all_mask],  'all')
+        label_box(ax, s_norm + '\n' + s_all)
+
+    # hollow circle proxy for overturned
+    h_over = ax.scatter([], [], s=12, facecolors='none', edgecolors='0.3',
+                        linewidths=0.8, label='overturned')
+    fig.legend(legend_handles + [h_over],
+               [m for m in unique] + ['overturned'],
+               title='Model', fontsize=6.5,
+               loc='lower center', ncol=min(len(unique) + 1, 6),
                bbox_to_anchor=(0.5, -0.02))
-    fig.suptitle("Does K belong in the dQ/ds scaling?  (panel 3: no-K formula)",
+    fig.suptitle(f"dQ/ds predictions  (L_eff calibrated on normal slabs: "
+                 f"{L_med_norm/1e3:.0f} km;  all: {L_med_all/1e3:.0f} km)",
                  fontsize=10, fontweight='bold')
     fig.tight_layout(rect=[0, 0.10, 1, 1])
     _save(fig, out_dir, "fig2_Leff_prediction")
@@ -353,10 +435,13 @@ def main():
         print("No valid records — check paths and column count.")
         sys.exit(1)
 
-    L_vals = arr(records, 'L_eff')
-    ok     = np.isfinite(L_vals) & (L_vals > 0)
-    print(f"\n  L_eff  median = {np.nanmedian(L_vals[ok])/1e3:.0f} km"
-          f"  (N={ok.sum()}, from K>0 and dQ/ds>0 timesteps)")
+    is_over = arr(records, 'overturned').astype(bool)
+    for label, mask in [('all models', np.ones(len(records), bool)),
+                        ('excl. overturned', ~is_over)]:
+        L_vals = arr(records, 'L_eff')[mask]
+        ok = np.isfinite(L_vals) & (L_vals > 0)
+        print(f"  L_eff median = {np.nanmedian(L_vals[ok])/1e3:.0f} km"
+              f"  (N={ok.sum()})  [{label}]")
 
     print("\nMaking figures...")
     make_figure_Leff(records, out_dir)

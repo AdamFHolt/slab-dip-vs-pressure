@@ -137,6 +137,7 @@ def load_records(files):
                 K          = K,
                 dKds       = dKds,
                 H          = H,
+                KH         = K * H,        # dimensionless thin-sheet parameter
                 eta        = eta,
                 vc_si      = vc_si,
                 vs_si      = vs_si,
@@ -359,9 +360,12 @@ def make_figure_prediction(records, out_dir):
     pred_noK_mpa  = pred_noK_pa  / MPa
     pred_dKds_mpa = pred_dKds_pa / MPa
 
+    KH_a    = arr(records, 'KH')
     ok_K    = np.isfinite(meas_mpa) & np.isfinite(pred_K_mpa)    & (np.sign(meas_pa) == np.sign(pred_K_pa))
     ok_noK  = np.isfinite(meas_mpa) & np.isfinite(pred_noK_mpa)  & (np.sign(meas_pa) == np.sign(pred_noK_pa))
     ok_dK   = np.isfinite(meas_mpa) & np.isfinite(pred_dKds_mpa) & (np.sign(meas_pa) == np.sign(pred_dKds_pa))
+    ok_dK_thin = ok_dK & (KH_a < 0.1)    # strict thin-sheet filter
+    ok_dK_mod  = ok_dK & (KH_a < 0.2)    # moderate thin-sheet filter
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -404,12 +408,17 @@ def make_figure_prediction(records, out_dir):
         ax.set_ylabel("Measured  dQ/ds  [MPa]")
         ax.grid(True, ls='--', lw=0.4, alpha=0.4)
 
-        # stats for normal and all subsets
+        # stats for normal and all subsets; extra KH filters for dK/ds panel
         norm_mask = mask & ~is_over
         all_mask  = mask
         s_norm = corr_str(pred[norm_mask], meas_mpa[norm_mask], 'excl. overturned')
         s_all  = corr_str(pred[all_mask],  meas_mpa[all_mask],  'all')
-        label_box(ax, s_norm + '\n' + s_all)
+        if ax is axes[2]:
+            s_thin = corr_str(pred[ok_dK_thin], meas_mpa[ok_dK_thin], 'KH < 0.1')
+            s_mod  = corr_str(pred[ok_dK_mod],  meas_mpa[ok_dK_mod],  'KH < 0.2')
+            label_box(ax, s_all + '\n' + s_mod + '\n' + s_thin)
+        else:
+            label_box(ax, s_norm + '\n' + s_all)
 
     # hollow circle proxy for overturned
     h_over = ax.scatter([], [], s=12, facecolors='none', edgecolors='0.3',

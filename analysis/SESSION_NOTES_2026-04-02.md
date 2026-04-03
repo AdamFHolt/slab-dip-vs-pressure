@@ -83,18 +83,56 @@ so K does not cancel cleanly — it belongs in the formula.
 ## Script
 `plot_dqds_diagnostic.py` — self-contained, auto-loads `text_files/TESTC/*.txt`
 
+## Replacement manuscript text (Section 3.3, after Eq. 8)
+
+Replace "To obtain a first-order scaling, we further assume that vs and K vary over
+a common mantle length scale L..." through old Eq. 11 (and its justification) with:
+
+---
+
+Equation 8 contains two terms, involving the along-slab gradients of vs and K
+respectively, which vary on different and independently evolving length scales.
+Both are difficult to constrain reliably — model-derived dK/ds in particular is
+noisy due to the repeated numerical differentiation required to compute it, and
+direct evaluation of Eq. 8 yields large overpredictions of dQ/ds. We therefore
+take an empirical approach. Both terms in Eq. 8 scale as ηHKvs/L, where L
+represents the relevant along-slab length scale, giving:
+
+    dQ/ds ∝ η H K vs                                                      (9)
+
+Rather than estimating L analytically, we define the effective length scale
+implied directly by the data:
+
+    L_eff = η H K vc / dQ/ds                                              (10)
+
+where we substitute vc ≈ vs as before. If L_eff is approximately constant across
+our model suite, Eq. 9 can be written as a practical scaling law with a single
+calibrated parameter:
+
+    dQ/ds ≈ η H K vc / L_eff                                              (11)
+
+Excluding models with rollover slab geometry not observed on Earth, we find a
+median L_eff = 1624 km (N = 119; Fig. X), and Eq. 11 predicts measured dQ/ds
+with r = 0.87 (Fig. 6c). The scatter in L_eff reflects the fact that Eq. 11
+approximates the full two-term expression of Eq. 8 with a single empirical
+constant — the residuals encode real differences in the along-slab variation of
+vs and K between models that are not captured by η, H, K, and vc alone. The IQR
+of L_eff ([X–Y] km; compute from fig1 panel 1) directly quantifies the
+uncertainty on dQ/ds estimates when Eq. 11 is applied to Earth slabs.
+
+---
+
+**Do NOT:**
+- Say the thin-sheet assumption breaks down (it was already used to get Eq. 8)
+- Say "L_K ≈ H" causes the failure (likely a numerical artifact)
+- Say "H/L_eff ≈ 1/25 is consistent with expected suppression" (circular)
+
 ## Next Session Tasks
-1. **Update paper text** (Section 3.3, after Eq. 8):
-   - Keep Eqs. 6–8 unchanged
-   - Replace "To obtain a first-order scaling, we further assume vs and K vary over
-     a common mantle length scale L..." through old Eq. 11 with the revised text:
-       * Note Eq. 8 has two terms with two independent length scales (L_v, L_K)
-       * Say direct evaluation fails because dK/ds is unreliable (not thin-sheet violation)
-       * Motivate dQ/ds ∝ ηHKvs (Eq. 9) as the scaling form
-       * Define L_eff empirically (Eq. 10), show L_eff ≈ 1963 km ≈ constant (Fig. X)
-       * State Eq. 11: dQ/ds ≈ ηHKvc / L_eff, r=0.86
-   - Do NOT invoke thin-sheet breakdown or H/L_eff suppression argument (both wrong/circular)
-2. **Update Earth application figures**:
-   - Use `dQ/ds / DP_anal = H K v_c / (L_eff · Δρ g cos θ)` with L_eff = 1963 km
+1. **Fill in [X–Y] km IQR** for L_eff from fig1 panel 1 histogram (normal models only)
+2. **Update Eq. 11 coefficient** everywhere it appears in the paper (was 0.1ηKvc,
+   now ηHKvc/L_eff with L_eff = 1624 km excl. overturned, 1963 km all models)
+3. **Update Earth application figures**:
+   - Use `dQ/ds / DP_anal = H K vc / (L_eff · Δρ g cos θ)` with L_eff = 1624 km
    - Existing Earth-application script exists — find it and update coefficient
-   - Inputs needed per subduction zone: H, K, v_c, Δρ, θ
+   - Inputs per subduction zone: H, K, vc, Δρ, θ (already in the obs. scripts)
+4. **Update Fig. 6c** (currently shows 0.1ηKvc vs measured) to show ηHKvc/L_eff

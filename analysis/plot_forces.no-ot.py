@@ -193,7 +193,7 @@ fixed_aspect_ratio(1)
 
 # plot model DP misfit vs. x-axis variable
 
-ax=fig.add_subplot(gs[0,1])
+ax=fig.add_subplot(gs[0,2])
 
 plot_forcecomponent_dpmisfit(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
 plot_forcecomponent_dpmisfit(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
@@ -224,12 +224,14 @@ ax.set_xticks([0, 10, 20, 30, 40])
 ax.xaxis.set_minor_locator(plt.MultipleLocator(5))
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+x_values = np.linspace(-5, 40, 100)
+plt.plot(x_values, x_values, color='gray', linestyle='--', linewidth=1, zorder=-1)
 plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 fixed_aspect_ratio(1)
 
 # plot dQ/dS vs. x-axis variable
-ax=fig.add_subplot(gs[0,2])
+ax=fig.add_subplot(gs[0,1])
 
 plot_forcecomponent_dqds(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
 plot_forcecomponent_dqds(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)

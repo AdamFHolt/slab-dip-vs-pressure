@@ -12,9 +12,9 @@ import sys, os, subprocess
 from scipy.signal import savgol_filter
 from scipy.interpolate import splrep, splev
 from functions import get_misfit_mean_and_stdev, get_curvature_mean_and_stdev, get_misfit_mean_and_stdev_nondim
-from functions_plotting import plot_forcecomponent_dqds, plot_forcecomponent_dqds_vsK
+from functions_plotting import plot_forcecomponent_dqds_vsK
 from functions_plotting import plot_forcecomponent_dqds_vsVc, plot_forcecomponent_dqds_vsVisc
-from functions_plotting import plot_forcecomponent_dqds_overturned, plot_forcecomponent_dqds_vsK_overturned
+from functions_plotting import plot_forcecomponent_dqds_vsK_overturned
 from functions_plotting import plot_forcecomponent_dqds_vsVc_overturned, plot_forcecomponent_dqds_vsVisc_overturned
 
 
@@ -138,7 +138,7 @@ m1000_bothfree[:,vs_ind] =  coeff * m1000_bothfree[:,K_ind]  * 1000 * mant_visc 
 m1000_fixedSP[:,vs_ind] 	=  coeff * m1000_fixedSP[:,K_ind]   * 1000 * mant_visc * m1000_fixedSP[:,vc_ind]  * cmyr_to_ms * 1e-6
 m1000_fixedOP[:,vs_ind] 	=  coeff * m1000_fixedOP[:,K_ind]   * 1000 *mant_visc  *  m1000_fixedOP[:,vc_ind] * cmyr_to_ms * 1e-6
 
-gs=GridSpec(1,4)
+gs=GridSpec(1,3)
 
 #### SCATTER PLOTS ####
 def fixed_aspect_ratio(ratio):
@@ -260,44 +260,6 @@ plt.xlabel(r'$\eta$    [Pas]')
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
 plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
-fixed_aspect_ratio(1)
-
-
-# plot dQ/dS vs. x-axis variable
-ax=fig.add_subplot(gs[0,3])
-x_ind=vs_ind
-plot_forcecomponent_dqds(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
-plot_forcecomponent_dqds(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
-plot_forcecomponent_dqds(tmin,m50_fixedOP,curve_thresh,x_ind,'tan','^',misfit_color)
-
-plot_forcecomponent_dqds(tmin,m250_fixedSP,curve_thresh,x_ind,'peru','v',misfit_color)
-plot_forcecomponent_dqds(tmin,m250_bothfree,curve_thresh,x_ind,'peru','o',misfit_color)
-plot_forcecomponent_dqds(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_color)
-
-plot_forcecomponent_dqds(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
-plot_forcecomponent_dqds(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
-plot_forcecomponent_dqds(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
-
-plot_forcecomponent_dqds(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
-plot_forcecomponent_dqds(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
-plot_forcecomponent_dqds_overturned(tmin,m500_fixedOP,x_ind,'maroon','^')
-
-plot_forcecomponent_dqds(tmin,m1000_fixedSP,curve_thresh,x_ind,'black','v',misfit_color)
-plot_forcecomponent_dqds_overturned(tmin,m1000_bothfree,x_ind,'black','o')
-plot_forcecomponent_dqds_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
-
-
-# axis stuff
-plt.ylim(-10,  17.5);
-plt.xlim(-5, 40);
-plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
-plt.xlabel(r'($\eta H K V_{C}$)/$L_{eff}$   [MPa]')
-ax.set_xticks([0, 10, 20, 30, 40])
-ax.xaxis.set_minor_locator(plt.MultipleLocator(5))
-ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
-plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
-plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
-plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 fixed_aspect_ratio(1)
 
 

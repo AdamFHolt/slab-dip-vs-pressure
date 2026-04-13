@@ -98,12 +98,26 @@ Three panels, now on one row:
   → implements ηHKvc/L_eff with H=100 km, L_eff=1624 km
 - Layout changed from GridSpec(2,3) to GridSpec(1,3) — all panels on one row
 - x-axis tightened to −5→40 MPa on panels 2 and 3 (was −15→65)
+- Panels reordered: full stress misfit vs K | dQ/ds vs scaling | DP misfit vs scaling
+  (narrative: balance closes → calibrate scaling → apply to DP)
+- 1:1 line added to DP misfit panel
 - Axis labels updated to `(ηHKV_C)/L_eff [MPa]`
 
 ### plot_forces.supp-shear.no-ot.py
 - Same `coeff` change: `100./1624.0`
-- Layout changed from GridSpec(2,3) to GridSpec(1,4)
-- Last panel (dQ/ds vs combined scaling): xlim −5→40, label updated
+- Layout changed from GridSpec(2,3) to GridSpec(1,3) — dropped repeated combined-scaling
+  panel (already in main figure); now 3 panels: dQ/ds vs K, vs Vc, vs η
+- Removed unused imports for `plot_forcecomponent_dqds` and `plot_forcecomponent_dqds_overturned`
+
+### plot_DPvsDP.color-points.no-ot.py (bottom row)
+- Color variable updated from `0.1·ηKvc` to `(100/1624)·ηKvc` = `ηHKvc/L_eff`
+  — both inline scatter and via `plot_BvsDP_scalingcolored` / `_overturned`
+- colorbar label updated to `(ηHKV_C)/L_eff [MPa]`
+- color_max2 kept at 20 MPa
+
+### functions_plotting.py
+- `plot_BvsDP_scalingcolored`: `0.1 *` → `(100./1624.) *`
+- `plot_BvsDP_scalingcolored_overturned`: same
 
 ---
 

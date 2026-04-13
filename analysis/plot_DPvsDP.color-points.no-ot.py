@@ -342,7 +342,7 @@ ax=fig.add_subplot(gs[1,0])
 # 50
 cmyr_to_ms = 0.01/(365.25*24*3600)
 for i in range(tmin,len(weak1_bothfree)):
-	im2 = plt.scatter(weak1_bothfree[i,4]/1.e6,weak1_bothfree[i,3]/1.e6,s=10,c=weak1_bothfree[i,11]*50*mant_visc*weak1_bothfree[i,19]*cmyr_to_ms*1e-6,cmap=color_map2,norm=norm2,edgecolor='black',linewidth=0.1,zorder=3,marker='o')
+	im2 = plt.scatter(weak1_bothfree[i,4]/1.e6,weak1_bothfree[i,3]/1.e6,s=10,c=(100./1624.)*weak1_bothfree[i,11]*50*mant_visc*weak1_bothfree[i,19]*cmyr_to_ms*1e-6,cmap=color_map2,norm=norm2,edgecolor='black',linewidth=0.1,zorder=3,marker='o')
 plot_BvsDP_scalingcolored(tmin,weak1_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=50)
 plot_BvsDP_scalingcolored(tmin,weak1_fixedOP,'black','^',color_map2,norm2,mant_visc,zorder=3,viscosity=50)
 # 250
@@ -386,7 +386,7 @@ cbar = plt.colorbar(im2, cax = fig.add_axes([0.18, 0.272, 0.008, 0.08]), orienta
 cbar.ax.tick_params(axis='y',labelsize=4.5,pad=1)
 cbar.ax.yaxis.set_ticks_position('left')
 cbar.ax.yaxis.set_label_position('left')
-cbar.set_label(r'($\eta K V_{C}$)/10  [MPa]', rotation=0, labelpad=-10, y=1.1)
+cbar.set_label(r'($\eta H K V_{C}$)/$L_{eff}$  [MPa]', rotation=0, labelpad=-10, y=1.1)
 cbar.ax.tick_params(axis='y', labelsize=5.5, pad=1)
 
 

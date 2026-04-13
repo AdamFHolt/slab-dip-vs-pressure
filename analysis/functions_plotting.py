@@ -79,7 +79,7 @@ def plot_BvsDP_scalingcolored(tmin,model,edge_color,marker,color_map,norm,mant_v
 
 	for i in range(tmin,len(model)):
 
-		plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,s=10,c=0.1*model[i,11]*viscosity*mant_visc*model[i,19]*cmyr_to_ms*1e-6,cmap=color_map,norm=norm,edgecolor=edge_color,linewidth=0.1,zorder=zorder,marker=marker)
+		plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,s=10,c=(100./1624.)*model[i,11]*viscosity*mant_visc*model[i,19]*cmyr_to_ms*1e-6,cmap=color_map,norm=norm,edgecolor=edge_color,linewidth=0.1,zorder=zorder,marker=marker)
 
 def plot_BvsDP_scalingcolored_overturned(
     tmin, model, marker, color_map, norm, mant_visc, zorder, viscosity
@@ -92,7 +92,7 @@ def plot_BvsDP_scalingcolored_overturned(
 
         # value you want to color by (same expression you had in c=...)
         val = (
-            0.1 * model[i, 11] * viscosity * mant_visc * model[i, 19] * cmyr_to_ms * 1e-6
+            (100./1624.) * model[i, 11] * viscosity * mant_visc * model[i, 19] * cmyr_to_ms * 1e-6
         )
 
         edge_col = color_map(norm(val))  # map -> RGBA using norm + cmap

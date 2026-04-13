@@ -35,7 +35,7 @@ analysis_depth  = float(sys.argv[1])
 analysis_depth_dz = float(sys.argv[2])     # m (depth for DP extraction and central point of shear stress derivative)
 ds = float(sys.argv[3])                 # m (distance from slab to pull out DP)
 dz = float(sys.argv[4])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
-coeff = 100./1000.0
+coeff = 100./1624.0
 
 
 tactual_min = 11 # first time step to use
@@ -133,7 +133,7 @@ m1000_bothfree[:,vc_ind] =  coeff * m1000_bothfree[:,K_ind]  * 1000 * mant_visc 
 m1000_fixedSP[:,vc_ind] 	=  coeff * m1000_fixedSP[:,K_ind]   * 1000 * mant_visc * m1000_fixedSP[:,vc_ind]  * cmyr_to_ms * 1e-6
 m1000_fixedOP[:,vc_ind] 	=  coeff * m1000_fixedOP[:,K_ind]   * 1000 *mant_visc  *  m1000_fixedOP[:,vc_ind] * cmyr_to_ms * 1e-6
 
-gs=GridSpec(2,3) 
+gs=GridSpec(1,3)
 
 #### SCATTER PLOTS ####
 def fixed_aspect_ratio(ratio):
@@ -216,12 +216,12 @@ plot_forcecomponent_dpmisfit_overturned(tmin,m1000_bothfree,x_ind,'black','o')
 plot_forcecomponent_dpmisfit_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 
 # axis stuff
-plt.ylim(-10,  17.5); 
-plt.xlim(-15, 65);
+plt.ylim(-10,  17.5);
+plt.xlim(-5, 40);
 plt.ylabel(r'$-(\Delta P - B_{slab}$)   [MPa]')
-plt.xlabel(r'($\eta K V_{C}$)/10   [MPa]')
-ax.set_xticks([-10, 0, 10, 20, 30, 40, 50, 60])
-ax.xaxis.set_minor_locator(plt.MultipleLocator(100))
+plt.xlabel(r'($\eta H K V_{C}$)/$L_{eff}$   [MPa]')
+ax.set_xticks([0, 10, 20, 30, 40])
+ax.xaxis.set_minor_locator(plt.MultipleLocator(5))
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
 plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
@@ -229,7 +229,7 @@ plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 fixed_aspect_ratio(1)
 
 # plot dQ/dS vs. x-axis variable
-ax=fig.add_subplot(gs[1,0])
+ax=fig.add_subplot(gs[0,2])
 
 plot_forcecomponent_dqds(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
 plot_forcecomponent_dqds(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
@@ -253,21 +253,17 @@ plot_forcecomponent_dqds_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 
 # axis stuff
 # REGULAR
-plt.ylim(-10,  17.5); 
-plt.xlim(-15, 65);
-ax.set_xticks([-10, 0, 10, 20, 30, 40, 50, 60])
-
-# # ZOOMED
-# plt.ylim(-5,  15); 
-# plt.xlim(-10, 25);
+plt.ylim(-10,  17.5);
+plt.xlim(-5, 40);
+ax.set_xticks([0, 10, 20, 30, 40])
 
 plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
-plt.xlabel(r'($\eta K V_{C}$)/10   [MPa]')
-ax.xaxis.set_minor_locator(plt.MultipleLocator(100))
+plt.xlabel(r'($\eta H K V_{C}$)/$L_{eff}$   [MPa]')
+ax.xaxis.set_minor_locator(plt.MultipleLocator(5))
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
 # Add a 1:1 line in the background
-x_values = np.linspace(-15, 65, 100)
+x_values = np.linspace(-5, 40, 100)
 plt.plot(x_values, x_values, color='gray', linestyle='--', linewidth=1, zorder=-1)
 plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)

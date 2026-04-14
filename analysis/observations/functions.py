@@ -202,10 +202,56 @@ def compute_DP_hs(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick):
     T_erf= Tm - Tm * scipy.special.erfc(z/(2*np.sqrt(k*age*1e6*365*24*60*60)))
 
     B_erf= (Tm - T_erf) * rho0 * alpha # rho - rho0, kg/m3
-    B_erf_int=scipy.integrate.simps(y=B_erf, x=z, even='avg') + (crust_thick * (crust_density-rho0)) # kg/m2
+    B_erf_int=scipy.integrate.simpson(y=B_erf, x=z) + (crust_thick * (crust_density-rho0)) # kg/m2
     DP = np.cos(np.deg2rad(dip))*B_erf_int*g*1e-6 # MPa
 
     return DP
+
+
+def compute_H_eff(age, Tm, k, plate_thick, frac=0.9):
+    """
+    Return the depth (m) at which the plate cooling temperature reaches frac*Tm.
+
+    Uses the same plate cooling series as compute_DP_pl.  T increases from 0
+    at the surface (z=0) to Tm at z=plate_thick; H_eff is the depth at which
+    the plate has warmed to frac*Tm (i.e., where thermal thickness ends).
+
+    Parameters
+    ----------
+    age        : float, plate age in Ma
+    Tm         : float, mantle temperature in K (or degC — only the ratio matters)
+    k          : float, thermal diffusivity in m^2/s
+    plate_thick: float, asymptotic plate thickness in m
+    frac       : float, fraction of Tm that defines the base of the plate (default 0.9)
+
+    Returns
+    -------
+    H_eff : float, depth in m where T_plate = frac*Tm; returns plate_thick if
+            the temperature never reaches frac*Tm within the plate.
+    """
+    age_s = age * 1e6 * 365 * 24 * 60 * 60  # Ma -> s
+    z = np.arange(0, plate_thick / 1e3, 0.1) * 1e3  # m
+
+    T_term1 = Tm * (z / plate_thick)
+    T_term2 = np.zeros_like(z)
+    for n in range(1, 10):
+        T_term2 += ((2 * Tm) / (n * np.pi)) * np.sin(n * np.pi * z / plate_thick) * \
+                   np.exp((-1. * n**2 * np.pi**2 * k * age_s) / plate_thick**2)
+    T_plate = T_term1 + T_term2
+
+    T_target = frac * Tm
+    # Find first depth where T_plate crosses T_target
+    idx = np.where(T_plate >= T_target)[0]
+    if len(idx) == 0:
+        return plate_thick
+    # Linear interpolation between the bracketing points
+    i = idx[0]
+    if i == 0:
+        return z[0]
+    z0, z1 = z[i - 1], z[i]
+    T0, T1 = T_plate[i - 1], T_plate[i]
+    H_eff = z0 + (T_target - T0) / (T1 - T0) * (z1 - z0)
+    return H_eff
 
 
 def compute_DP_pl(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick, plate_thick):
@@ -224,7 +270,7 @@ def compute_DP_pl(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick, plat
 
     B_plate= (Tm - T_plate) * rho0 * alpha # rho - rho0, kg/m3
 
-    B_plate_int=scipy.integrate.simps(y=B_plate, x=z, even='avg') + (crust_thick * (crust_density-rho0)) # kg/m2
+    B_plate_int=scipy.integrate.simpson(y=B_plate, x=z) + (crust_thick * (crust_density-rho0)) # kg/m2
     DP = np.cos(np.deg2rad(dip))*B_plate_int*g*1e-6 # MPa
 
 

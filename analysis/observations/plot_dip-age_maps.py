@@ -12,8 +12,8 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl
-from functions import load_data_file, stats_data_file, stats_DP
+from functions import make_strictly_ascending
+from functions import load_data_file
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
 myriad_pro = fm.FontProperties(fname=font_path)
@@ -32,18 +32,6 @@ mpl.rcParams['ytick.major.size'] = 2.5
 mpl.rcParams['xtick.minor.size'] = 1.25
 mpl.rcParams['ytick.minor.size'] = 1.25
 
-# constants
-slab_visc = float(4e22)           # Pa s [ref=5e22]
-alpha = float(3.28e-5)               # 1/K  [ref=3e-5]
-Tm = float(1333)                  # degC [ref=1300]
-diffusivity = float(8.044e-7)         # m^2/s [ref=1e-6]
-plate_thick = float(88e3)         # m [ref=88e3]
-crust_thick = float(7e3)         # m [ref=7e3]
-cooling_model = 'plate-cooling'
-
-# conversion factors
-cmyr_to_ms = 1e-2 / 3.154e7
-Ma_to_s = 1e6 * 3.154e7
 
 
 plotname=''.join(['plots/maps_dip-age.png'])
@@ -140,20 +128,9 @@ for i in range(len(segment_data)):
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot K*eta*vc -------------------
-        stress_scaling = K * (vc * cmyr_to_ms) * (slab_visc) * 1e-6   # MPa
         x1, y1 = m1(lon_center, lat_center)
-        if np.abs(K*1000.) > 0.0015:
-            edgecolor = 'gray'
-            edgethick = 0.3
-            zord = 10
-        else:
-            edgecolor = 'black'
-            edgethick = 0.5
-            zord = 11
-
-        ck = ax1.scatter(x1, y1, s=23, c=dip_shall, cmap='BrBG',      norm=norm1, edgecolors='black', linewidths=0.4, zorder=zord)
-        cv = ax2.scatter(x1, y1, s=23, c=age,       cmap='inferno_r', norm=norm2, edgecolors='black', linewidths=0.4, zorder=zord)
+        ck = ax1.scatter(x1, y1, s=23, c=dip_shall, cmap='BrBG',      norm=norm1, edgecolors='black', linewidths=0.4, zorder=10)
+        cv = ax2.scatter(x1, y1, s=23, c=age,       cmap='inferno_r', norm=norm2, edgecolors='black', linewidths=0.4, zorder=10)
                 
         # store DP and stress scaling
         DP_array.append((0, np.abs(K)))

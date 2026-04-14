@@ -31,16 +31,14 @@ mpl.rcParams['xtick.major.size'] = 2.5
 mpl.rcParams['ytick.major.size'] = 2.5
 mpl.rcParams['xtick.minor.size'] = 1.25
 mpl.rcParams['ytick.minor.size'] = 1.25
-scaling_thresh = 5  # MPa, threshold for scaling parameter
-
 
 # constants
-slab_visc = float(sys.argv[1])    # Pa s [ref=4e22]
-alpha = float(sys.argv[2])        # 1/K  [ref=3.28e-5]
-Tm = float(sys.argv[3])           # degC [ref=1333]
-diffusivity = float(sys.argv[4])  # m^2/s [ref=8.044e-7]
-plate_thick = float(sys.argv[5])  # m [ref=88e3]
-crust_thick = float(7e3)          # m [ref=7e3]
+slab_visc = float(4e22)           # Pa s [ref=5e22]
+alpha = float(3.28e-5)               # 1/K  [ref=3e-5]
+Tm = float(1333)                  # degC [ref=1300]
+diffusivity = float(8.044e-7)         # m^2/s [ref=1e-6]
+plate_thick = float(88e3)         # m [ref=88e3]
+crust_thick = float(7e3)         # m [ref=7e3]
 cooling_model = 'plate-cooling'
 
 # conversion factors
@@ -48,14 +46,14 @@ cmyr_to_ms = 1e-2 / 3.154e7
 Ma_to_s = 1e6 * 3.154e7
 
 
-plotname=''.join(['plots/just-maps.slab',str(slab_visc),'.alpha',str(alpha),'.T',str(Tm),'.k',str(diffusivity),'.platethick',str(plate_thick),'.',cooling_model,'.png'])
-plotname_pdf=''.join(['plots/just-maps.slab',str(slab_visc),'.alpha',str(alpha),'.T',str(Tm),'.k',str(diffusivity),'.platethick',str(plate_thick),'.',cooling_model,'.pdf'])
+plotname=''.join(['plots/maps_H-curvature-vc.png'])
+plotname_pdf=''.join(['plots/maps_H-curvature-vc.pdf'])
 
 # ------------------------------------------------
 # --- Set up the map ---
 # ------------------------------------------------
-fig = plt.figure(figsize=(8,6))
-G = gridspec.GridSpec(2,3)
+fig = plt.figure(figsize=(8,9))
+G = gridspec.GridSpec(3,3)
 
 # First subplot
 ax1 = plt.subplot(G[0, 0:2])
@@ -72,6 +70,14 @@ m2 = Basemap(projection='robin', lon_0=-180, resolution='l',
 m2.drawcoastlines(linewidth=0)
 m2.drawmapboundary(fill_color='white')
 m2.fillcontinents(color='silver', lake_color='silver')
+
+# Third subplot
+ax3 = plt.subplot(G[2, 0:2])
+m3 = Basemap(projection='robin', lon_0=-180, resolution='l',
+            llcrnrlat=-80, urcrnrlat=80, ax=ax3)
+m3.drawcoastlines(linewidth=0)
+m3.drawmapboundary(fill_color='white')
+m3.fillcontinents(color='silver', lake_color='silver')
 
 #------------------------------------------------
 # ------ plot slab contours ---------------------
@@ -103,6 +109,10 @@ for grd_file in slab_files:
     x2d2, y2d2 = m2(lon2d, lat2d)
     ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
 
+    x2d3, y2d3 = m3(lon2d, lat2d)
+    ax3.contour(x2d3, y2d3, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+
+
 # ------------------------------------------------
 # -------- Read in the segment data --------------
 # ------------------------------------------------
@@ -114,13 +124,15 @@ segment_data = np.array(data, dtype=float)
 # ------------------------------------------------
 # ---- compute and plot DP and K vc eta ----------
 # ------------------------------------------------
-DPmin, DPmax = 10, 60
-vminK, vmaxK = 0, 15
-norm1 = mcolors.Normalize(vmin=DPmin, vmax=DPmax)
+vminVc, vmaxVc = 0, 10
+norm1 = mcolors.Normalize(vmin=vminVc, vmax=vmaxVc)
+vminK, vmaxK = 0, 0.004
 norm2 = mcolors.Normalize(vmin=vminK, vmax=vmaxK)
+vminH, vmaxH = 40, 90   # km
+norm3 = mcolors.Normalize(vmin=vminH, vmax=vmaxH)
 DP_array = []
-min_dp=1e9
-max_dp=0
+n_lowK = 0
+n_total = 0
 for i in range(len(segment_data)):
 
     # load everything in
@@ -139,45 +151,38 @@ for i in range(len(segment_data)):
         K = deep_K/1000.     
 
     x1, y1 = m1(lon_center, lat_center)
-    x2, y2 = m2(lon_center, lat_center)
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot ηHKvc/L_eff -------------------
-        H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
-        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.624e6 * 1e-6  # MPa
-        x2, y2 = m2(lon_center, lat_center)
-        if np.abs(stress_scaling) > scaling_thresh:
+        x1, y1 = m1(lon_center, lat_center)
+        if np.abs(K*1000.) > 0.002:
             edgecolor = 'gray'
-            edgethick = 0
+            edgethick = 0.3
             zord = 10
+            n_total += 1
         else:
             edgecolor = 'black'
-            edgethick = 0.35
+            edgethick = 0.5
             zord = 11
-        ck = ax2.scatter(x2, y2, s=23, c=np.abs(stress_scaling), cmap='BrBG', norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
+            n_lowK += 1
+            n_total += 1
 
-        # compute/plot DP ------------------------
-        if not np.isnan(dip_deep):
-            DP = compute_DP_pl(age, dip_deep, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
-        else:
-            DP = compute_DP_pl(age, dip_shall, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
+        ck = ax1.scatter(x1, y1, s=23, c=np.abs(K*1000.), cmap='BrBG', norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
+        cv = ax2.scatter(x1, y1, s=23, c=vc, cmap='inferno_r', norm=norm1, edgecolors='black', linewidths=0.4, zorder=zord)
+        H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick) / 1e3  # km
+        ch = ax3.scatter(x1, y1, s=23, c=H_eff, cmap='plasma_r', norm=norm3, edgecolors='black', linewidths=0.4, zorder=zord)
                 
-        if DP < min_dp:
-            min_dp=DP
-        if DP > max_dp:
-            max_dp=DP
-        cp = ax1.scatter(x1, y1, s=23, c=DP, cmap='plasma_r', norm=norm1, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
-
         # store DP and stress scaling
-        DP_array.append((DP, np.abs(stress_scaling)))
+        DP_array.append((0, np.abs(K)))
 
+print('Percentage of segments with K < 0.002: ', n_lowK/n_total*100)
 
 DP_array = np.array(DP_array)
 
-cp_bar = plt.colorbar(cp, ax=ax1, label=r'$\Delta P$   [MPa]', extend='max', shrink=0.5, pad=0.05)
-cp_bar.set_ticks([10, 20, 30, 40, 50, 60])
-ck_bar = plt.colorbar(ck, ax=ax2, label=r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  [MPa]', extend='max', shrink=0.5, pad=0.05)
+ck_bar = plt.colorbar(ck, ax=ax1, label=r'$K$  [1/km]', shrink=0.5, pad=0.05)
+ck_bar.set_ticks([0, 0.002, 0.004])
+cv_bar = plt.colorbar(cv, ax=ax2, label=r'$v_c$  [cm/yr]', shrink=0.5, pad=0.05)
+ch_bar = plt.colorbar(ch, ax=ax3, label=r'$H_\mathrm{eff}$  [km]', shrink=0.5, pad=0.05)
 
 # ------------------------------------------------
 # --- Plot plate boundaries ---
@@ -208,9 +213,15 @@ for seg in boundaries:
         m1.plot(*m1(lons2, lats2), color=color, linewidth=lw)
         m2.plot(*m2(lons1, lats1), color=color, linewidth=lw)
         m2.plot(*m2(lons2, lats2), color=color, linewidth=lw)
+        m3.plot(*m3(lons1, lats1), color=color, linewidth=lw)
+        m3.plot(*m3(lons2, lats2), color=color, linewidth=lw)
     else:
         m1.plot(x, y, color=color, linewidth=lw)
         m2.plot(x, y, color=color, linewidth=lw)
+        m3.plot(x, y, color=color, linewidth=lw)
+
+# ------------------------------------------------
+
 
 plt.tight_layout()
 plt.savefig(plotname, bbox_inches='tight', format='png', dpi=700)

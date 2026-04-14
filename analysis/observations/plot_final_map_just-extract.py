@@ -12,7 +12,7 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl
+from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff
 from functions import load_data_file, stats_data_file, stats_DP
 
 
@@ -73,8 +73,9 @@ for i in range(len(segment_data)):
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot K*eta*vc -------------------
-        stress_scaling = (K * (vc * cmyr_to_ms) * (slab_visc) * 1e-6)/10   # MPa
+        # compute/plot ηHKvc/L_eff -------------------
+        H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
+        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.624e6 * 1e-6  # MPa
 
         # compute/plot DP ------------------------
         if not np.isnan(dip_deep):

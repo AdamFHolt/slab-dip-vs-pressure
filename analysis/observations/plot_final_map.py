@@ -12,7 +12,7 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl
+from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff
 from functions import load_data_file, stats_data_file, stats_DP
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
@@ -31,16 +31,16 @@ mpl.rcParams['xtick.major.size'] = 2.5
 mpl.rcParams['ytick.major.size'] = 2.5
 mpl.rcParams['xtick.minor.size'] = 1.25
 mpl.rcParams['ytick.minor.size'] = 1.25
-scaling_thresh = 10  # MPa, threshold for scaling parameter
+scaling_thresh = 5  # MPa, threshold for scaling parameter
 
 
 # constants
-slab_visc = float(4e22)           # Pa s [ref=5e22]
-alpha = float(3.28e-5)               # 1/K  [ref=3e-5]
-Tm = float(1333)                  # degC [ref=1300]
-diffusivity = float(8.044e-7)         # m^2/s [ref=1e-6]
-plate_thick = float(88e3)         # m [ref=88e3]
-crust_thick = float(7e3)         # m [ref=7e3]
+slab_visc = float(sys.argv[1])    # Pa s [ref=4e22]
+alpha = float(sys.argv[2])        # 1/K  [ref=3.28e-5]
+Tm = float(sys.argv[3])           # degC [ref=1333]
+diffusivity = float(sys.argv[4])  # m^2/s [ref=8.044e-7]
+plate_thick = float(sys.argv[5])  # m [ref=88e3]
+crust_thick = float(7e3)          # m [ref=7e3]
 cooling_model = 'plate-cooling'
 
 # conversion factors
@@ -115,7 +115,7 @@ segment_data = np.array(data, dtype=float)
 # ---- compute and plot DP and K vc eta ----------
 # ------------------------------------------------
 DPmin, DPmax = 10, 60
-vminK, vmaxK = 0, 20
+vminK, vmaxK = 0, 15
 norm1 = mcolors.Normalize(vmin=DPmin, vmax=DPmax)
 norm2 = mcolors.Normalize(vmin=vminK, vmax=vmaxK)
 DP_array = []
@@ -143,8 +143,9 @@ for i in range(len(segment_data)):
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot K*eta*vc -------------------
-        stress_scaling = (K * (vc * cmyr_to_ms) * (slab_visc) * 1e-6)/10.   # MPa
+        # compute/plot ηHKvc/L_eff -------------------
+        H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
+        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.624e6 * 1e-6  # MPa
         x2, y2 = m2(lon_center, lat_center)
         if np.abs(stress_scaling) > scaling_thresh:
             edgecolor = 'gray'
@@ -178,7 +179,7 @@ DP_array = np.array(DP_array)
 
 cp_bar = plt.colorbar(cp, ax=ax1, label=r'$\Delta P$   [MPa]', extend='max', shrink=0.5, pad=0.05)
 cp_bar.set_ticks([10, 20, 30, 40, 50, 60])
-ck_bar = plt.colorbar(ck, ax=ax2, label=r'($\eta K V_{C}$)/10  [MPa]', extend='max', shrink=0.5, pad=0.05)
+ck_bar = plt.colorbar(ck, ax=ax2, label=r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  [MPa]', extend='max', shrink=0.5, pad=0.05)
 
 # ------------------------------------------------
 # --- Plot plate boundaries ---
@@ -332,7 +333,7 @@ side_tick_labels = ['0', '20 %', '40 %', '60 %', '80 %', '100 %']
 ax_top.set_yticks(side_ticks)
 ax_top.set_yticklabels(side_tick_labels)
 
-ax4.set_ylabel(r'($\eta K V_{C}$)/10  <  10 MPa')
+ax4.set_ylabel(r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  <  10 MPa')
 ax4.set_xlabel(r'$\eta$  [Pa s]' )
 ax_top.set_xlabel(r'$\eta$ / $\eta_{mantle}$')
 ax4.set_xlim(20, 25)

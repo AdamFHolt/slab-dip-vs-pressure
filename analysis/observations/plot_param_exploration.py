@@ -44,7 +44,6 @@ cooling_model = 'plate-cooling'
 # conversion factors
 cmyr_to_ms = 1e-2 / 3.154e7
 Ma_to_s = 1e6 * 3.154e7
-10
 
 plotname=''.join(['plots/DP-param-exploration.png'])
 plotname_pdf=''.join(['plots/DP-param-exploration.pdf'])
@@ -69,7 +68,7 @@ DPmean_thresh_grid = np.zeros((len(plate_thick_vals), len(T_vals)))
 for i, plate_thick_val in enumerate(plate_thick_vals):
     for j, T_val in enumerate(T_vals):
         data = load_data_file(slab_visc, alpha, float(T_val), diffusivity, float(plate_thick_val), crust_thick, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=10)
+        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=5)
         DPmean_thresh_grid[i, j] = DPmean_thresh
 
 # orginal exploration (crust thick = 0 km)
@@ -78,7 +77,7 @@ DPmean_thresh_grid_nocrust = np.zeros((len(plate_thick_vals), len(T_vals)))
 for i, plate_thick_val in enumerate(plate_thick_vals):
     for j, T_val in enumerate(T_vals):
         data = load_data_file(slab_visc, alpha, float(T_val), diffusivity, float(plate_thick_val), 0.0, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=10)
+        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=5)
         DPmean_thresh_grid_nocrust[i, j] = DPmean_thresh
 
 plate_thick_vals_km = plate_thick_vals / 1e3
@@ -122,7 +121,7 @@ for i, k_val in enumerate(k_vals):
         alpha_val = round(alpha_val, 8)
         k_val = round(k_val, 9)
         data = load_data_file(slab_visc, alpha_val, Tm, k_val, plate_thick, crust_thick, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data, thresh=10)
+        DPmean_thresh, DPmean_tot = stats_DP(data, thresh=5)
         DPmean_thresh_grid2[i, j] = DPmean_thresh
 
 

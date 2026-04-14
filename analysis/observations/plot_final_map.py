@@ -333,7 +333,7 @@ side_tick_labels = ['0', '20 %', '40 %', '60 %', '80 %', '100 %']
 ax_top.set_yticks(side_ticks)
 ax_top.set_yticklabels(side_tick_labels)
 
-ax4.set_ylabel(r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  <  10 MPa')
+ax4.set_ylabel(r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  <  5 MPa')
 ax4.set_xlabel(r'$\eta$  [Pa s]' )
 ax_top.set_xlabel(r'$\eta$ / $\eta_{mantle}$')
 ax4.set_xlim(20, 25)

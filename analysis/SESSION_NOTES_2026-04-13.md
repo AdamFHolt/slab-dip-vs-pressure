@@ -121,28 +121,88 @@ Three panels, now on one row:
 
 ---
 
+## L_eff calibration: sign filter justification (2026-04-17)
+
+The L_eff computation retains only timesteps where measured dQ/ds > 0 (`meas_pa > 0`).
+
+**Not** justified by the derivation — the scaling `dQ/ds = ηHKvc / L_eff` was derived
+purely from the velocity→strain rate→stress chain, independent of buoyancy sign.
+
+**Actually justified empirically:** the scaling assumes a coherent relationship between
+curvature, slab-parallel velocity, and shear stress gradient. Timesteps where dQ/ds < 0
+tend to be geometrically anomalous ones — near inflection points in the slab, early
+transient evolution — where that coherent relationship breaks down regardless of sign
+convention. The sign filter is a practical proxy for excluding those cases.
+
+Concrete example: η'=250 models develop a kink (inflection point) in the mid-upper
+mantle. Near the inflection, dQ/ds flips sign while K stays small, producing physically
+meaningless L_eff values (K→0 inflates L_eff artificially). With the sign filter,
+those timesteps are excluded and the 250 models behave normally in the calibration.
+
+A cleaner criterion would be geometric (e.g. exclude timesteps where K < threshold or
+dK/ds changes sign at the analysis depth), but the sign filter is a practical
+stand-in that achieves the same effect.
+
+**For the paper:** frame as "we retain timesteps where the shear force gradient opposes
+the buoyancy-driven motion, i.e. where the scaling relationship is physically active."
+Avoid framing it as a sign convention imposed by the derivation.
+
+### Updated L_eff calibration values (2026-04-17)
+After adding `new_FixedOP_375plates` to the excluded (overturned) set:
+- **All-models median: 1963 km** (N=183) ← used for coeff in all plot scripts
+- Normal-only median: 1497 km (N=95, excl. overturned rollover models)
+- Previously (before this session): all-models median = 1963 km, normal = 1624 km (N=119)
+  The shift in normal median reflects the new exclusion of new_FixedOP_375plates.
+
+Excluded models (OVERTURNED_MODELS in diagnostic scripts):
+- η'=1000 free, η'=1000 fixedOP, η'=500 fixedOP — rollover geometry
+- η'=375 fixedOP (`new_FixedOP_375plates`) — rollover geometry (added 2026-04-17)
+
+---
+
+---
+
+## Script fixes (2026-04-17, session 2)
+
+### plot_Leff_distribution.supp.py
+- Panel 1: already showed both all + non-rollover histograms with both median vlines
+- Panel 2: added `med_norm` (steelblue solid) axhline alongside `med_all` (black dashed)
+  — both panels now show both medians consistently
+
+### observations/plot_final_map.py
+- Removed two debug print statements left in from development:
+  - `print(lon_center, lat_center, age, dip_deep, DP)` inside per-segment loop
+  - `print(min_dp, max_dp)` after loop
+  These were flooding stdout when running observations/all_plots.sh
+
+---
+
 ## Next session tasks (updated)
 
 1. **Fill in [X–Y] km IQR** for L_eff from fig1 panel 1 (normal models only)
 
 2. **Update Eq. 11 everywhere in the paper**:
    - Was: dQ/ds ≈ 0.1ηKvc
-   - Now: dQ/ds ≈ ηHKvc / L_eff,  L_eff = 1624 km (excl. overturned)
+   - Now: dQ/ds ≈ ηHKvc / L_eff,  L_eff = 1497 km (normal models only)
    - Check: abstract, Section 3.3, Section 4.1, conclusions, Fig. 6 caption,
      Fig. 7 caption, any place 0.1ηKvc appears
 
 3. **Reorder Fig. 6 panels** (if not already): 1 → 3 → 2 for logical narrative flow
 
-4. **Update Earth application figures**:
-   - Use dQ/ds / DP_anal = HKvc / (L_eff · Δρ g cosθ) with L_eff = 1624 km
-   - Find existing Earth-application script (in analysis/observations/ ?)
+4. **Earth application figures already updated** (observations/ scripts use 1.497e6 m)
+   — regenerate figures if needed
 
-5. **Update Fig. 7 (Earth application map)**:
-   - Update to use ηHKvc/L_eff with L_eff = 1624 km
-
-6. **Paper text — justification for excluding overturned models**:
+5. **Paper text — justification for excluding overturned models**:
    - Add that these models also fail the *exact* numerical force balance (panel 1),
      not just the scaling — this is independent evidence they are geometrically
      anomalous, not just empirical outliers
    - Do NOT say "thin-sheet assumption breaks down" without qualification —
      it is valid for normal models; overturned cases are a separate geometric regime
+
+6. **Paper text — scaling diagnostic narrative**:
+   - Direct Eq. 8 evaluation fails because dK/ds is noise-limited (3rd derivative),
+     not because thin-sheet breaks down — confirmed by r *decreasing* at lower KH
+   - L_eff works because both terms scale as ηHKvs/L regardless of individual L_v, L_K
+   - Sign filter (meas_pa > 0): empirical proxy for excluding geometrically anomalous
+     timesteps (inflection points); frame as "retaining timesteps where shear opposes
+     buoyancy-driven motion"

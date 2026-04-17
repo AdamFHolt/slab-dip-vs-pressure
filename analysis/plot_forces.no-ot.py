@@ -35,7 +35,7 @@ analysis_depth  = float(sys.argv[1])
 analysis_depth_dz = float(sys.argv[2])     # m (depth for DP extraction and central point of shear stress derivative)
 ds = float(sys.argv[3])                 # m (distance from slab to pull out DP)
 dz = float(sys.argv[4])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
-coeff = 100./1624.0
+coeff = 100./1497.0
 
 
 tactual_min = 11 # first time step to use

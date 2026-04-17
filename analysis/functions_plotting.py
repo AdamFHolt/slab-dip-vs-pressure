@@ -12,21 +12,21 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 
-def plot_BvsFullForce_wKthresh(tmin,model,curvature_thresh,center_color,edge_color,marker):
+def plot_BvsFullForce_wKthresh(tmin,model,curvature_thresh,center_color,edge_color,marker,zorder=3):
 
 	for i in range(tmin,len(model)):
-		if np.abs(model[i,11])*1000 < curvature_thresh: 
-			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,color=center_color,s=10,edgecolor=edge_color,marker=marker,lw=0.1,zorder=3) 
+		if np.abs(model[i,11])*1000 < curvature_thresh:
+			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,color=center_color,s=10,edgecolor=edge_color,marker=marker,lw=0.1,zorder=zorder)
 		else:
-			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,color=center_color,s=5,edgecolor=edge_color,marker=marker,lw=0.1,zorder=3,alpha=0.2) 
+			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,color=center_color,s=5,edgecolor=edge_color,marker=marker,lw=0.1,zorder=zorder,alpha=0.2)
 
-def plot_BvsFullForce_wKthresh_overturned(tmin,model,curvature_thresh,edge_color,marker):
+def plot_BvsFullForce_wKthresh_overturned(tmin,model,curvature_thresh,edge_color,marker,zorder=2):
 
 	for i in range(tmin,len(model)):
-		if np.abs(model[i,11])*1000 < curvature_thresh: 
-			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,facecolors='none',s=10,edgecolor=edge_color,marker=marker,lw=0.2,zorder=2,alpha=0.7) 
+		if np.abs(model[i,11])*1000 < curvature_thresh:
+			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,facecolors='none',s=10,edgecolor=edge_color,marker=marker,lw=0.2,zorder=zorder,alpha=0.7)
 		else:
-			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,facecolors='none',s=5,edgecolor=edge_color,marker=marker,lw=0.2,zorder=2,alpha=0.7) 
+			plt.scatter(model[i,4]/1.e6,(model[i,3]-model[i,6]+model[i,17])/1.e6,facecolors='none',s=5,edgecolor=edge_color,marker=marker,lw=0.2,zorder=zorder,alpha=0.7)
 
 def plot_BvsFullForce_Kcolored(tmin,model,edge_color,marker,color_map,norm,zorder):
 
@@ -56,21 +56,21 @@ def plot_BvsFullForce_Kcolored_overturned(
         )
 
 
-def plot_BvsDP_wKthresh(tmin,model,curvature_thresh,center_color,edge_color,marker):
+def plot_BvsDP_wKthresh(tmin,model,curvature_thresh,center_color,edge_color,marker,zorder=3):
 
 	for i in range(tmin,len(model)):
-		if np.abs(model[i,11])*1000 < curvature_thresh: 
-			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,color=center_color,s=10,edgecolor=edge_color,marker=marker,lw=0.1,zorder=3) 
+		if np.abs(model[i,11])*1000 < curvature_thresh:
+			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,color=center_color,s=10,edgecolor=edge_color,marker=marker,lw=0.1,zorder=zorder)
 		else:
-			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,color=center_color,s=5,edgecolor=edge_color,marker=marker,lw=0.1,zorder=3,alpha=0.2)
+			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,color=center_color,s=5,edgecolor=edge_color,marker=marker,lw=0.1,zorder=zorder,alpha=0.2)
 
-def plot_BvsDP_wKthresh_overturned(tmin,model,curvature_thresh,edge_color,marker):
+def plot_BvsDP_wKthresh_overturned(tmin,model,curvature_thresh,edge_color,marker,zorder=2):
 
 	for i in range(tmin,len(model)):
-		if np.abs(model[i,11])*1000 < curvature_thresh: 
-			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,facecolors='none',s=10,edgecolor=edge_color,marker=marker,lw=0.2,zorder=2,alpha=0.7) 
+		if np.abs(model[i,11])*1000 < curvature_thresh:
+			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,facecolors='none',s=10,edgecolor=edge_color,marker=marker,lw=0.2,zorder=zorder,alpha=0.7)
 		else:
-			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,facecolors='none',s=5,edgecolor=edge_color,marker=marker,lw=0.2,zorder=2,alpha=0.7)
+			plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,facecolors='none',s=5,edgecolor=edge_color,marker=marker,lw=0.2,zorder=zorder,alpha=0.7)
 
 
 def plot_BvsDP_scalingcolored(tmin,model,edge_color,marker,color_map,norm,mant_visc,zorder,viscosity):
@@ -79,7 +79,7 @@ def plot_BvsDP_scalingcolored(tmin,model,edge_color,marker,color_map,norm,mant_v
 
 	for i in range(tmin,len(model)):
 
-		plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,s=10,c=(100./1624.)*model[i,11]*viscosity*mant_visc*model[i,19]*cmyr_to_ms*1e-6,cmap=color_map,norm=norm,edgecolor=edge_color,linewidth=0.1,zorder=zorder,marker=marker)
+		plt.scatter(model[i,4]/1.e6,model[i,3]/1.e6,s=10,c=(100./1497.)*model[i,11]*viscosity*mant_visc*model[i,19]*cmyr_to_ms*1e-6,cmap=color_map,norm=norm,edgecolor=edge_color,linewidth=0.1,zorder=zorder,marker=marker)
 
 def plot_BvsDP_scalingcolored_overturned(
     tmin, model, marker, color_map, norm, mant_visc, zorder, viscosity
@@ -92,7 +92,7 @@ def plot_BvsDP_scalingcolored_overturned(
 
         # value you want to color by (same expression you had in c=...)
         val = (
-            (100./1624.) * model[i, 11] * viscosity * mant_visc * model[i, 19] * cmyr_to_ms * 1e-6
+            (100./1497.) * model[i, 11] * viscosity * mant_visc * model[i, 19] * cmyr_to_ms * 1e-6
         )
 
         edge_col = color_map(norm(val))  # map -> RGBA using norm + cmap

@@ -16,3 +16,6 @@ python3 plot_final_map.py 4e22 3.28e-5 1333 8.044e-7 88e3
 python3 plot_final_just-maps.py 4e22 3.28e-5 1333 8.044e-7 88e3
 python3 plot_final_just-maps.py 2e22 3.28e-5 1333 8.044e-7 88e3
 python3 plot_final_just-maps.py 8e22 3.28e-5 1333 8.044e-7 88e3
+
+# --- Zip all plots ---
+zip -j plots/all_observational_plots.zip plots/*.pdf

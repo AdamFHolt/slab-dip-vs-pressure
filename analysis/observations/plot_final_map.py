@@ -145,7 +145,7 @@ for i in range(len(segment_data)):
 
         # compute/plot ηHKvc/L_eff -------------------
         H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
-        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.624e6 * 1e-6  # MPa
+        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.497e6 * 1e-6  # MPa
         x2, y2 = m2(lon_center, lat_center)
         if np.abs(stress_scaling) > scaling_thresh:
             edgecolor = 'gray'
@@ -160,7 +160,6 @@ for i in range(len(segment_data)):
         # compute/plot DP ------------------------
         if not np.isnan(dip_deep):
             DP = compute_DP_pl(age, dip_deep, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
-            print(lon_center,lat_center,age,dip_deep,DP)
         else:
             DP = compute_DP_pl(age, dip_shall, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
                 
@@ -172,8 +171,6 @@ for i in range(len(segment_data)):
 
         # store DP and stress scaling
         DP_array.append((DP, np.abs(stress_scaling)))
-
-print(min_dp,max_dp)
 
 DP_array = np.array(DP_array)
 

@@ -190,23 +190,23 @@ def fixed_aspect_ratio(ratio):
 ax=fig.add_subplot(gs[0,0])
 # 50
 plot_BvsFullForce_wKthresh(tmin,weak1_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsFullForce_wKthresh(tmin,weak1_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsFullForce_wKthresh(tmin,weak1_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,weak1_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsFullForce_wKthresh(tmin,ref1_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref1_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref1_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,ref1_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsFullForce_wKthresh(tmin,new1_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsFullForce_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsFullForce_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,new1_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref1b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,ref1b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsFullForce_wKthresh_overturned(tmin,strong1_bothfree,curvature_thresh,'black','o')
-plot_BvsFullForce_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsFullForce_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black','v',zorder=2)
 plot_BvsFullForce_wKthresh_overturned(tmin,strong1_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
@@ -231,23 +231,23 @@ fixed_aspect_ratio(1)
 ax=fig.add_subplot(gs[0,1])
 # 50
 plot_BvsFullForce_wKthresh(tmin,weak2_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsFullForce_wKthresh(tmin,weak2_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsFullForce_wKthresh(tmin,weak2_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,weak2_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsFullForce_wKthresh(tmin,ref2_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref2_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref2_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,ref2_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsFullForce_wKthresh(tmin,new2_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsFullForce_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsFullForce_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,new2_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref2b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,ref2b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsFullForce_wKthresh_overturned(tmin,strong2_bothfree,curvature_thresh,'black','o')
-plot_BvsFullForce_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsFullForce_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black','v',zorder=2)
 plot_BvsFullForce_wKthresh_overturned(tmin,strong2_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
@@ -272,23 +272,23 @@ fixed_aspect_ratio(1)
 ax=fig.add_subplot(gs[0,2])
 # 50
 plot_BvsFullForce_wKthresh(tmin,weak3_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsFullForce_wKthresh(tmin,weak3_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsFullForce_wKthresh(tmin,weak3_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,weak3_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsFullForce_wKthresh(tmin,ref3_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref3_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref3_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsFullForce_wKthresh(tmin,ref3_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsFullForce_wKthresh(tmin,new3_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsFullForce_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsFullForce_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,new3_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref3b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsFullForce_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsFullForce_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsFullForce_wKthresh_overturned(tmin,ref3b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsFullForce_wKthresh_overturned(tmin,strong3_bothfree,curvature_thresh,'black','o')
-plot_BvsFullForce_wKthresh(tmin,strong3_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsFullForce_wKthresh(tmin,strong3_fixedSP,curvature_thresh, 'black','black','v',zorder=2)
 plot_BvsFullForce_wKthresh_overturned(tmin,strong3_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
@@ -317,23 +317,23 @@ fixed_aspect_ratio(1)
 ax=fig.add_subplot(gs[1,0])
 # 50
 plot_BvsDP_wKthresh(tmin,weak1_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsDP_wKthresh(tmin,weak1_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsDP_wKthresh(tmin,weak1_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,weak1_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsDP_wKthresh(tmin,ref1_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsDP_wKthresh(tmin,ref1_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsDP_wKthresh(tmin,ref1_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,ref1_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new1_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsDP_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsDP_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,new1_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref1b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsDP_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsDP_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,ref1b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsDP_wKthresh_overturned(tmin,strong1_bothfree,curvature_thresh,'black','o')
-plot_BvsDP_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsDP_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,strong1_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
@@ -357,23 +357,23 @@ fixed_aspect_ratio(1)
 ax=fig.add_subplot(gs[1,1])
 # 50
 plot_BvsDP_wKthresh(tmin,weak2_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsDP_wKthresh(tmin,weak2_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsDP_wKthresh(tmin,weak2_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,weak2_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsDP_wKthresh(tmin,ref2_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsDP_wKthresh(tmin,ref2_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsDP_wKthresh(tmin,ref2_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,ref2_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new2_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsDP_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsDP_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,new2_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref2b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsDP_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsDP_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,ref2b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsDP_wKthresh_overturned(tmin,strong2_bothfree,curvature_thresh,'black','o')
-plot_BvsDP_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsDP_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,strong2_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
@@ -396,23 +396,23 @@ fixed_aspect_ratio(1)
 ax=fig.add_subplot(gs[1,2])
 # 50
 plot_BvsDP_wKthresh(tmin,weak3_bothfree,curvature_thresh,'tan','black','o')
-plot_BvsDP_wKthresh(tmin,weak3_fixedSP,curvature_thresh, 'tan','black','v')
+plot_BvsDP_wKthresh(tmin,weak3_fixedSP,curvature_thresh, 'tan','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,weak3_fixedOP,curvature_thresh, 'tan','black','^')
 # 250
 plot_BvsDP_wKthresh(tmin,ref3_bothfree,curvature_thresh,'peru','black','o')
-plot_BvsDP_wKthresh(tmin,ref3_fixedSP,curvature_thresh, 'peru','black','v')
+plot_BvsDP_wKthresh(tmin,ref3_fixedSP,curvature_thresh, 'peru','black','v',zorder=4)
 plot_BvsDP_wKthresh(tmin,ref3_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new3_bothfree,curvature_thresh,'firebrick','black','o')
-plot_BvsDP_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v')
+plot_BvsDP_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,new3_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref3b_bothfree,curvature_thresh,'maroon','black','o')
-plot_BvsDP_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v')
+plot_BvsDP_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,ref3b_fixedOP,curvature_thresh, 'maroon','^')
 # 1000
 plot_BvsDP_wKthresh_overturned(tmin,strong3_bothfree,curvature_thresh,'black','o')
-plot_BvsDP_wKthresh(tmin,strong3_fixedSP,curvature_thresh, 'black','black','v')
+plot_BvsDP_wKthresh(tmin,strong3_fixedSP,curvature_thresh, 'black','black','v',zorder=4)
 plot_BvsDP_wKthresh_overturned(tmin,strong3_fixedOP,curvature_thresh, 'black','^')
 
 

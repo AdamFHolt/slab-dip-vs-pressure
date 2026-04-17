@@ -150,14 +150,14 @@ def make_figure(records):
     ax1 = fig.add_subplot(gs[0, 0])
 
     clip = lambda v: v[(v > np.nanpercentile(v, 2)) & (v < 10000)]
+    ax1.hist(clip(L_eff_km[ok]), bins=35, color='gray',
+             edgecolor='none', alpha=0.5,
+             label=f'all  (N={ok.sum()}, median={med_all:.0f} km)')
     ax1.hist(clip(L_eff_km[ok_norm]), bins=35, color='steelblue',
              edgecolor='none', alpha=0.75,
-             label=f'normal  (N={ok_norm.sum()}, median={med_norm:.0f} km)')
-    ax1.hist(clip(L_eff_km[ok_over]), bins=15, histtype='step',
-             edgecolor='tomato', linewidth=1.2, alpha=0.9,
-             label=f'overturned  (N={ok_over.sum()})')
-    ax1.axvline(med_norm, color='steelblue', lw=1.5, ls='-')
+             label=f'non-rollover  (N={ok_norm.sum()}, median={med_norm:.0f} km)')
     ax1.axvline(med_all,  color='k',         lw=1.0, ls='--')
+    ax1.axvline(med_norm, color='steelblue', lw=1.5, ls='-')
     ax1.set_xlabel(r'$L_\mathrm{eff}$  [km]')
     ax1.set_ylabel('count')
     ax1.set_xlim(0, 7000)
@@ -197,10 +197,10 @@ def make_figure(records):
             ax2.plot([i - 0.35, i + 0.35], [med_m, med_m],
                      color=col, lw=2.0, zorder=4)
 
-    ax2.axhline(med_norm, color='steelblue', lw=1.2, ls='-',
-                label=f'normal median = {med_norm:.0f} km')
     ax2.axhline(med_all,  color='k',         lw=1.0, ls='--',
                 label=f'all median = {med_all:.0f} km')
+    ax2.axhline(med_norm, color='steelblue', lw=1.5, ls='-',
+                label=f'non-rollover median = {med_norm:.0f} km')
 
     tick_labels = [MODEL_LABELS.get(m, m) for _, m, _, _ in model_stats]
     ax2.set_xticks(range(len(tick_labels)))

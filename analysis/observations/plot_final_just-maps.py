@@ -145,7 +145,7 @@ for i in range(len(segment_data)):
 
         # compute/plot ηHKvc/L_eff -------------------
         H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
-        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.624e6 * 1e-6  # MPa
+        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.497e6 * 1e-6  # MPa
         x2, y2 = m2(lon_center, lat_center)
         if np.abs(stress_scaling) > scaling_thresh:
             edgecolor = 'gray'

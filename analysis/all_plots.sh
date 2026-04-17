@@ -25,3 +25,6 @@ python3 plot_Psp-DP-ratio.py 300000 10000 10000 1000
 # python3 plot_onestep_simple-pressure.zoomed.py <model_name> <timestep> <x_center_km>
 # python3 plot_onestep_simple-viscosity.zoomed.py <model_name> <timestep> <x_center_km>
 
+# --- Zip all plots ---
+zip -j plots/DP-comparisons/compilations/all_model_plots.zip plots/DP-comparisons/compilations/*.pdf 
+

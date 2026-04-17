@@ -222,8 +222,8 @@ plot_BvsFullForce_Kcolored_overturned(tmin,strong1_fixedOP,'^',color_map,norm,zo
 
 
 # axis stuff
-plt.xlim(-5,  34); plt.ylim(-5,  34)
-plt.plot([-5, 34], [-5, 34], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  30); plt.ylim(-3,  30)
+plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([-5, 0, 10, 20, 30])
@@ -342,7 +342,7 @@ ax=fig.add_subplot(gs[1,0])
 # 50
 cmyr_to_ms = 0.01/(365.25*24*3600)
 for i in range(tmin,len(weak1_bothfree)):
-	im2 = plt.scatter(weak1_bothfree[i,4]/1.e6,weak1_bothfree[i,3]/1.e6,s=10,c=(100./1624.)*weak1_bothfree[i,11]*50*mant_visc*weak1_bothfree[i,19]*cmyr_to_ms*1e-6,cmap=color_map2,norm=norm2,edgecolor='black',linewidth=0.1,zorder=3,marker='o')
+	im2 = plt.scatter(weak1_bothfree[i,4]/1.e6,weak1_bothfree[i,3]/1.e6,s=10,c=(100./1497.)*weak1_bothfree[i,11]*50*mant_visc*weak1_bothfree[i,19]*cmyr_to_ms*1e-6,cmap=color_map2,norm=norm2,edgecolor='black',linewidth=0.1,zorder=3,marker='o')
 plot_BvsDP_scalingcolored(tmin,weak1_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=50)
 plot_BvsDP_scalingcolored(tmin,weak1_fixedOP,'black','^',color_map2,norm2,mant_visc,zorder=3,viscosity=50)
 # 250

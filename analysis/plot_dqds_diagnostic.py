@@ -56,7 +56,8 @@ COL_ETA     = 26   # Pa·s
 SPY        = 365.25 * 24.0 * 3600.0
 CMYR_TO_MS = 0.01 / SPY
 
-# Models with overturned (rollover) slab geometry — shown hollow, excluded from calibration
+# Models excluded from L_eff calibration — shown hollow
+# Overturned (rollover) geometry:
 OVERTURNED_MODELS = {
     'new_1000plates',         # η' = 1000, free plates
     'new_FixedOP_1000plates', # η' = 1000, fixed OP

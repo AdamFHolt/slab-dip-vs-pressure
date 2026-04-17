@@ -199,7 +199,7 @@ plot_BvsFullForce_wKthresh(tmin,ref1_fixedOP,curvature_thresh, 'peru','black','^
 # 375
 plot_BvsFullForce_wKthresh(tmin,new1_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsFullForce_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsFullForce_wKthresh(tmin,new1_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsFullForce_wKthresh_overturned(tmin,new1_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref1b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsFullForce_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v')
@@ -240,7 +240,7 @@ plot_BvsFullForce_wKthresh(tmin,ref2_fixedOP,curvature_thresh, 'peru','black','^
 # 375
 plot_BvsFullForce_wKthresh(tmin,new2_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsFullForce_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsFullForce_wKthresh(tmin,new2_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsFullForce_wKthresh_overturned(tmin,new2_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref2b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsFullForce_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v')
@@ -281,7 +281,7 @@ plot_BvsFullForce_wKthresh(tmin,ref3_fixedOP,curvature_thresh, 'peru','black','^
 # 375
 plot_BvsFullForce_wKthresh(tmin,new3_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsFullForce_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsFullForce_wKthresh(tmin,new3_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsFullForce_wKthresh_overturned(tmin,new3_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsFullForce_wKthresh(tmin,ref3b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsFullForce_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v')
@@ -326,7 +326,7 @@ plot_BvsDP_wKthresh(tmin,ref1_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new1_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsDP_wKthresh(tmin,new1_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsDP_wKthresh(tmin,new1_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsDP_wKthresh_overturned(tmin,new1_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref1b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsDP_wKthresh(tmin,ref1b_fixedSP,curvature_thresh, 'maroon','black','v')
@@ -366,7 +366,7 @@ plot_BvsDP_wKthresh(tmin,ref2_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new2_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsDP_wKthresh(tmin,new2_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsDP_wKthresh(tmin,new2_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsDP_wKthresh_overturned(tmin,new2_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref2b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsDP_wKthresh(tmin,ref2b_fixedSP,curvature_thresh, 'maroon','black','v')
@@ -405,7 +405,7 @@ plot_BvsDP_wKthresh(tmin,ref3_fixedOP,curvature_thresh, 'peru','black','^')
 # 375
 plot_BvsDP_wKthresh(tmin,new3_bothfree,curvature_thresh,'firebrick','black','o')
 plot_BvsDP_wKthresh(tmin,new3_fixedSP,curvature_thresh, 'firebrick','black','v')
-plot_BvsDP_wKthresh(tmin,new3_fixedOP,curvature_thresh, 'firebrick','black','^')
+plot_BvsDP_wKthresh_overturned(tmin,new3_fixedOP,curvature_thresh, 'firebrick','^')
 # 500
 plot_BvsDP_wKthresh(tmin,ref3b_bothfree,curvature_thresh,'maroon','black','o')
 plot_BvsDP_wKthresh(tmin,ref3b_fixedSP,curvature_thresh, 'maroon','black','v')

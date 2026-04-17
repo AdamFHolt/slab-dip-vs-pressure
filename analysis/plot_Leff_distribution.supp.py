@@ -54,6 +54,7 @@ OVERTURNED_MODELS = {
     'new_1000plates',
     'new_FixedOP_1000plates',
     'FixedOP_lower-res_new',
+    'new_FixedOP_375plates',  # η' = 375, fixed OP
 }
 
 MODEL_ORDER = [

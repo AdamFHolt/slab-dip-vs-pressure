@@ -61,6 +61,7 @@ OVERTURNED_MODELS = {
     'new_1000plates',         # η' = 1000, free plates
     'new_FixedOP_1000plates', # η' = 1000, fixed OP
     'FixedOP_lower-res_new',  # η' = 500,  fixed OP
+    'new_FixedOP_375plates',  # η' = 375,  fixed OP
 }
 
 # Canonical model order: fixed SP / free / fixed OP, grouped by η'

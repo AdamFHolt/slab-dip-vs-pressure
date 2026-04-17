@@ -210,7 +210,7 @@ plot_BvsFullForce_Kcolored(tmin,ref1_fixedOP,'black','^',color_map,norm,zorder=3
 # 375
 plot_BvsFullForce_Kcolored(tmin,new1_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,new1_fixedSP,'black','v',color_map,norm,zorder=4)
-plot_BvsFullForce_Kcolored(tmin,new1_fixedOP,'black','^',color_map,norm,zorder=3)
+plot_BvsFullForce_Kcolored_overturned(tmin,new1_fixedOP,'^',color_map,norm,zorder=2)
 # 500
 plot_BvsFullForce_Kcolored(tmin,ref1b_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,ref1b_fixedSP,'black','v',color_map,norm,zorder=4)
@@ -257,7 +257,7 @@ plot_BvsFullForce_Kcolored(tmin,ref2_fixedOP,'black','^',color_map,norm,zorder=3
 # 375
 plot_BvsFullForce_Kcolored(tmin,new2_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,new2_fixedSP,'black','v',color_map,norm,zorder=4)
-plot_BvsFullForce_Kcolored(tmin,new2_fixedOP,'black','^',color_map,norm,zorder=3)
+plot_BvsFullForce_Kcolored_overturned(tmin,new2_fixedOP,'^',color_map,norm,zorder=2)
 # 500
 plot_BvsFullForce_Kcolored(tmin,ref2b_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,ref2b_fixedSP,'black','v',color_map,norm,zorder=4)
@@ -295,7 +295,7 @@ plot_BvsFullForce_Kcolored(tmin,ref3_fixedOP,'black','^',color_map,norm,zorder=3
 # 375
 plot_BvsFullForce_Kcolored(tmin,new3_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,new3_fixedSP,'black','v',color_map,norm,zorder=4)
-plot_BvsFullForce_Kcolored(tmin,new3_fixedOP,'black','^',color_map,norm,zorder=3)
+plot_BvsFullForce_Kcolored_overturned(tmin,new3_fixedOP,'^',color_map,norm,zorder=2)
 # 500
 plot_BvsFullForce_Kcolored(tmin,ref3b_bothfree,'black','o',color_map,norm,zorder=3)
 plot_BvsFullForce_Kcolored(tmin,ref3b_fixedSP,'black','v',color_map,norm,zorder=4)
@@ -352,7 +352,7 @@ plot_BvsDP_scalingcolored(tmin,ref1_fixedOP,'black','^',color_map2,norm2,mant_vi
 # 375
 plot_BvsDP_scalingcolored(tmin,new1_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
 plot_BvsDP_scalingcolored(tmin,new1_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=375)
-plot_BvsDP_scalingcolored(tmin,new1_fixedOP,'black','^',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
+plot_BvsDP_scalingcolored_overturned(tmin,new1_fixedOP,'^',color_map2,norm2,mant_visc,zorder=2,viscosity=375)
 # 500
 plot_BvsDP_scalingcolored(tmin,ref1b_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=500)
 plot_BvsDP_scalingcolored(tmin,ref1b_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=500)
@@ -403,7 +403,7 @@ plot_BvsDP_scalingcolored(tmin,ref2_fixedOP,'black','^',color_map2,norm2,mant_vi
 # 375
 plot_BvsDP_scalingcolored(tmin,new2_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
 plot_BvsDP_scalingcolored(tmin,new2_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=375)
-plot_BvsDP_scalingcolored(tmin,new2_fixedOP,'black','^',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
+plot_BvsDP_scalingcolored_overturned(tmin,new2_fixedOP,'^',color_map2,norm2,mant_visc,zorder=2,viscosity=375)
 # 500
 plot_BvsDP_scalingcolored(tmin,ref2b_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=500)
 plot_BvsDP_scalingcolored(tmin,ref2b_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=500)
@@ -443,7 +443,7 @@ plot_BvsDP_scalingcolored(tmin,ref3_fixedOP,'black','^',color_map2,norm2,mant_vi
 # 375
 plot_BvsDP_scalingcolored(tmin,new3_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
 plot_BvsDP_scalingcolored(tmin,new3_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=375)
-plot_BvsDP_scalingcolored(tmin,new3_fixedOP,'black','^',color_map2,norm2,mant_visc,zorder=3,viscosity=375)
+plot_BvsDP_scalingcolored_overturned(tmin,new3_fixedOP,'^',color_map2,norm2,mant_visc,zorder=2,viscosity=375)
 # 500
 plot_BvsDP_scalingcolored(tmin,ref3b_bothfree,'black','o',color_map2,norm2,mant_visc,zorder=3,viscosity=500)
 plot_BvsDP_scalingcolored(tmin,ref3b_fixedSP,'black','v',color_map2,norm2,mant_visc,zorder=4,viscosity=500)

@@ -170,7 +170,7 @@ plot_forcecomponent_dqds_vsK(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',mis
 
 plot_forcecomponent_dqds_vsK(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
 plot_forcecomponent_dqds_vsK(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
-plot_forcecomponent_dqds_vsK(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+plot_forcecomponent_dqds_vsK_overturned(tmin,m375_fixedOP,x_ind,'firebrick','^')
 
 plot_forcecomponent_dqds_vsK(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
 plot_forcecomponent_dqds_vsK(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
@@ -207,7 +207,7 @@ plot_forcecomponent_dqds_vsVc(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',mi
 
 plot_forcecomponent_dqds_vsVc(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
 plot_forcecomponent_dqds_vsVc(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
-plot_forcecomponent_dqds_vsVc(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+plot_forcecomponent_dqds_vsVc_overturned(tmin,m375_fixedOP,x_ind,'firebrick','^')
 
 plot_forcecomponent_dqds_vsVc(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
 plot_forcecomponent_dqds_vsVc(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
@@ -242,7 +242,7 @@ plot_forcecomponent_dqds_vsVisc(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',
 
 plot_forcecomponent_dqds_vsVisc(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color,375*mant_visc)
 plot_forcecomponent_dqds_vsVisc(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color,375*mant_visc)
-plot_forcecomponent_dqds_vsVisc(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color,375*mant_visc)
+plot_forcecomponent_dqds_vsVisc_overturned(tmin,m375_fixedOP,x_ind,'firebrick','^',375*mant_visc)
 
 plot_forcecomponent_dqds_vsVisc(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color,500*mant_visc)
 plot_forcecomponent_dqds_vsVisc(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color,500*mant_visc)

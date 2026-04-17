@@ -165,7 +165,7 @@ plot_forcecomponent_fullstressmisfit(tmin,m250_fixedOP,curve_thresh,'peru','^',m
 
 plot_forcecomponent_fullstressmisfit(tmin,m375_fixedSP,curve_thresh,'firebrick','v',misfit_color)
 plot_forcecomponent_fullstressmisfit(tmin,m375_bothfree,curve_thresh,'firebrick','o',misfit_color)
-plot_forcecomponent_fullstressmisfit(tmin,m375_fixedOP,curve_thresh,'firebrick','^',misfit_color)
+plot_forcecomponent_fullstressmisfit_overturned(tmin,m375_fixedOP,'firebrick','^')
 
 plot_forcecomponent_fullstressmisfit(tmin,m500_fixedSP,curve_thresh,'maroon','v',misfit_color)
 plot_forcecomponent_fullstressmisfit(tmin,m500_bothfree,curve_thresh,'maroon','o',misfit_color)
@@ -205,7 +205,7 @@ plot_forcecomponent_dpmisfit(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',mis
 
 plot_forcecomponent_dpmisfit(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
 plot_forcecomponent_dpmisfit(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
-plot_forcecomponent_dpmisfit(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+plot_forcecomponent_dpmisfit_overturned(tmin,m375_fixedOP,x_ind,'firebrick','^')
 
 plot_forcecomponent_dpmisfit(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
 plot_forcecomponent_dpmisfit(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)
@@ -243,7 +243,7 @@ plot_forcecomponent_dqds(tmin,m250_fixedOP,curve_thresh,x_ind,'peru','^',misfit_
 
 plot_forcecomponent_dqds(tmin,m375_fixedSP,curve_thresh,x_ind,'firebrick','v',misfit_color)
 plot_forcecomponent_dqds(tmin,m375_bothfree,curve_thresh,x_ind,'firebrick','o',misfit_color)
-plot_forcecomponent_dqds(tmin,m375_fixedOP,curve_thresh,x_ind,'firebrick','^',misfit_color)
+plot_forcecomponent_dqds_overturned(tmin,m375_fixedOP,x_ind,'firebrick','^')
 
 plot_forcecomponent_dqds(tmin,m500_fixedSP,curve_thresh,x_ind,'maroon','v',misfit_color)
 plot_forcecomponent_dqds(tmin,m500_bothfree,curve_thresh,x_ind,'maroon','o',misfit_color)

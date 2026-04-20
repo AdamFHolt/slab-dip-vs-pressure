@@ -135,7 +135,7 @@ def destination_point(lon, lat, bearing, distance_km):
 
 def load_data_file(slab_visc,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model):
 
-    name=''.join(['text_files/new/maps.slab',str(slab_visc),'.alpha',str(alpha),'.T',str(Tm),'.k',str(diffusivity),'.platethick',str(plate_thick),'.crustthick',str(crust_thick),'.',cooling_model,'.txt'])
+    name=''.join(['text_files/maps.slab',str(slab_visc),'.alpha',str(alpha),'.T',str(Tm),'.k',str(diffusivity),'.platethick',str(plate_thick),'.crustthick',str(crust_thick),'.',cooling_model,'.txt'])
 
     array = np.genfromtxt(name, delimiter=',', dtype=float)
 

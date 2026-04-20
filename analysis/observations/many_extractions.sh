@@ -52,6 +52,7 @@ python3 plot_final_map_just-extract.py 3e21 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 5e21 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 6e21 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 7e21 3.28e-5 1333 8.044e-7 88e3 7e3
+python3 plot_final_map_just-extract.py 8e21 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 9e21 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 2e22 3.28e-5 1333 8.044e-7 88e3 7e3
 python3 plot_final_map_just-extract.py 3e22 3.28e-5 1333 8.044e-7 88e3 7e3

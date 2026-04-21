@@ -251,7 +251,7 @@ ax3.plot(Tm, plate_thick/1e3, 'k*', markersize=9)
 
 # Set axis labels and ticks.
 ax3.set_xlabel('Basal temperature  [°C]')
-ax3.set_ylabel('Plate thickness  [km]')
+ax3.set_ylabel('Max plate thickness  [km]')
 ax3.set_xticks(np.arange(1100, 1400+100, 100))
 ax3.set_yticks(np.arange(75,135,10))
 ax3.tick_params(axis='both', labelsize=10)

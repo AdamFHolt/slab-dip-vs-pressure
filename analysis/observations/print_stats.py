@@ -2,9 +2,9 @@
 """
 Print DP and scaling statistics for reference and sensitivity viscosities.
 
-For each viscosity, reports:
+For each viscosity, reports stats for ALL segments and for scaling < 5 MPa segments:
   - % of segments with scaling < 5 MPa and < 10 MPa
-  - DP min, mean, max  (computed over segments with scaling < 5 MPa)
+  - DP min, mean, max
 
 Usage:
     python3 print_stats.py
@@ -32,7 +32,7 @@ def fname(visc):
 def load(visc):
     return np.genfromtxt(fname(visc), delimiter=',', dtype=float)
 
-def stats(visc, thresh=5):
+def stats(visc):
     d = load(visc)
     if d.ndim == 1:
         d = d.reshape(1, -1)
@@ -44,20 +44,27 @@ def stats(visc, thresh=5):
     mask5 = np.abs(scaling) < 5
     dp5 = dp[mask5]
     return {
-        'pct5':  n5  / n_tot * 100,
-        'pct10': n10 / n_tot * 100,
-        'dp_min':  dp5.min(),
-        'dp_mean': dp5.mean(),
-        'dp_max':  dp5.max(),
+        'pct5':   n5  / n_tot * 100,
+        'pct10':  n10 / n_tot * 100,
+        'all_min':  dp.min(),
+        'all_mean': dp.mean(),
+        'all_max':  dp.max(),
+        'dp_min':   dp5.min(),
+        'dp_mean':  dp5.mean(),
+        'dp_max':   dp5.max(),
         'n_tot': int(n_tot),
         'n5':    int(n5),
     }
 
-print(f"{'eta (Pa s)':<14} {'<5 MPa':>8} {'<10 MPa':>9} "
-      f"{'DP min':>8} {'DP mean':>9} {'DP max':>8}   (DP over scaling<5 segments)")
-print('-' * 75)
+hdr = f"{'eta (Pa s)':<14} {'subset':<12} {'<5 MPa':>8} {'<10 MPa':>9}  {'DP min':>7} {'DP mean':>8} {'DP max':>7}   N"
+print(hdr)
+print('-' * len(hdr))
 for v in VISCOSITIES:
     s = stats(v)
-    print(f"{v:<14.2e} {s['pct5']:>7.1f}% {s['pct10']:>8.1f}%"
-          f"  {s['dp_min']:>7.1f}  {s['dp_mean']:>8.1f}  {s['dp_max']:>7.1f} MPa"
-          f"   (N={s['n5']}/{s['n_tot']})")
+    print(f"{v:<14.2e} {'all':<12} {s['pct5']:>7.1f}% {s['pct10']:>8.1f}%"
+          f"  {s['all_min']:>6.1f}  {s['all_mean']:>7.1f}  {s['all_max']:>6.1f} MPa"
+          f"   {s['n_tot']}")
+    print(f"{'':14} {'scaling<5 MPa':<12} {'':>8}  {'':>9}"
+          f"  {s['dp_min']:>6.1f}  {s['dp_mean']:>7.1f}  {s['dp_max']:>6.1f} MPa"
+          f"   {s['n5']}")
+    print()

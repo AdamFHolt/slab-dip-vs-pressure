@@ -216,7 +216,7 @@ for seg in boundaries:
 # ------------------------------------------------
 
 # Define the independent variables:
-T_vals = np.arange(1100, 1450+10, 10)
+T_vals = np.arange(1080, 1450+10, 10)
 plate_thick_vals = np.arange(75e3, 135e3+2e3, 2e3)
 
 # Initialize a grid to store the DPmean_thresh values.
@@ -243,8 +243,33 @@ plate_thick_vals_km = plate_thick_vals / 1e3
 ax3 = plt.subplot(G[0, 2])
 
 contour_levels1 = np.arange(20, 40+2, 2)
+contour_levels1_minor = np.arange(21, 40, 2)
 contours1 = ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid, levels=contour_levels1, colors='black', linewidths=1, linestyles='solid')
-ax3.clabel(contours1, inline=True, fontsize=10)
+labels1 = ax3.clabel(contours1, levels=contour_levels1, inline=False, fontsize=8, fmt='%d')
+for txt in labels1:
+    txt.set_bbox(dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
+ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid, levels=contour_levels1_minor, colors='black', linewidths=0.5, linestyles='dashed')
+
+def _rightmost_label(ax, cs, level, xlim, ylim, color, fontsize=8):
+    lidx = np.where(np.isclose(cs.levels, level))[0]
+    if len(lidx) == 0:
+        return
+    best_x, best_y = -np.inf, None
+    for seg in cs.allsegs[lidx[0]]:
+        mask = (seg[:,0] >= xlim[0]) & (seg[:,0] <= xlim[1]) & \
+               (seg[:,1] >= ylim[0]) & (seg[:,1] <= ylim[1])
+        if mask.any():
+            pts = seg[mask]
+            i = np.argmax(pts[:,0])
+            if pts[i,0] > best_x:
+                best_x, best_y = pts[i,0], pts[i,1]
+    if best_y is not None:
+        ax.text(best_x, best_y, str(int(level)), fontsize=fontsize, color=color,
+                ha='right', va='bottom',
+                bbox=dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
+
+_rightmost_label(ax3, contours1, 30, (1250, 1450), (80, 135), 'black')
+_rightmost_label(ax3, contours1, 32, (1250, 1450), (80, 135), 'black')
 
 # plot paramters of the map
 ax3.plot(Tm, plate_thick/1e3, 'k*', markersize=9)
@@ -252,9 +277,11 @@ ax3.plot(Tm, plate_thick/1e3, 'k*', markersize=9)
 # Set axis labels and ticks.
 ax3.set_xlabel('Basal temperature  [°C]')
 ax3.set_ylabel('Max plate thickness  [km]')
-ax3.set_xticks(np.arange(1100, 1400+100, 100))
-ax3.set_yticks(np.arange(75,135,10))
-ax3.tick_params(axis='both', labelsize=10)
+ax3.set_xlim(1250, 1450)
+ax3.set_ylim(80, 135)
+ax3.set_xticks(np.arange(1250, 1450+50, 50))
+ax3.set_yticks(np.arange(80, 131, 10))
+ax3.tick_params(axis='both', labelsize=9)
 ax3.labelsize = 12
 
 

@@ -59,8 +59,8 @@ G = gridspec.GridSpec(2,3)
 # ------------------------------------------------
 
 # Define the independent variables:
-T_vals = np.arange(1080, 1450+10, 10)
-plate_thick_vals = np.arange(75e3, 135e3+2e3, 2e3)
+T_vals = np.arange(1250, 1450+10, 10)
+plate_thick_vals = np.arange(80e3, 135e3+2e3, 2e3)
 
 # orginal exploration (crust thick = 7 km)
 DPmean_thresh_grid = np.zeros((len(plate_thick_vals), len(T_vals)))
@@ -98,9 +98,9 @@ ax3.plot(Tm, plate_thick/1e3, 'k*', markersize=9)
 
 # Set axis labels and ticks.
 ax3.set_xlabel('Basal temperature  [°C]')
-ax3.set_ylabel('Plate thickness  [km]')
-ax3.set_xticks(np.arange(1100, 1400+100, 100))
-ax3.set_yticks(np.arange(75,135,10))
+ax3.set_ylabel('Max plate thickness  [km]')
+ax3.set_xticks(np.arange(1250, 1450+50, 50))
+ax3.set_yticks(np.arange(80, 135+10, 10))
 ax3.tick_params(axis='both', labelsize=9)
 ax3.labelsize = 12
 
@@ -108,8 +108,8 @@ ax3.labelsize = 12
 # -----------------------------------------------
 # ----------- second plot -----------------------
 # -----------------------------------------------
-k_vals = np.arange(5e-7, 1.8e-6+0.25e-7, 0.25e-7)
-alpha_vals = np.arange(2.7e-5, 4.3e-5, 0.025e-5)
+k_vals = np.arange(0.6e-6, 1.4e-6+0.25e-7, 0.25e-7)
+alpha_vals = np.arange(2.8e-5, 4.0e-5+0.025e-5, 0.025e-5)
 
 
 # orginal exploration (crust thick = 7 km)

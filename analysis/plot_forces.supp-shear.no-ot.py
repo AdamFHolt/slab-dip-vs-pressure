@@ -112,7 +112,7 @@ DP_ind   = 3
 dip_ind  = 5
 vc_ind   = 19
 vs_ind   = 20
-coeff = 100./1000.0
+coeff = 100./1497.0  # H [km] / L_eff [km], i.e. H=100km / L_eff=1497km
 
 x_ind = vc_ind
 x_label = "V K visc [Pa]"

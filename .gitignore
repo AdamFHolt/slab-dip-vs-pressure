@@ -28,3 +28,6 @@ analysis/observations/**/__pycache__/
 analysis/observations/data/Muller2008/age.3.2.img
 analysis/observations/data/Muller2008/age.3.2.nc
 analysis/observations/data/Muller2008/age.3.6.xyz
+
+# Session notes (local working notes, not tracked)
+SESSION_NOTES*.md

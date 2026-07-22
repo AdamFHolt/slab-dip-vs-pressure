@@ -14,6 +14,7 @@ from scipy.interpolate import splrep, splev
 from functions import get_misfit_mean_and_stdev, get_curvature_mean_and_stdev, get_misfit_mean_and_stdev_nondim
 from functions_plotting import plot_forcecomponent_fullstressmisfit, plot_forcecomponent_dqds, plot_forcecomponent_dpmisfit
 from functions_plotting import plot_forcecomponent_fullstressmisfit_overturned, plot_forcecomponent_dqds_overturned, plot_forcecomponent_dpmisfit_overturned
+from functions_plotting import plot_BvsDP_wKthresh, plot_BvsDP_wKthresh_overturned
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
 myriad_pro = fm.FontProperties(fname=font_path)
@@ -36,6 +37,7 @@ analysis_depth_dz = float(sys.argv[2])     # m (depth for DP extraction and cent
 ds = float(sys.argv[3])                 # m (distance from slab to pull out DP)
 dz = float(sys.argv[4])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
 coeff = 100./1497.0
+B_norm = 50. * 9.81 * 100.e3 * 1e-6   # B = drho*g*H [MPa] (buoyancy normalization for Lambda)
 
 
 tactual_min = 11 # first time step to use
@@ -139,7 +141,7 @@ for m in [m50_bothfree, m50_fixedSP, m50_fixedOP, m250_bothfree, m250_fixedSP, m
           m1000_bothfree, m1000_fixedSP, m1000_fixedOP]:
 	m[:,vc_ind] = np.abs(m[:,vc_ind])
 
-gs=GridSpec(1,3)
+gs=GridSpec(2,2)
 
 #### SCATTER PLOTS ####
 def fixed_aspect_ratio(ratio):
@@ -199,7 +201,7 @@ fixed_aspect_ratio(1)
 
 # plot model DP misfit vs. x-axis variable
 
-ax=fig.add_subplot(gs[0,2])
+ax=fig.add_subplot(gs[1,1])
 
 plot_forcecomponent_dpmisfit(tmin,m50_fixedSP,curve_thresh,x_ind,'tan','v',misfit_color)
 plot_forcecomponent_dpmisfit(tmin,m50_bothfree,curve_thresh,x_ind,'tan','o',misfit_color)
@@ -227,6 +229,9 @@ plt.ylim(-10,  17.5);
 plt.xlim(1e-2, 1e2);
 plt.ylabel(r'$-(\Delta P - B_{slab}$)   [MPa]')
 plt.xlabel(r'($\eta H |K| V_{C}$)/$L_{eff}$   [MPa]')
+secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
+secax.set_xlabel(r'$\Lambda$')
+secax.set_xticks([1e-3, 1e-2, 1e-1, 1e0])
 ax.set_xticks([1e-2, 1e-1, 1e0, 1e1, 1e2])
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='major', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
@@ -267,6 +272,9 @@ ax.set_xticks([1e-2, 1e-1, 1e0, 1e1, 1e2])
 
 plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
 plt.xlabel(r'($\eta H |K| V_{C}$)/$L_{eff}$   [MPa]')
+secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
+secax.set_xlabel(r'$\Lambda$')
+secax.set_xticks([1e-3, 1e-2, 1e-1, 1e0])
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='major', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
 # Add a 1:1 line in the background
@@ -315,7 +323,45 @@ ax.set_box_aspect(1)
 # plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=0)
 # fixed_aspect_ratio(1)
 
-plt.subplots_adjust(wspace=0.5)
+# plot DP vs. Bslab (300 km panel, as in DP-vs-DP compilation; linear axes)
+ax=fig.add_subplot(gs[1,0])
+
+plot_BvsDP_wKthresh(tmin,m50_bothfree,curve_thresh,'tan','black','o')
+plot_BvsDP_wKthresh(tmin,m50_fixedSP,curve_thresh, 'tan','black','v',zorder=4)
+plot_BvsDP_wKthresh(tmin,m50_fixedOP,curve_thresh, 'tan','black','^')
+
+plot_BvsDP_wKthresh(tmin,m250_bothfree,curve_thresh,'peru','black','o')
+plot_BvsDP_wKthresh(tmin,m250_fixedSP,curve_thresh, 'peru','black','v',zorder=4)
+plot_BvsDP_wKthresh(tmin,m250_fixedOP,curve_thresh, 'peru','black','^')
+
+plot_BvsDP_wKthresh(tmin,m375_bothfree,curve_thresh,'firebrick','black','o')
+plot_BvsDP_wKthresh(tmin,m375_fixedSP,curve_thresh, 'firebrick','black','v',zorder=4)
+plot_BvsDP_wKthresh_overturned(tmin,m375_fixedOP,curve_thresh, 'firebrick','^')
+
+plot_BvsDP_wKthresh(tmin,m500_bothfree,curve_thresh,'maroon','black','o')
+plot_BvsDP_wKthresh(tmin,m500_fixedSP,curve_thresh, 'maroon','black','v',zorder=4)
+plot_BvsDP_wKthresh_overturned(tmin,m500_fixedOP,curve_thresh, 'maroon','^')
+
+plot_BvsDP_wKthresh(tmin,m1000_fixedSP,curve_thresh, 'black','black','v',zorder=4)
+plot_BvsDP_wKthresh_overturned(tmin,m1000_bothfree,curve_thresh,'black','o')
+plot_BvsDP_wKthresh_overturned(tmin,m1000_fixedOP,curve_thresh, 'black','^')
+
+# axis stuff
+plt.xlim(-3,  30); plt.ylim(-3,  30)
+plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.ylabel(r'$\Delta P$   [MPa]')
+plt.xlabel(r'$B_{slab}$   [MPa]')
+ax.set_xticks([ 0, 10, 20, 30])
+ax.set_xticklabels([ 0, 10, 20, 30])
+ax.set_yticks([ 0, 10, 20, 30])
+ax.set_yticklabels([ 0, 10, 20, 30])
+plt.minorticks_on()
+plt.grid(True, which='major', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+plt.axhline(y=0, color='lightgray',linestyle='-',linewidth=1, zorder=1)
+plt.axvline(x=0, color='lightgray',linestyle='-',linewidth=1, zorder=1)
+fixed_aspect_ratio(1)
+
+plt.subplots_adjust(wspace=0.3, hspace=0.35)
 
 plt.savefig(plot_name_png, bbox_inches='tight', format='png', dpi=600)
 plt.savefig(plot_name_pdf, format='pdf', bbox_inches='tight')

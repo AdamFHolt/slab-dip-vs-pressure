@@ -137,7 +137,7 @@ for i in range(len(segment_data)):
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
         x1, y1 = m1(lon_center, lat_center)
-        ck = ax1.scatter(x1, y1, s=23, c=dip_shall, cmap='BrBG',      norm=norm1, edgecolors='black', linewidths=0.4, zorder=10)
+        ck = ax1.scatter(x1, y1, s=23, c=dip_shall, cmap='plasma',    norm=norm1, edgecolors='black', linewidths=0.4, zorder=10)
         cv = ax2.scatter(x1, y1, s=23, c=age,       cmap='inferno_r', norm=norm2, edgecolors='black', linewidths=0.4, zorder=10)
                 
         # store DP and stress scaling

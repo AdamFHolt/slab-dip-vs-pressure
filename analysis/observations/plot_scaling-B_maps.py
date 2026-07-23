@@ -139,7 +139,7 @@ for i in range(len(segment_data)):
 
 cs_bar = plt.colorbar(cs, ax=ax1, extend='max', shrink=0.5, pad=0.05)
 cs_bar.set_ticks([0, 5, 10, 15])
-cs_bar.ax.set_title(r'$(\eta H |d\theta/ds|\, v_c)/L_\mathrm{eff}$  [MPa]', fontsize=10, pad=8)
+cs_bar.ax.set_title(r'$(\eta H |K|\, v_c)/L_\mathrm{eff}$  [MPa]', fontsize=10, pad=8)
 cb_bar = plt.colorbar(cb, ax=ax2, extend='min', shrink=0.5, pad=0.05)
 cb_bar.set_ticks([30, 40, 50, 60, 70, 80])
 cb_bar.ax.set_title(r'$B$  [MPa]', fontsize=10, pad=8)

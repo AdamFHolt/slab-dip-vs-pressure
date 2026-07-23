@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.basemap import Basemap, shiftgrid
 import matplotlib.colors as mcolors
+from matplotlib.patches import PathPatch
 import numpy as np
 from netCDF4 import Dataset
 import sys
@@ -56,8 +57,11 @@ ax1 = plt.subplot(G[0, 0:2])
 m1 = Basemap(projection='robin', lon_0=-180, resolution='l',
             llcrnrlat=-80, urcrnrlat=80, ax=ax1)
 m1.drawcoastlines(linewidth=0)
-m1.drawmapboundary(fill_color='white')
-m1.fillcontinents(color='silver', lake_color='silver')
+limb1 = m1.drawmapboundary(fill_color='white')
+for _poly in m1.fillcontinents(color='silver', lake_color='silver'):
+    _poly.set_clip_path(limb1.get_path(), limb1.get_transform())
+ax1.add_patch(PathPatch(limb1.get_path(), transform=limb1.get_transform(),
+                          facecolor='none', edgecolor='black', linewidth=1, zorder=50))
 
 
 # Second subplot
@@ -65,16 +69,22 @@ ax2 = plt.subplot(G[1, 0:2])
 m2 = Basemap(projection='robin', lon_0=-180, resolution='l',
             llcrnrlat=-80, urcrnrlat=80, ax=ax2)
 m2.drawcoastlines(linewidth=0)
-m2.drawmapboundary(fill_color='white')
-m2.fillcontinents(color='silver', lake_color='silver')
+limb2 = m2.drawmapboundary(fill_color='white')
+for _poly in m2.fillcontinents(color='silver', lake_color='silver'):
+    _poly.set_clip_path(limb2.get_path(), limb2.get_transform())
+ax2.add_patch(PathPatch(limb2.get_path(), transform=limb2.get_transform(),
+                          facecolor='none', edgecolor='black', linewidth=1, zorder=50))
 
 # Third subplot (net buoyancy B)
 ax3 = plt.subplot(G[2, 0:2])
 m3 = Basemap(projection='robin', lon_0=-180, resolution='l',
             llcrnrlat=-80, urcrnrlat=80, ax=ax3)
 m3.drawcoastlines(linewidth=0)
-m3.drawmapboundary(fill_color='white')
-m3.fillcontinents(color='silver', lake_color='silver')
+limb3 = m3.drawmapboundary(fill_color='white')
+for _poly in m3.fillcontinents(color='silver', lake_color='silver'):
+    _poly.set_clip_path(limb3.get_path(), limb3.get_transform())
+ax3.add_patch(PathPatch(limb3.get_path(), transform=limb3.get_transform(),
+                          facecolor='none', edgecolor='black', linewidth=1, zorder=50))
 
 #------------------------------------------------
 # ------ plot slab contours ---------------------

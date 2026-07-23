@@ -3,8 +3,11 @@
 # H, curvature, vc maps
 python3 plot_H-curvature-vc_maps.py
 
-# dip, age, and net-buoyancy B maps (maps_dip-age-B)
+# dip, age maps
 python3 plot_dip-age_maps.py
+
+# Lambda breakdown: stress scaling (numerator) and B (denominator) maps
+python3 plot_scaling-B_maps.py
 
 # parameter exploration
 python3 plot_param_exploration.py

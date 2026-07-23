@@ -124,7 +124,7 @@ segment_data = np.array(data, dtype=float)
 # ------------------------------------------------
 DPmin, DPmax = 10, 60
 norm1 = mcolors.Normalize(vmin=DPmin, vmax=DPmax)
-norm2 = mcolors.LogNorm(vmin=1e-2, vmax=1)  # Lambda, log scale
+norm2 = mcolors.LogNorm(vmin=0.02, vmax=0.5)  # Lambda, log scale
 DP_array = []
 min_dp=1e9
 max_dp=0
@@ -164,7 +164,7 @@ for i in range(len(segment_data)):
             edgecolor = 'black'
             edgethick = 0.35
             zord = 11
-        ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.oslo_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
+        ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.navia_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
         # compute/plot DP ------------------------
         if not np.isnan(dip_deep):
@@ -198,7 +198,8 @@ cp_bar = plt.colorbar(cp, ax=ax1, extend='max', shrink=0.5, pad=0.05)
 cp_bar.set_ticks([10, 20, 30, 40, 50, 60])
 cp_bar.ax.set_title(r'$\Delta P$  [MPa]', fontsize=10, pad=8)
 ck_bar = plt.colorbar(ck, ax=ax2, extend='both', shrink=0.5, pad=0.05)
-ck_bar.set_ticks([1e-2, 1e-1, 1])
+ck_bar.set_ticks([0.02, 0.05, 0.1, 0.2, 0.5])
+ck_bar.set_ticklabels(['0.02', '0.05', '0.1', '0.2', '0.5'])
 ck_bar.ax.set_title(r'$\Lambda$', fontsize=10, pad=8)
 
 # ------------------------------------------------

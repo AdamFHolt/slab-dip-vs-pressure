@@ -56,7 +56,7 @@ python $script $m3 $t3 $x3 &
 python $script $m4 $t4 $x4 &
 python $script $m5 $t5 $x5 &
 python $script $m6 $t6 $x6 &
-python $script $m7 $t7 $x7 &
+python $script $m7 $t7 $x7 cbar &
 python $script $m8 $t8 $x8 &
 python $script $m9 $t9 $x9 &
 python $script $m10 $t10 $x10 &

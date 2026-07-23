@@ -17,6 +17,7 @@ matplotlib.use('Agg')
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from cmcrameri import cm as cmc
 from scipy.interpolate import griddata
 from matplotlib.gridspec import GridSpec
 import sys, os
@@ -55,6 +56,7 @@ if len(sys.argv) < 4:
 model_name = str(sys.argv[1])
 time = int(sys.argv[2])
 x_center_km = float(sys.argv[3])  # NEW: center of zoom window
+draw_cbar = len(sys.argv) > 4 and sys.argv[4] == 'cbar'  # colorbar only if requested
 
 # --------------------------- analysis depths ---------------------------
 analysis_depth1 = 250e3
@@ -236,9 +238,9 @@ visc_plot = ax1.contourf(
     X_low_z/1.e3,
     (ymax - Y_low_z)/1.e3,
     np.log10(visc_z),
-    cmap=cm.get_cmap('hot_r'),
-    levels=np.linspace(20, 25, 501),
-    extend='max'
+    cmap=cmc.lajolla_r,
+    levels=np.linspace(21.5, 24, 501),
+    extend='both'
 )
 
 # flow vectors
@@ -253,15 +255,22 @@ ax1.streamplot(
     density=1.2
 )
 
-# # colorbar (tight to the right)
-# cbar = plt.colorbar(
-#     visc_plot,
-#     cax=fig.add_axes([0.88, 0.18, 0.03, 0.64]),
-#     ticks=[20, 21, 22, 23, 24, 25],
-#     ticklocation='right'
-# )
-# cbar.ax.tick_params(axis='y', labelsize=5.5, pad=1,
-#                     left=False, labelleft=False, right=True, labelright=True)
+# colorbar (tight to the right); separate mappable so only the max arrow shows
+# (the field itself needs extend='both' to fill the sub-21.5 mantle)
+if draw_cbar:
+    cbar_sm = plt.cm.ScalarMappable(
+        norm=matplotlib.colors.Normalize(vmin=21.5, vmax=24),
+        cmap=cmc.lajolla_r
+    )
+    cbar = plt.colorbar(
+        cbar_sm,
+        cax=fig.add_axes([0.88, 0.18, 0.03, 0.64]),
+        ticks=[22, 23, 24],
+        ticklocation='right',
+        extend='max'
+    )
+    cbar.ax.tick_params(axis='y', labelsize=5.5, pad=1,
+                        left=False, labelleft=False, right=True, labelright=True)
 
 # axis properties: zoom box
 ax1.set_xlim([x0_km, x1_km])

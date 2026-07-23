@@ -266,12 +266,12 @@ plate_thick_vals_km = plate_thick_vals / 1e3
 # Create the subplot (ax3) for the colored grid.
 ax3 = plt.subplot(G[0, 2])
 
-# filled background shares the DP map's color scale (plasma_r, 10-60 MPa)
-ax3.contourf(T_vals, plate_thick_vals_km, DPmean_thresh_grid,
-             levels=np.linspace(DPmin, DPmax, 251), cmap='plasma_r', norm=norm1)
+# unlabeled light intermediate contours (odd MPa values)
+ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid,
+            levels=np.arange(21, 41, 2), colors='lightgray', linewidths=0.5)
 contour_levels1 = np.arange(20, 40+2, 2)
 contours1 = ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid,
-                        levels=contour_levels1, colors='white', linewidths=0.9)
+                        levels=contour_levels1, colors='black', linewidths=0.9)
 # one label per line, at the midpoint of its longest VISIBLE portion
 xlim3, ylim3 = (1250, 1450), (80, 135)
 pad_x = 0.04 * (xlim3[1] - xlim3[0])
@@ -296,7 +296,7 @@ for segs in contours1.allsegs:
 ax3.clabel(contours1, inline=True, inline_spacing=2, fontsize=8, fmt='%d', manual=label_pts)
 
 # plot paramters of the map
-ax3.plot(Tm, plate_thick/1e3, marker='*', color='black', markersize=11,
+ax3.plot(Tm, plate_thick/1e3, marker='*', color='black', markersize=13,
          markeredgecolor='white', markeredgewidth=0.7)
 
 # Set axis labels and ticks.

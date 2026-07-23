@@ -12,8 +12,9 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending
+from functions import make_strictly_ascending, compute_B_pl
 from functions import load_data_file
+from cmcrameri import cm as cmc
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
 myriad_pro = fm.FontProperties(fname=font_path)
@@ -34,14 +35,21 @@ mpl.rcParams['ytick.minor.size'] = 1.25
 
 
 
-plotname=''.join(['plots/maps_dip-age.png'])
-plotname_pdf=''.join(['plots/maps_dip-age.pdf'])
+plotname=''.join(['plots/maps_dip-age-B.png'])
+plotname_pdf=''.join(['plots/maps_dip-age-B.pdf'])
+
+# reference thermal parameters (as in plot_final_just-maps.py) for B
+Tm = 1333.0           # degC
+diffusivity = 8.044e-7  # m^2/s
+alpha = 3.28e-5       # 1/K
+plate_thick = 88e3    # m
+crust_thick = 7e3     # m
 
 # ------------------------------------------------
 # --- Set up the map ---
 # ------------------------------------------------
-fig = plt.figure(figsize=(8,6))
-G = gridspec.GridSpec(2,3)
+fig = plt.figure(figsize=(8,9))
+G = gridspec.GridSpec(3,3)
 
 # First subplot
 ax1 = plt.subplot(G[0, 0:2])
@@ -59,6 +67,14 @@ m2 = Basemap(projection='robin', lon_0=-180, resolution='l',
 m2.drawcoastlines(linewidth=0)
 m2.drawmapboundary(fill_color='white')
 m2.fillcontinents(color='silver', lake_color='silver')
+
+# Third subplot (net buoyancy B)
+ax3 = plt.subplot(G[2, 0:2])
+m3 = Basemap(projection='robin', lon_0=-180, resolution='l',
+            llcrnrlat=-80, urcrnrlat=80, ax=ax3)
+m3.drawcoastlines(linewidth=0)
+m3.drawmapboundary(fill_color='white')
+m3.fillcontinents(color='silver', lake_color='silver')
 
 #------------------------------------------------
 # ------ plot slab contours ---------------------
@@ -90,6 +106,9 @@ for grd_file in slab_files:
     x2d2, y2d2 = m2(lon2d, lat2d)
     ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
 
+    x2d3, y2d3 = m3(lon2d, lat2d)
+    ax3.contour(x2d3, y2d3, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+
 
 # ------------------------------------------------
 # -------- Read in the segment data --------------
@@ -106,6 +125,8 @@ vminDip, vmaxDip = 25, 90
 norm1 = mcolors.Normalize(vmin=vminDip, vmax=vmaxDip)
 vminAge, vmaxAge = 0, 200
 norm2 = mcolors.Normalize(vmin=vminAge, vmax=vmaxAge)
+vminB, vmaxB = 30, 80
+norm3 = mcolors.Normalize(vmin=vminB, vmax=vmaxB)
 DP_array = []
 for i in range(len(segment_data)):
 
@@ -131,6 +152,10 @@ for i in range(len(segment_data)):
         x1, y1 = m1(lon_center, lat_center)
         ck = ax1.scatter(x1, y1, s=23, c=dip_shall, cmap='BrBG',      norm=norm1, edgecolors='black', linewidths=0.4, zorder=10)
         cv = ax2.scatter(x1, y1, s=23, c=age,       cmap='inferno_r', norm=norm2, edgecolors='black', linewidths=0.4, zorder=10)
+
+        # net buoyancy B = Drho*g*H (no cos(dip)); Lambda denominator
+        B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)  # MPa
+        cb = ax3.scatter(x1, y1, s=23, c=B_seg, cmap=cmc.batlow_r, norm=norm3, edgecolors='black', linewidths=0.4, zorder=10)
                 
         # store DP and stress scaling
         DP_array.append((0, np.abs(K)))
@@ -140,6 +165,8 @@ DP_array = np.array(DP_array)
 ck_bar = plt.colorbar(ck, ax=ax1, label=r'$\theta$  [$\degree$]',  shrink=0.5, pad=0.05)
 ck_bar.set_ticks([30, 40, 50, 60, 70, 80, 90])
 cv_bar = plt.colorbar(cv, ax=ax2, label=r'age  [Ma]',  shrink=0.5, pad=0.05)
+cb_bar = plt.colorbar(cb, ax=ax3, label=r'$B$  [MPa]', extend='min', shrink=0.5, pad=0.05)
+cb_bar.set_ticks([30, 40, 50, 60, 70, 80])
 
 # ------------------------------------------------
 # --- Plot plate boundaries ---
@@ -170,9 +197,12 @@ for seg in boundaries:
         m1.plot(*m1(lons2, lats2), color=color, linewidth=lw)
         m2.plot(*m2(lons1, lats1), color=color, linewidth=lw)
         m2.plot(*m2(lons2, lats2), color=color, linewidth=lw)
+        m3.plot(*m3(lons1, lats1), color=color, linewidth=lw)
+        m3.plot(*m3(lons2, lats2), color=color, linewidth=lw)
     else:
         m1.plot(x, y, color=color, linewidth=lw)
         m2.plot(x, y, color=color, linewidth=lw)
+        m3.plot(x, y, color=color, linewidth=lw)
 
 # ------------------------------------------------
 

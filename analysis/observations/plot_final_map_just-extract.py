@@ -12,7 +12,7 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff
+from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff, compute_B_pl
 from functions import load_data_file, stats_data_file, stats_DP
 
 
@@ -89,8 +89,12 @@ for i in range(len(segment_data)):
             else:
                 DP = compute_DP_pl(age, dip_shall, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
                 
-        # store DP and stress scaling
-        DP_array.append((DP, np.abs(stress_scaling)))
+        # compute per-segment buoyancy B = Drho*g*H (no cos(dip)) and Lambda
+        B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)
+        Lambda = np.abs(stress_scaling) / B_seg
+
+        # store DP, stress scaling, and Lambda
+        DP_array.append((DP, np.abs(stress_scaling), Lambda))
 
 DP_array = np.array(DP_array)
 np.savetxt(textname, DP_array, delimiter=',', fmt='%f')

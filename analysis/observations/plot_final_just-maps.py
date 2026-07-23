@@ -12,8 +12,9 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff
+from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff, compute_B_pl
 from functions import load_data_file, stats_data_file, stats_DP
+from cmcrameri import cm as cmc
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
 myriad_pro = fm.FontProperties(fname=font_path)
@@ -31,7 +32,7 @@ mpl.rcParams['xtick.major.size'] = 2.5
 mpl.rcParams['ytick.major.size'] = 2.5
 mpl.rcParams['xtick.minor.size'] = 1.25
 mpl.rcParams['ytick.minor.size'] = 1.25
-scaling_thresh = 5  # MPa, threshold for scaling parameter
+lambda_thresh = 0.1  # threshold for nondimensional scaling parameter Lambda
 
 
 # constants
@@ -115,9 +116,8 @@ segment_data = np.array(data, dtype=float)
 # ---- compute and plot DP and K vc eta ----------
 # ------------------------------------------------
 DPmin, DPmax = 10, 60
-vminK, vmaxK = 0, 15
 norm1 = mcolors.Normalize(vmin=DPmin, vmax=DPmax)
-norm2 = mcolors.Normalize(vmin=vminK, vmax=vmaxK)
+norm2 = mcolors.LogNorm(vmin=1e-2, vmax=1)  # Lambda, log scale
 DP_array = []
 min_dp=1e9
 max_dp=0
@@ -143,19 +143,21 @@ for i in range(len(segment_data)):
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot ηHKvc/L_eff -------------------
+        # compute/plot Lambda = (ηH|dθ/ds|vc)/(L_eff B) ---
         H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
         stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.497e6 * 1e-6  # MPa
+        B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)  # MPa
+        Lambda = np.abs(stress_scaling) / B_seg
         x2, y2 = m2(lon_center, lat_center)
-        if np.abs(stress_scaling) > scaling_thresh:
-            edgecolor = 'gray'
-            edgethick = 0
+        if Lambda > lambda_thresh:
+            edgecolor = 'lightgray'
+            edgethick = 0.35
             zord = 10
         else:
             edgecolor = 'black'
             edgethick = 0.35
             zord = 11
-        ck = ax2.scatter(x2, y2, s=23, c=np.abs(stress_scaling), cmap='BrBG', norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
+        ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.oslo_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
         # compute/plot DP ------------------------
         if not np.isnan(dip_deep):
@@ -169,15 +171,29 @@ for i in range(len(segment_data)):
             max_dp=DP
         cp = ax1.scatter(x1, y1, s=23, c=DP, cmap='plasma_r', norm=norm1, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
-        # store DP and stress scaling
-        DP_array.append((DP, np.abs(stress_scaling)))
+        # store DP, stress scaling, and Lambda
+        DP_array.append((DP, np.abs(stress_scaling), Lambda))
 
 
 DP_array = np.array(DP_array)
 
-cp_bar = plt.colorbar(cp, ax=ax1, label=r'$\Delta P$   [MPa]', extend='max', shrink=0.5, pad=0.05)
+# legend: black outline marks qualifying segments (Lambda < threshold)
+from matplotlib.lines import Line2D
+qual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
+                     markerfacecolor='white', markeredgecolor='black', markeredgewidth=0.6,
+                     label=r'$\Lambda$ < 0.1')
+nonqual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
+                        markerfacecolor='white', markeredgecolor='lightgray', markeredgewidth=0.6,
+                        label=r'$\Lambda$ $\geq$ 0.1')
+ax1.legend(handles=[qual_handle, nonqual_handle], loc='upper left', bbox_to_anchor=(0.02, 0.0),
+           ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
+
+cp_bar = plt.colorbar(cp, ax=ax1, extend='max', shrink=0.5, pad=0.05)
 cp_bar.set_ticks([10, 20, 30, 40, 50, 60])
-ck_bar = plt.colorbar(ck, ax=ax2, label=r'($\eta H K V_{C}$)/$L_\mathrm{eff}$  [MPa]', extend='max', shrink=0.5, pad=0.05)
+cp_bar.ax.set_title(r'$\Delta P$  [MPa]', fontsize=10, pad=8)
+ck_bar = plt.colorbar(ck, ax=ax2, extend='both', shrink=0.5, pad=0.05)
+ck_bar.set_ticks([1e-2, 1e-1, 1])
+ck_bar.ax.set_title(r'$\Lambda$', fontsize=10, pad=8)
 
 # ------------------------------------------------
 # --- Plot plate boundaries ---

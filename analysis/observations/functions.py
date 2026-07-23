@@ -142,27 +142,36 @@ def load_data_file(slab_visc,alpha,Tm,diffusivity,plate_thick,crust_thick,coolin
     return array
 
 
-def stats_data_file(array,thresh):
-
+def stats_data_file(array,thresh,col=2):
+    """
+    Stats on the selection column of an extraction file.
+    Columns: 0 = DP (MPa), 1 = scaling (MPa), 2 = Lambda (nondimensional).
+    Default col=2 selects on Lambda (thresh e.g. 0.1).
+    """
     sum_tot = 0;  n_tot = 0; n_perc = 0
 
     for i in range(len(array)):
 
-        if not np.isnan(array[i,1]):
-            sum_tot += array[i,1]
+        if not np.isnan(array[i,col]):
+            sum_tot += array[i,col]
             n_tot += 1
         
-        if np.abs(array[i,1]) < thresh:
+        if np.abs(array[i,col]) < thresh:
             n_perc += 1
     
     perc = (n_perc/n_tot) *100
     mean = sum_tot/n_tot
-    std  = np.std(array[:,1])
+    std  = np.std(array[:,col])
 
     return mean, std, perc
 
 
-def stats_DP(array,thresh):
+def stats_DP(array,thresh,col=2):
+    """
+    Mean DP over qualifying segments (selection column < thresh) and over all.
+    Columns: 0 = DP (MPa), 1 = scaling (MPa), 2 = Lambda (nondimensional).
+    Default col=2 selects on Lambda (thresh e.g. 0.1).
+    """
 
     DPtot_all = 0; DPtot_thresh = 0; 
     n_all = 0; n_thresh = 0
@@ -170,12 +179,12 @@ def stats_DP(array,thresh):
     for i in range(len(array)):
 
         DP = array[i,0]
-        scaling = array[i,1]
+        selval = array[i,col]
 
         DPtot_all += DP
         n_all += 1
 
-        if np.abs(scaling) < thresh:
+        if np.abs(selval) < thresh:
             DPtot_thresh += DP
             n_thresh += 1
     
@@ -252,6 +261,28 @@ def compute_H_eff(age, Tm, k, plate_thick, frac=0.9):
     T0, T1 = T_plate[i - 1], T_plate[i]
     H_eff = z0 + (T_target - T0) / (T1 - T0) * (z1 - z0)
     return H_eff
+
+
+def compute_B_pl(age, Tm, k, rho0, alpha, crust_density, crust_thick, plate_thick):
+    """
+    Depth-integrated slab buoyancy B = Delta-rho*g*H (MPa) from the plate
+    cooling profile (same integration as compute_DP_pl but without cos(dip)).
+    """
+    g=9.81		# m/s2
+    age = age * 1e6 * 365 * 24 * 60 * 60 # seconds
+
+    z=np.arange(0,plate_thick/1e3,0.1)*1e3 # m
+
+    T_term1 = Tm*(z/plate_thick)
+    T_term2 = 0
+    for n in range(1,10):
+        T_term2 += ((2*Tm)/(n*np.pi))*np.sin(n*np.pi*z/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age)/(plate_thick**2))
+    T_plate = T_term1 + T_term2
+
+    B_plate= (Tm - T_plate) * rho0 * alpha # rho - rho0, kg/m3
+    B_plate_int=scipy.integrate.simpson(y=B_plate, x=z) + (crust_thick * (crust_density-rho0)) # kg/m2
+
+    return B_plate_int*g*1e-6 # MPa
 
 
 def compute_DP_pl(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick, plate_thick):

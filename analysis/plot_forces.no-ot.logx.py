@@ -228,7 +228,7 @@ ax.set_xscale('log')
 plt.ylim(-10,  17.5);
 plt.xlim(1e-2, 1e2);
 plt.ylabel(r'$-(\Delta P - B_{slab}$)   [MPa]')
-plt.xlabel(r'($\eta H |K| V_{C}$)/$L_{eff}$   [MPa]')
+plt.xlabel(r'($\eta H |K| v_{c}$)/$L_{eff}$   [MPa]')
 secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
 secax.set_xlabel(r'$\Lambda$')
 secax.set_xticks([1e-3, 1e-2, 1e-1, 1e0])
@@ -271,7 +271,7 @@ plt.xlim(1e-2, 1e2);
 ax.set_xticks([1e-2, 1e-1, 1e0, 1e1, 1e2])
 
 plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
-plt.xlabel(r'($\eta H |K| V_{C}$)/$L_{eff}$   [MPa]')
+plt.xlabel(r'($\eta H |K| v_{c}$)/$L_{eff}$   [MPa]')
 secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
 secax.set_xlabel(r'$\Lambda$')
 secax.set_xticks([1e-3, 1e-2, 1e-1, 1e0])

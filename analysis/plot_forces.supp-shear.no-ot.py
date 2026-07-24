@@ -221,7 +221,7 @@ plot_forcecomponent_dqds_vsVc_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 plt.ylim(-10,  17.5); 
 plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
 plt.xlim(1,  4); 
-plt.xlabel(r'$V_{C}$    [cm/yr]')
+plt.xlabel(r'$v_{c}$    [cm/yr]')
 ax.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))
 plt.grid(True, which='both', color='lightgray', linestyle='--', linewidth=0.5, zorder=0)

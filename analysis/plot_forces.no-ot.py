@@ -221,7 +221,7 @@ plot_forcecomponent_dpmisfit_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 plt.ylim(-10,  17.5);
 plt.xlim(-5, 40);
 plt.ylabel(r'$-(\Delta P - B_{slab}$)   [MPa]')
-plt.xlabel(r'($\eta H K V_{C}$)/$L_{eff}$   [MPa]')
+plt.xlabel(r'($\eta H K v_{c}$)/$L_{eff}$   [MPa]')
 secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
 secax.set_xlabel(r'$\Lambda$')
 secax.set_xticks([0, 0.2, 0.4, 0.6, 0.8])
@@ -266,7 +266,7 @@ plt.xlim(-5, 40);
 ax.set_xticks([0, 10, 20, 30, 40])
 
 plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
-plt.xlabel(r'($\eta H K V_{C}$)/$L_{eff}$   [MPa]')
+plt.xlabel(r'($\eta H K v_{c}$)/$L_{eff}$   [MPa]')
 secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
 secax.set_xlabel(r'$\Lambda$')
 secax.set_xticks([0, 0.2, 0.4, 0.6, 0.8])

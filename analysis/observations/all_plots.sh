@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Log full run output (incl. print_stats summary) to all_plots_run.log (gitignored)
+exec > >(tee all_plots_run.log) 2>&1
+
 # H, curvature, vc maps
 python3 plot_H-curvature-vc_maps.py
 

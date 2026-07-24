@@ -1,0 +1,196 @@
+set Dimension                              = 2
+set Use years in output instead of seconds = true
+set End time                               = 60e6
+set Output directory                       = outputs/2D_compositional_subd_lower-res_new_FixedSP_375plates
+set Resume computation			   = auto
+
+#-------- solver stuff ------------
+# non-linear stuff
+set Nonlinear solver scheme                = single Advection, iterated Stokes
+set Nonlinear solver tolerance             = 1.0e-4
+set Max nonlinear iterations               = 300
+set CFL number                             = 0.5
+
+# linear solver stuff 
+subsection Solver parameters
+  subsection Stokes solver parameters
+    set Linear solver tolerance  		= 1.0e-5
+    set Number of cheap Stokes solver steps     = 200
+  end
+  set Temperature solver tolerance        = 1e-11
+  set Composition solver tolerance        = 1e-11
+end
+
+# discretization
+subsection Discretization
+  set Temperature polynomial degree       = 1
+  set Use discontinuous composition discretization = true
+  subsection Stabilization parameters
+    set Use limiter for discontinuous composition solution = true
+    set Global composition maximum = 1, 1, 1
+    set Global composition minimum = 0, 0, 0
+  end
+end
+
+#------ domain and meshing -----------
+subsection Geometry model
+  set Model name = box
+
+  subsection Box
+    set X repetitions = 5
+    set X extent = 5800e3
+    set Y extent = 1450e3
+  end
+end
+
+subsection Mesh refinement
+
+  set Initial global refinement                   = 5
+  set Initial adaptive refinement                 = 4
+  set Time steps between mesh refinement          = 1
+  set Refinement fraction                         = 0.5
+  set Coarsening fraction                         = 0.2
+  set Strategy                                    = viscosity, composition threshold, minimum refinement function
+  set Refinement criteria scaling factors         = 1, 1, 1
+  set Refinement criteria merge operation      = max
+  set Run postprocessors on initial refinement    = false 
+
+  subsection Composition threshold
+    set Compositional field thresholds            = 0.01, 0.01, 0.01
+  end
+  
+  subsection Minimum refinement function
+    set Coordinate system   = cartesian
+    set Variable names      = x, y
+    set Function constants  = yd=1450e3
+    set Function expression = if(y>(yd-670.e3), 7, 1)
+  end
+
+end
+#-------------------------------------
+
+#---- initial temp and comp fields ---
+subsection Initial temperature model
+  set Model name = ascii data
+   
+   subsection Ascii data model
+     set Data directory = /work2/04714/adamholt/stampede2/aspect_work/subd_models_new/compositional/text_files/
+     set Data file name = temp_constant.txt 
+   end
+end
+
+subsection Compositional fields
+   set Number of fields = 3
+   set Names of fields  = crust, ulith, llith
+end
+
+subsection Initial composition model
+  set Model name = ascii data
+   subsection Ascii data model
+     set Data directory = /work2/04714/adamholt/stampede2/aspect_work/subd_models_new/compositional/text_files/
+     set Data file name =  comp_lith-and-crust_FixedSP.txt
+   end
+end
+#-------------------------------------
+
+#------- boundary conditions -------------
+subsection Boundary temperature model
+  set Fixed temperature boundary indicators = left, right, bottom, top 
+  set List of model names = box
+  subsection Box
+    set Bottom temperature = 1573
+    set Top temperature    = 1573
+    set Left temperature   = 1573
+    set Right temperature  = 1573
+  end
+end
+subsection Boundary velocity model
+  set Tangential velocity boundary indicators = left, right, bottom, top
+end
+#-------------------------------------
+
+#---------- rheology -----------------
+subsection Material model
+  set Model name = visco plastic
+
+  subsection Visco Plastic 
+
+    # reference stuff
+    set Reference temperature =   1573
+    
+    # Set up phase transitions so that crust becomes background material past 100 km, and
+    # dislocation becomes inactive in the lower mantle for all fields.
+    set Phase transition depths           =   background: 660e3,   crust: 100e3|660e3, ulith: 660e3,     llith: 660e3
+    set Phase transition widths           =   background: 1e3,     crust: 1e3|1e3,     ulith: 1e3,       llith: 1e3
+    set Phase transition temperatures     =   background: 1573,    crust: 1573|1573,   ulith: 1573,      llith: 1573
+    set Phase transition Clapeyron slopes =   background: 0,       crust: 0|0,         ulith: 0,         llith: 0
+    
+    # Viscosity cut offs
+    set Minimum viscosity   =   background: 2.49e20|0.99e22, crust: 1.99e20|2.49e20|0.99e22, ulith:  2.49e20|2.499e24, llith:  2.49e20|3.749e24
+    set Maximum viscosity   =   background: 2.51e20|1.01e22, crust: 2.01e20|2.51e20|1.01e22, ulith: 9.376e22|2.501e24, llith: 9.376e22|3.751e24
+
+    # Thermal parameters 
+    set Thermal diffusivities  =   1.e-20
+    
+    # Densities 
+    set Densities              =   background: 3300|3300,   crust: 3300|3300|3300, ulith: 3350|3350,  llith: 3350|3350
+    
+    set Viscous flow law            =   diffusion 
+    set Viscosity averaging scheme  =   maximum composition
+
+    # diffusion creep (lm/um viscosity = 20)
+    set Prefactors for diffusion creep = background: 2.0e-21|5.0e-23, crust: 2.0e-21|2.0e-21|5.0e-23, ulith: 5.33e-24|1.33e-25, llith: 5.33e-24|1.33e-25
+    set Stress exponents for diffusion creep      = 1
+    set Grain size exponents for diffusion creep  = 0
+    set Activation energies for diffusion creep   = 0
+    set Activation volumes for diffusion creep    = 0
+    
+    # Plasticity parameters using drucker-prager
+    set Cohesions                   =   20.e6
+    # Friction angle set to mimic byerlee's law with a coefficient of friction of 0.6 and a prefactor of 0.15
+    set Angles of internal friction =   5    
+    set Maximum yield stress        = 0.5e9
+  end
+end
+#-------------------------------------
+
+
+# --------- other stuff -------------
+set Pressure normalization            = surface
+set Surface pressure                  = 0
+set Adiabatic surface temperature     = 1573
+
+subsection Gravity model
+  set Model name = vertical
+
+  subsection Vertical
+    set Magnitude = 9.81
+  end
+end
+
+subsection Formulation
+  set Formulation = Boussinesq approximation
+end
+#-------------------------------------
+
+#--------- postprocessing ------------
+subsection Postprocess
+  set List of postprocessors = visualization
+
+  subsection Visualization
+    set List of output variables = viscosity, strain rate, nonadiabatic pressure, shear stress, stress, density
+    set Output format                 = vtu
+    set Time steps between graphical output = 50
+    set Interpolate output = true
+    set Point-wise stress and strain = true
+    set Number of grouped files = 1
+  end
+end
+#-------------------------------------
+
+#--------- checkpointing -------------
+subsection Checkpointing
+  set Steps between checkpoint = 25
+end
+#-------------------------------------
+

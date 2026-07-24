@@ -14,7 +14,8 @@ input_geometries/outputs/
 input_geometries/test_plots/
 
 # Large simulation outputs and derived analysis artifacts
-analysis/raw_outputs/
+analysis/raw_outputs/*
+!analysis/raw_outputs/*.prm
 analysis/csv_outputs/
 analysis/plots/
 analysis/text_files/

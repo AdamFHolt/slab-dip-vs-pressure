@@ -7,7 +7,7 @@ Tools and data products for 2D compositional subduction experiments (ASPECT).
 - `input_geometries/`: Python generators for initial composition and temperature fields used by ASPECT input models.
 - `rheology_params/`: Scripts to compute rheological prefactors (diffusion/dislocation style parameter sweeps).
 - `analysis/`: Post-processing workflows for ASPECT outputs, including CSV extraction (`pvpython`) and force/stress/dip/curvature diagnostics. See `analysis/ANALYSIS_QUICKSTART.md`.
-- `analysis/raw_outputs/`: **ASPECT model input files (`.prm`) and raw model outputs.** Each model's input file lives at `analysis/raw_outputs/<model_name>.prm`, alongside its output directory `analysis/raw_outputs/<model_name>/` (each output directory also contains ASPECT's own copy of the input as `original.prm`/`parameters.prm`). Note: this directory is gitignored, so the `.prm` files exist only locally — back them up separately if needed.
+- `analysis/raw_outputs/`: **ASPECT model input files (`.prm`) and raw model outputs.** Each model's input file lives at `analysis/raw_outputs/<model_name>.prm`, alongside its output directory `analysis/raw_outputs/<model_name>/` (each output directory also contains ASPECT's own copy of the input as `original.prm`/`parameters.prm`). The `.prm` input files are tracked in git; the model outputs themselves are gitignored (local only).
 
 ## Typical workflow
 
@@ -20,5 +20,5 @@ Tools and data products for 2D compositional subduction experiments (ASPECT).
 
 ## Notes
 
-- This repository intentionally ignores very large generated outputs (`analysis/raw_outputs`, `analysis/csv_outputs`, plots, and text outputs) so version control tracks the reproducible scripts/configuration only. This means the `.prm` model input files in `analysis/raw_outputs/` are **not** under version control.
+- This repository intentionally ignores very large generated outputs (`analysis/raw_outputs` model directories, `analysis/csv_outputs`, plots, and text outputs) so version control tracks the reproducible scripts/configuration only. The `.prm` model input files in `analysis/raw_outputs/` **are** tracked (they define the manuscript's model suite).
 - Some scripts assume local ParaView (`pvpython`) and scientific Python stack (`numpy`, `scipy`, `matplotlib`).

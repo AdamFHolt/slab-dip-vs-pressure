@@ -60,6 +60,11 @@ CASES = [
     ('2D_compositional_subd_lower-res_new2',                    [24, 26, 29]),
 ]
 
+# `python3 test_curvature_stability.py <model> <t> [<t> ...]` overrides the
+# list above, so the sweep can be run over the whole suite in parallel.
+if len(sys.argv) > 2:
+    CASES = [(sys.argv[1], [int(a) for a in sys.argv[2:]])]
+
 
 def curvature_with_window(llith_points, dips_unsmoothed, window):
     """Replicate the pipeline's K, with the smoothing window parameterised."""

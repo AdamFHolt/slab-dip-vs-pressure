@@ -210,8 +210,8 @@ plot_BvsFullForce_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black
 plot_BvsFullForce_wKthresh_overturned(tmin,strong1_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -251,8 +251,8 @@ plot_BvsFullForce_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black
 plot_BvsFullForce_wKthresh_overturned(tmin,strong2_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -293,8 +293,8 @@ plot_BvsFullForce_wKthresh_overturned(tmin,strong3_fixedOP,curvature_thresh, 'bl
 
 # axis stuff
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -337,8 +337,8 @@ plot_BvsDP_wKthresh(tmin,strong1_fixedSP,curvature_thresh, 'black','black','v',z
 plot_BvsDP_wKthresh_overturned(tmin,strong1_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -377,8 +377,8 @@ plot_BvsDP_wKthresh(tmin,strong2_fixedSP,curvature_thresh, 'black','black','v',z
 plot_BvsDP_wKthresh_overturned(tmin,strong2_fixedOP,curvature_thresh, 'black','^')
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -417,8 +417,8 @@ plot_BvsDP_wKthresh_overturned(tmin,strong3_fixedOP,curvature_thresh, 'black','^
 
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])

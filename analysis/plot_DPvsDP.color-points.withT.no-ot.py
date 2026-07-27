@@ -230,8 +230,8 @@ plot_BvsFullForce_Kcolored_overturned(tmin,strong1_fixedOP,'^',color_map,norm,zo
 
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([-5, 0, 10, 20, 30])
@@ -276,8 +276,8 @@ plot_BvsFullForce_Kcolored(tmin,strong2_fixedSP,'black','v',color_map,norm,zorde
 plot_BvsFullForce_Kcolored_overturned(tmin,strong2_fixedOP,'^',color_map,norm,zorder=2)
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -315,8 +315,8 @@ plot_BvsFullForce_Kcolored_overturned(tmin,strong3_fixedOP,'^',color_map,norm,zo
 
 # axis stuff
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P  +  \sigma_{slab}$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -373,8 +373,8 @@ plot_BvsDP_scalingcolored_overturned(tmin,strong1_fixedOP,'^',color_map2,norm2,m
 
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -423,8 +423,8 @@ plot_BvsDP_scalingcolored_overturned(tmin,strong2_fixedOP,'^',color_map2,norm2,m
 
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])
@@ -463,8 +463,8 @@ plot_BvsDP_scalingcolored_overturned(tmin,strong3_fixedOP,'^',color_map2,norm2,m
 
 
 # axis stuff
-plt.xlim(-3,  30); plt.ylim(-3,  30)
-plt.plot([-3, 30], [-3, 30], color='black', linewidth=1, zorder=2)
+plt.xlim(-3,  33); plt.ylim(-3,  33)
+plt.plot([-3, 33], [-3, 33], color='black', linewidth=1, zorder=2)
 plt.ylabel(r'$\Delta P$   [MPa]')
 plt.xlabel(r'$B_{slab}$   [MPa]')
 ax.set_xticks([ 0, 10, 20, 30])

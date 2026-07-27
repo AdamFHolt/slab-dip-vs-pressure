@@ -1,0 +1,35 @@
+==============================================================================
+EFFECT OF THE CURVATURE-PRESSURE TERM ON FORCE-BALANCE CLOSURE
+misfit = (DP - dQs/ds + K*Qn [+ T]) - Bslab,  timesteps t >= 11
+==============================================================================
+
+--- 250 km ---
+  all             N=258
+     as published : mean +1.071  median +0.773  RMS 1.986  max|.| 14.450 MPa
+     including T  : mean -0.620  median -0.604  RMS 1.085  max|.| 5.266 MPa
+     RMS change -45.3%,  |misfit| reduced for 60% of points,  median |T| = 1.45 MPa
+  non-overturned  N=182
+     as published : mean +0.793  median +0.739  RMS 1.210  max|.| 4.569 MPa
+     including T  : mean -0.440  median -0.449  RMS 1.005  max|.| 5.266 MPa
+     RMS change -16.9%,  |misfit| reduced for 62% of points,  median |T| = 1.24 MPa
+
+--- 300 km ---
+  all             N=263
+     as published : mean -0.200  median -0.355  RMS 1.318  max|.| 12.291 MPa
+     including T  : mean -0.251  median -0.177  RMS 0.786  max|.| 4.435 MPa
+     RMS change -40.3%,  |misfit| reduced for 72% of points,  median |T| = 0.37 MPa
+  non-overturned  N=187
+     as published : mean -0.206  median -0.248  RMS 0.800  max|.| 2.902 MPa
+     including T  : mean -0.087  median -0.068  RMS 0.673  max|.| 4.435 MPa
+     RMS change -15.8%,  |misfit| reduced for 72% of points,  median |T| = 0.32 MPa
+
+--- 350 km ---
+  all             N=271
+     as published : mean -0.816  median -0.863  RMS 1.262  max|.| 3.972 MPa
+     including T  : mean -0.250  median -0.196  RMS 0.661  max|.| 2.742 MPa
+     RMS change -47.6%,  |misfit| reduced for 85% of points,  median |T| = 0.64 MPa
+  non-overturned  N=195
+     as published : mean -0.578  median -0.596  RMS 0.912  max|.| 2.221 MPa
+     including T  : mean -0.117  median -0.064  RMS 0.531  max|.| 1.808 MPa
+     RMS change -41.8%,  |misfit| reduced for 81% of points,  median |T| = 0.54 MPa
+

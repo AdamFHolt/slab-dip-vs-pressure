@@ -49,14 +49,13 @@ sxy_col = 4
 
 # analysis settings, matching many_property-extractions.sh / all_plots.sh
 ymax = 1450.e3
-analysis_depth = 300.e3
 ds = 10.e3          # stand-off from slab surface for P_subslab / P_wedge
 dz = 1.e3           # half-height of the horizontal profile slabs
 profcut = 10.0      # km trimmed from each end of the cross-slab profile
 first_time = 8      # first timestep in the extraction files
 tactual_min = 11    # first timestep used by the paper's figures (tmin = 3)
 
-TXT = 'text_files/TESTB/{model}.z300.0.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
+TXT = 'text_files/TESTB/{model}.z{zkm}.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
 OUTDIR = ANALYSIS + 'text_files/curvature_pressure_term'
 
 # text-file column indices
@@ -67,7 +66,7 @@ DP_IND = 3
 KQN_IND = 17
 
 
-def process_timestep(md, row):
+def process_timestep(md, row, analysis_depth):
     """Return a dict of everything computed for one timestep."""
     dip = row[DIP_IND]
     H = row[H_IND]
@@ -118,9 +117,11 @@ def process_timestep(md, row):
 
 def main():
     model = sys.argv[1]
+    analysis_depth = float(sys.argv[2]) if len(sys.argv) > 2 else 300.e3
+    zkm = '%.1f' % (analysis_depth / 1.e3)
     os.makedirs(OUTDIR, exist_ok=True)
 
-    txt = np.loadtxt(ANALYSIS + TXT.format(model=model))
+    txt = np.loadtxt(ANALYSIS + TXT.format(model=model, zkm=zkm))
     n_rows = txt.shape[0]
 
     out = []
@@ -131,7 +132,7 @@ def main():
             print('%s t=%d: MISSING CSV' % (model, time), flush=True)
             continue
         md = pd.read_csv(csv).to_numpy()
-        r = process_timestep(md, txt[irow, :])
+        r = process_timestep(md, txt[irow, :], analysis_depth)
         del md
 
         out.append([time, r['dip'], r['H'], r['K'], r['H_recon'],
@@ -150,8 +151,8 @@ def main():
     header = ('time dip H K H_recon Pleft Pright DP_recon DP_txt '
               'Pbar_cut Pbar_full Pbar_med bracket_cut bracket_full '
               'bracket_med T_cut T_full T_med KQn prof_span_km')
-    np.savetxt(os.path.join(OUTDIR, model + '.txt'), np.array(out),
-               header=header)
+    np.savetxt(os.path.join(OUTDIR, '%s.z%s.txt' % (model, zkm)),
+               np.array(out), header=header)
 
 
 if __name__ == '__main__':

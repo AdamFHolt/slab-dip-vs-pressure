@@ -8,13 +8,21 @@ T = (H/2) * (dtheta/ds) * (2*Pbar_n - P_subslab - P_wedge)
 Reported against the slab buoyancy per unit slab area, B = drho*g*H, which is
 49.05 MPa in the models (drho = 50 kg/m3, g = 9.81, H = 100 km), the same
 normalization used for Lambda in the manuscript.
+
+Usage:  python3 summarize_curvature_pressure_term.py [analysis_depth_m]
+        (default 300e3, the depth used throughout the manuscript)
 """
 import os
+import sys
 
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 INDIR = os.path.join(HERE, 'text_files', 'curvature_pressure_term')
+
+ANALYSIS_DEPTH = float(sys.argv[1]) if len(sys.argv) > 1 else 300.e3
+ZKM = '%.1f' % (ANALYSIS_DEPTH / 1.e3)
+ZSUF = '.z%s.txt' % ZKM
 
 B_NORM = 50. * 9.81 * 100.e3 * 1e-6   # 49.05 MPa
 
@@ -53,7 +61,7 @@ def stats(x, label, unit=''):
 
 rows, visc, bc, ot = [], [], [], []
 for model, eta, cond, overturned in MODELS:
-    f = os.path.join(INDIR, model + '.txt')
+    f = os.path.join(INDIR, model + ZSUF)
     if not os.path.exists(f):
         print('MISSING: %s' % model)
         continue
@@ -78,7 +86,7 @@ B_actual = 50. * 9.81 * d[:, C['H']] * 1e-6
 
 print('=' * 78)
 print('CURVATURE-PRESSURE TERM  T = (H/2)(dtheta/ds)(2*Pbar_n - P_sub - P_wedge)')
-print('300 km depth, timesteps t >= 11, B = %.2f MPa' % B_NORM)
+print('%s km depth, timesteps t >= 11, B = %.2f MPa' % (ZKM, B_NORM))
 print('=' * 78)
 
 print('\nSANITY CHECKS (reconstruction vs archived extraction)')
@@ -138,7 +146,7 @@ print('  %-10s %-9s %-4s %4s %10s %10s %10s %10s'
       % ('eta_prime', 'condition', 'ot', 'N', 'med|T|/B', 'med|T|MPa',
          'med HK/2', 'med|K*Qn|'))
 for model, eta, cond, overturned in MODELS:
-    f = os.path.join(INDIR, model + '.txt')
+    f = os.path.join(INDIR, model + ZSUF)
     if not os.path.exists(f):
         continue
     dd = np.atleast_2d(np.loadtxt(f))

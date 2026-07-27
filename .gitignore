@@ -19,12 +19,13 @@ analysis/raw_outputs/*
 analysis/csv_outputs/
 analysis/plots/
 analysis/text_files/*
-# keep the one-page summary of the curvature-pressure term check (it backs a
-# statement in the manuscript); the per-model/per-timestep files behind it
-# regenerate via many_curvature-pressure-term.sh
+# keep the summaries of the curvature-pressure term check (they back statements
+# in the manuscript); the per-model/per-timestep files behind them regenerate
+# via many_curvature-pressure-term.sh
 !analysis/text_files/curvature_pressure_term/
 analysis/text_files/curvature_pressure_term/*
-!analysis/text_files/curvature_pressure_term/SUMMARY.txt
+!analysis/text_files/curvature_pressure_term/SUMMARY*.txt
+!analysis/text_files/curvature_pressure_term/BALANCE_COMPARISON.txt
 
 # Scratch/history files
 input_geometries/gmt.history

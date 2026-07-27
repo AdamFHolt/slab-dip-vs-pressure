@@ -1,0 +1,75 @@
+==============================================================================
+CURVATURE-PRESSURE TERM  T = (H/2)(dtheta/ds)(2*Pbar_n - P_sub - P_wedge)
+250.0 km depth, timesteps t >= 11, B = 49.05 MPa
+==============================================================================
+
+SANITY CHECKS (reconstruction vs archived extraction)
+  max |H_recon - H|          = 0.000e+00 km
+  max |DP_recon - DP_txt|    = 2.310e-01 MPa
+  cross-slab profile span    = 45.8 to 89.7 km
+
+ALL TIMESTEPS  (N = 258, 15 models)
+  |T| / B                      N=258  median=  0.0295  IQR=[0.0155, 0.0453]  max=  0.2967 
+  |T|                          N=258  median=  1.4453  IQR=[0.7596, 2.2201]  max= 14.5507 MPa
+  (H/2)|dtheta/ds|             N=258  median=  0.0648  IQR=[0.0159, 0.0877]  max=  0.1448 
+  |bracket|                    N=258  median= 34.7963  IQR=[19.3635, 76.2613]  max=163.8187 MPa
+  |K*Qn| (existing term)       N=258  median=  0.5789  IQR=[0.2460, 1.0535]  max=  7.2808 MPa
+    fraction |T|/B > 0.01 :  85.3%
+    fraction |T|/B > 0.05 :  21.7%
+    fraction |T|/B > 0.10 :   4.3%
+    signed T: mean -1.6912 MPa, range -14.5507 to +3.1363 MPa
+
+NON-OVERTURNED ONLY  (N = 182, 11 models)
+  |T| / B                      N=182  median=  0.0252  IQR=[0.0121, 0.0392]  max=  0.1053 
+  |T|                          N=182  median=  1.2353  IQR=[0.5945, 1.9251]  max=  5.1674 MPa
+  (H/2)|dtheta/ds|             N=182  median=  0.0303  IQR=[0.0105, 0.0717]  max=  0.0920 
+  |bracket|                    N=182  median= 50.6525  IQR=[22.4225, 88.2629]  max=163.8187 MPa
+  |K*Qn| (existing term)       N=182  median=  0.5847  IQR=[0.2527, 1.0245]  max=  3.3581 MPa
+    fraction |T|/B > 0.01 :  81.3%
+    fraction |T|/B > 0.05 :  13.2%
+    fraction |T|/B > 0.10 :   0.5%
+    signed T: mean -1.2329 MPa, range -5.1674 to +3.1363 MPa
+
+OVERTURNED ONLY  (N = 76, 4 models)
+  |T| / B                      N= 76  median=  0.0405  IQR=[0.0270, 0.0712]  max=  0.2967 
+  |T|                          N= 76  median=  1.9851  IQR=[1.3235, 3.4938]  max= 14.5507 MPa
+  (H/2)|dtheta/ds|             N= 76  median=  0.0960  IQR=[0.0877, 0.1013]  max=  0.1448 
+  |bracket|                    N= 76  median= 22.3719  IQR=[15.0025, 34.8631]  max=100.4861 MPa
+  |K*Qn| (existing term)       N= 76  median=  0.5759  IQR=[0.2275, 1.1394]  max=  7.2808 MPa
+    fraction |T|/B > 0.01 :  94.7%
+    fraction |T|/B > 0.05 :  42.1%
+    fraction |T|/B > 0.10 :  13.2%
+    signed T: mean -2.7887 MPa, range -14.5507 to +0.1764 MPa
+
+RELATION TO THE RETAINED DEVIATORIC TERM K*Qn
+  Traction continuity across the slab faces plus 2-D incompressibility
+  predicts Pbar_n - P_avg = tau_n, i.e. T should equal K*Qn (making the
+  full curvature contribution 2*K*Qn rather than K*Qn).
+  all timesteps    N=258  median T/(K*Qn) = +1.517  IQR=[+1.431, +2.645]  corr(T, K*Qn) = +0.878
+  non-overturned   N=182  median T/(K*Qn) = +1.493  IQR=[+1.439, +2.021]  corr(T, K*Qn) = +0.951
+
+ROBUSTNESS OF THE INTERIOR AVERAGE (non-overturned)
+  interior cut (10 km trim)    median |T|/B = 0.0252   max |T|/B = 0.1053
+  full profile                 median |T|/B = 0.0252   max |T|/B = 0.1031
+  median instead of mean       median |T|/B = 0.0238   max |T|/B = 0.1021
+  using per-timestep B = drho*g*H_actual (median H = 81.6 km):
+      median |T|/B = 0.0301   max |T|/B = 0.1211
+
+PER-MODEL BREAKDOWN (median values)
+  eta_prime  condition ot      N   med|T|/B  med|T|MPa   med HK/2  med|K*Qn|
+  50         bothfree  no     12     0.0103     0.5073     0.0104     0.3255
+  50         fixedSP   no     12     0.0051     0.2497     0.0047     0.1707
+  50         fixedOP   no     12     0.0103     0.5063     0.0103     0.3308
+  250        bothfree  no     17     0.0345     1.6907     0.0751     0.8216
+  250        fixedSP   no     19     0.0179     0.8791     0.0114     0.6124
+  250        fixedOP   no     17     0.0315     1.5443     0.0868     0.5326
+  375        bothfree  no     19     0.0249     1.2208     0.0743     0.3564
+  375        fixedSP   no     16     0.0324     1.5910     0.0174     1.1074
+  375        fixedOP   yes    21     0.0321     1.5751     0.0928     0.6629
+  500        bothfree  no     20     0.0221     1.0859     0.0690     0.2966
+  500        fixedSP   no     19     0.0335     1.6410     0.0154     1.1340
+  500        fixedOP   yes    17     0.0453     2.2227     0.0950     0.5662
+  1000       bothfree  yes    19     0.0310     1.5211     0.0717     0.2258
+  1000       fixedSP   no     19     0.0625     3.0648     0.0192     2.0531
+  1000       fixedOP   yes    19     0.0708     3.4741     0.1015     0.7599
+

@@ -13,7 +13,7 @@ script reconstructs it from the archived csv_outputs.  No models are re-run.
 
 Everything else is taken straight from the existing analysis:
   - dip, curvature K, slab-normal thickness H are read from the same
-    text_files/TESTB/*.z300.0... files the paper's figures use,
+    text_files/extracted_archive/*.z300.0... files the paper's figures use,
   - P_subslab and P_wedge are re-extracted with get_nearslab_stresses using the
     same ds = 10 km stand-off, so all three pressures share one gauge (the
     combination 2*Pbar_n - P_subslab - P_wedge is gauge invariant, but the
@@ -59,7 +59,7 @@ first_time = 8      # first timestep in the extraction files
 # earlier t >= 11 behaviour.
 start_time = 8
 
-TXT = 'text_files/TESTB/{model}.z{zkm}.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
+TXT = 'text_files/extracted_archive/{model}.z{zkm}.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
 OUTDIR = ANALYSIS + 'text_files/curvature_pressure_term'
 
 # text-file column indices

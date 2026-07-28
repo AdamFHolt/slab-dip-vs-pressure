@@ -24,7 +24,7 @@ Overturned (rollover) slab models are tagged and shown as hollow symbols.
 L_eff calibration uses non-overturned models only.
 
 Usage (run from analysis/):
-    python3 plot_dqds_diagnostic.py [text_files/TESTC/*.txt ...]
+    python3 plot_dqds_diagnostic.py [text_files/extracted_Lscales/*.txt ...]
 
 Outputs to:  plots/tmp/
 """
@@ -441,7 +441,7 @@ def make_figure_prediction(records, out_dir):
 
 def main():
     args  = [a for a in sys.argv[1:] if not a.startswith('--')]
-    files = args if args else sorted(glob.glob('text_files/TESTC/*.txt'))
+    files = args if args else sorted(glob.glob('text_files/extracted_Lscales/*.txt'))
     if not files:
         print("No input files. Run from analysis/ or pass file paths.")
         sys.exit(1)

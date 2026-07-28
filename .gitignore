@@ -22,6 +22,7 @@ analysis/text_files/*
 # keep the summaries of the curvature-pressure term check (they back statements
 # in the manuscript); the per-model/per-timestep files behind them regenerate
 # via many_curvature-pressure-term.sh
+!analysis/text_files/README.txt
 !analysis/text_files/curvature_pressure_term/
 analysis/text_files/curvature_pressure_term/*
 !analysis/text_files/curvature_pressure_term/SUMMARY*.txt

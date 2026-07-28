@@ -5,7 +5,7 @@ Supplementary figure: L_eff distribution (panels 1 and 3 from diagnostic fig1).
   Panel 1: L_eff histogram — normal (filled) vs overturned (outlined)
   Panel 2: L_eff per model — median marks, canonical model order
 
-Auto-loads text_files/TESTC/*.txt.
+Auto-loads text_files/extracted_Lscales/*.txt.
 Output: plots/DP-comparisons/compilations/Leff_distribution.supp.{png,pdf}
 
 Usage:
@@ -217,9 +217,9 @@ def make_figure(records):
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
-files = sorted(glob.glob('text_files/TESTC/*.txt'))
+files = sorted(glob.glob('text_files/extracted_Lscales/*.txt'))
 if not files:
-    print("No files found in text_files/TESTC/. Run from analysis/.")
+    print("No files found in text_files/extracted_Lscales/. Run from analysis/.")
     raise SystemExit(1)
 
 print(f"Loading {len(files)} file(s)...")

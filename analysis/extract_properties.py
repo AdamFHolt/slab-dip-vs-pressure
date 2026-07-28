@@ -50,7 +50,7 @@ dz = float(sys.argv[6])                 # m (height used to extract horizontal p
 # Optional arguments.  All three default to the historical behaviour, so an
 # existing 6-argument call is byte-for-byte unchanged.
 #
-#   argv[7]  output subdirectory under text_files/     (default TESTC)
+#   argv[7]  output subdirectory under text_files/     (default extracted_Lscales)
 #   argv[8]  Savitzky-Golay smoothing length: "legacy" for the hardcoded 601
 #            CONTOUR POINTS, or a number of km for an arc-length window
 #            (default legacy)
@@ -60,7 +60,7 @@ dz = float(sys.argv[6])                 # m (height used to extract horizontal p
 #
 # Columns 0-29 are unchanged.  Columns 30-37 are new midplane diagnostics; see
 # the header written alongside the data.
-out_subdir  = str(sys.argv[7]) if len(sys.argv) > 7 else 'TESTC'
+out_subdir  = str(sys.argv[7]) if len(sys.argv) > 7 else 'extracted_Lscales'
 smooth_arg  = str(sys.argv[8]) if len(sys.argv) > 8 else 'legacy'
 make_plots  = not (len(sys.argv) > 9 and str(sys.argv[9]) == 'noplots')
 smooth_km   = None if smooth_arg == 'legacy' else float(smooth_arg)

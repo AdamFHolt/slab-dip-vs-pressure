@@ -4,14 +4,14 @@
 # Standard params: analysis_depth=300km, shear-dz=10km, ds=10km, prof-dz=1km
 
 # --- Prerequisite ---
-# Every force plot below reads text_files/TESTB_withT/, where column 17 is the
+# Every force plot below reads text_files/withT/, where column 17 is the
 # full in-slab normal-stress term K*H*(sigma_n_bar - P_ext).  Rebuild it after
 # any re-extraction.  The curvature-pressure term itself only needs recomputing
 # if the CSV outputs change:
 #   for z in 250.0e3 300.0e3 350.0e3; do
 #     bash many_curvature-pressure-term.sh $z
 #   done
-python3 make_TESTB_withT.py
+python3 make_withT.py
 
 # --- Main figures ---
 

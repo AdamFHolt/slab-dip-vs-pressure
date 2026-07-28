@@ -20,7 +20,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TDIR = os.path.join(HERE, 'text_files', 'curvature_pressure_term')
-BDIR = os.path.join(HERE, 'text_files', 'TESTB')
+BDIR = os.path.join(HERE, 'text_files', 'extracted_archive')
 
 FIRST_TIME = 8
 T_COL = 15          # T_cut

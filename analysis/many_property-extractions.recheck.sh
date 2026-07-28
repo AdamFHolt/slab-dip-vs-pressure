@@ -11,16 +11,15 @@
 # length rather than as a fixed number of contour points.
 #
 # Usage:
-#   bash many_property-extractions.recheck.sh TESTD_legacy legacy
-#   bash many_property-extractions.recheck.sh TESTD_legacy legacy 250.0e3
-#   bash many_property-extractions.recheck.sh TESTD_arc150 150
+#   bash many_property-extractions.recheck.sh extracted_coverage legacy
+#   bash many_property-extractions.recheck.sh extracted_coverage legacy 250.0e3
 #
 # The original many_property-extractions.sh is unchanged and still writes
-# text_files/TESTC/ with the figures.
+# text_files/extracted_Lscales/ with the figures.
 
 cd /home/holt/Projects/ASPECT/subd_2D/compositional/analysis
 
-OUTDIR="${1:-TESTD_legacy}"
+OUTDIR="${1:-extracted_coverage}"
 SMOOTH="${2:-legacy}"
 DEPTH="${3:-300.0e3}"
 MAX_JOBS="${MAX_JOBS:-15}"

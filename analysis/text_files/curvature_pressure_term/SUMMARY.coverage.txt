@@ -1,0 +1,54 @@
+==========================================================================
+MIDPLANE COVERAGE AT 300 km, AND THE ARC-LENGTH SMOOTHING WINDOW
+Re-extraction of all 15 models at 300 km only (many_property-extractions
+.recheck.sh). TESTD_legacy = 601-point window, TESTD_arc150 = 150 km
+arc-length window. Coverage flag is column 38; see COLUMNS.txt.
+==========================================================================
+
+1. LEGACY MODE vs THE ARCHIVE (text_files/TESTB), max abs difference
+   col  5 dip         4.263e-14 deg
+   col  9 H            2.91e-11 m
+   col 11 K           5.138e-20 1/m
+   col  3 DP           1.11e+05 Pa
+   col  6 dQs/ds      8.448e+05 Pa
+   col 17 K*Qn        1.039e+05 Pa
+   Geometry reproduces to machine precision. The stress integrals do not:
+   TESTB has 21 columns and the current code writes 39, so the archive
+   predates the present extraction. Treat TESTB as an archive, and
+   compare re-extractions against each other, not against it.
+
+2. ARC-LENGTH WINDOW vs 601 POINTS (covered timesteps only)
+   601 points spans 107-154 km depending on the model; 150 km fixes it.
+   dK    [1/km]: median |.| 0.000007   max |.| 0.000109
+   dK*Qn  [MPa]: median |.| 0.004      max |.| 0.188
+   VERDICT: negligible. Point spacing is near constant within a model, so
+   the window was never the problem. Not worth the churn of adopting.
+
+3. TIMESTEPS WHERE THE MIDPLANE DOES NOT RESOLVE 300 km
+   7 of 263, in 2 of 15 models, both fixed-SP, all at late times.
+   FixedSP_lower-res_new2
+     t=28  contour 263-575 km  depth gap  0 km  edge margin  49.0 km
+     t=29  contour 292-575 km  depth gap  0 km  edge margin  10.3 km
+   lower-res_new_FixedSP_1000plates2
+     t=25  contour 282-575 km  depth gap  0 km  edge margin  25.7 km
+     t=26  contour 316-575 km  depth gap 16 km  edge margin   0.0 km
+     t=27  contour 346-575 km  depth gap 46 km  edge margin   0.0 km
+     t=28  contour 373-575 km  depth gap 73 km  edge margin   0.0 km
+     t=29  contour 397-575 km  depth gap 97 km  edge margin   0.0 km
+
+4. EFFECT ON THE WITH-T FORCE BALANCE (non-overturned, 300 km)
+   all timesteps : N=187  RMS=0.67  max|.|=4.43 MPa
+   covered only  : N=180  RMS=0.51  max|.|=1.51 MPa
+
+   The four largest residuals are all uncovered timesteps of the
+   eta' = 1000 fixed-SP model:
+     lower-res_new_FixedSP_1000plates2      t=26  +4.43 MPa  covered=NO
+     lower-res_new_FixedSP_1000plates2      t=27  +2.98 MPa  covered=NO
+     lower-res_new_FixedSP_1000plates2      t=28  +2.09 MPa  covered=NO
+     lower-res_new_FixedSP_1000plates2      t=29  +1.99 MPa  covered=NO
+
+   CONCLUSION: the one surviving outlier in the with-T balance is not
+   physics and not a smoothing artefact. At those timesteps the slab has
+   necked so far that the c_llith = 0.5 contour no longer exists at
+   300 km, so dip, H and K are read off a contour that starts up to 97 km
+   deeper. Excluding them is justified on measurement grounds alone.

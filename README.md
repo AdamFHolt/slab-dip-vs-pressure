@@ -16,7 +16,13 @@ Tools and data products for 2D compositional subduction experiments (ASPECT).
 3. Place model outputs under `analysis/raw_outputs/<model_name>/`.
 4. Extract per-timestep CSV files with:
    - `pvpython analysis/extract_csv.py <model_name> <max_time>`
-5. Compute diagnostics (e.g., `analysis/extract_pref.py`) and plot scripts in `analysis/`.
+5. Extract diagnostics with `analysis/extract_properties.py` (whole suite: `many_property-extractions.sh`).
+6. Measure the curvature-pressure term and fold it into the normal-stress column:
+   `many_curvature-pressure-term.sh` then `make_withT.py`. Every force figure depends on this.
+7. Produce the manuscript figures with `bash analysis/all_plots.sh`.
+
+See `analysis/ANALYSIS_QUICKSTART.md` for the full sequence and
+`analysis/text_files/README.txt` for what each data directory holds.
 
 ## Notes
 

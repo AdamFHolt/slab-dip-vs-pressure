@@ -1,11 +1,11 @@
 ==========================================================================
 MIDPLANE COVERAGE AT 300 km, AND THE ARC-LENGTH SMOOTHING WINDOW
 Re-extraction of all 15 models at 300 km only (many_property-extractions
-.recheck.sh). TESTD_legacy = 601-point window, TESTD_arc150 = 150 km
+.recheck.sh). extracted_coverage = 601-point window; a 150 km
 arc-length window. Coverage flag is column 38; see COLUMNS.txt.
 ==========================================================================
 
-1. LEGACY MODE vs THE ARCHIVE (text_files/TESTB), max abs difference
+1. LEGACY MODE vs THE ARCHIVE (text_files/extracted_archive), max abs difference
    col  5 dip         4.263e-14 deg
    col  9 H            2.91e-11 m
    col 11 K           5.138e-20 1/m
@@ -13,8 +13,8 @@ arc-length window. Coverage flag is column 38; see COLUMNS.txt.
    col  6 dQs/ds      8.448e+05 Pa
    col 17 K*Qn        1.039e+05 Pa
    Geometry reproduces to machine precision. The stress integrals do not:
-   TESTB has 21 columns and the current code writes 39, so the archive
-   predates the present extraction. Treat TESTB as an archive, and
+   extracted_archive has 21 columns and the current code writes 39, so the archive
+   predates the present extraction. Treat it as an archive, and
    compare re-extractions against each other, not against it.
 
 2. ARC-LENGTH WINDOW vs 601 POINTS (covered timesteps only)

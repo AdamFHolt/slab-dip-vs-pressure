@@ -1,5 +1,5 @@
 #!/bin/bash
-# Re-extract the 15-model suite at the reference depth only (300 km), into a
+# Re-extract the 15-model suite at one depth (300 km by default), into a
 # separate output directory and without the per-timestep evolution figures, so
 # that nothing already on disk is overwritten.
 #
@@ -12,7 +12,8 @@
 #
 # Usage:
 #   bash many_property-extractions.recheck.sh TESTD_legacy legacy
-#   bash many_property-extractions.recheck.sh TESTD_arc140 140
+#   bash many_property-extractions.recheck.sh TESTD_legacy legacy 250.0e3
+#   bash many_property-extractions.recheck.sh TESTD_arc150 150
 #
 # The original many_property-extractions.sh is unchanged and still writes
 # text_files/TESTC/ with the figures.
@@ -21,9 +22,13 @@ cd /home/holt/Projects/ASPECT/subd_2D/compositional/analysis
 
 OUTDIR="${1:-TESTD_legacy}"
 SMOOTH="${2:-legacy}"
-DEPTH="300.0e3"
+DEPTH="${3:-300.0e3}"
 MAX_JOBS="${MAX_JOBS:-15}"
 
+# depth tag for the log names, so several depths can share one output
+# directory without overwriting each other's logs (the data files already
+# carry the depth in their own filenames)
+ZKM=$(python3 -c "print('%.1f' % (float('$DEPTH')/1e3))")
 LOGDIR="text_files/${OUTDIR}/logs"
 mkdir -p "$LOGDIR"
 echo "outdir = text_files/${OUTDIR}, smoothing = ${SMOOTH}, depth = ${DEPTH}"
@@ -54,9 +59,9 @@ for c in "${CASES[@]}"; do
   case " ${SKIP_MODELS:-} " in *" $m "*) echo "skipping $m"; continue;; esac
   PYTHONNOUSERSITE=1 python3 -W ignore extract_properties.py \
       "$m" "$maxt" "$DEPTH" 10.0e3 10.0e3 1.0e3 "$OUTDIR" "$SMOOTH" noplots \
-      > "$LOGDIR/$m.log" 2>&1 &
+      > "$LOGDIR/$m.z$ZKM.log" 2>&1 &
   while [ "$(jobs -rp | wc -l)" -ge "$MAX_JOBS" ]; do wait -n; done
 done
 wait
-echo "ALL EXTRACTIONS DONE (${OUTDIR})"
-grep -h "^WARNING" "$LOGDIR"/*.log | wc -l | xargs echo "timesteps flagged as not covered:"
+echo "ALL EXTRACTIONS DONE (${OUTDIR}, z${ZKM})"
+grep -h "^WARNING" "$LOGDIR"/*.z$ZKM.log | wc -l | xargs echo "timesteps flagged as not covered:"

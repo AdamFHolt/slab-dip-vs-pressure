@@ -53,7 +53,11 @@ ds = 10.e3          # stand-off from slab surface for P_subslab / P_wedge
 dz = 1.e3           # half-height of the horizontal profile slabs
 profcut = 10.0      # km trimmed from each end of the cross-slab profile
 first_time = 8      # first timestep in the extraction files
-tactual_min = 11    # first timestep used by the paper's figures (tmin = 3)
+# First timestep to measure T at.  Defaults to the start of the extraction so
+# that the whole record is covered; the figures then choose their own start
+# (tactual_min = 11, tmin = 3).  Override with argv[3] to reproduce the
+# earlier t >= 11 behaviour.
+start_time = 8
 
 TXT = 'text_files/TESTB/{model}.z{zkm}.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
 OUTDIR = ANALYSIS + 'text_files/curvature_pressure_term'
@@ -118,6 +122,7 @@ def process_timestep(md, row, analysis_depth):
 def main():
     model = sys.argv[1]
     analysis_depth = float(sys.argv[2]) if len(sys.argv) > 2 else 300.e3
+    t0 = int(sys.argv[3]) if len(sys.argv) > 3 else start_time
     zkm = '%.1f' % (analysis_depth / 1.e3)
     os.makedirs(OUTDIR, exist_ok=True)
 
@@ -125,7 +130,7 @@ def main():
     n_rows = txt.shape[0]
 
     out = []
-    for irow in range(tactual_min - first_time, n_rows):
+    for irow in range(max(0, t0 - first_time), n_rows):
         time = irow + first_time
         csv = ANALYSIS + 'csv_outputs/%s/full.%d.csv' % (model, time)
         if not os.path.exists(csv):

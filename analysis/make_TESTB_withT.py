@@ -90,18 +90,23 @@ def main():
             b = np.loadtxt(src)
             tdat = np.atleast_2d(np.loadtxt(tf))
 
+            # NaN every row first, then fill in whatever T actually covers, so
+            # a row is either fully corrected or obviously blank. This works
+            # whether the curvature-pressure files start at t = 8 or t = 11.
             out = b.copy()
-            out[:TACTUAL_MIN - FIRST_TIME, KQN_COL] = np.nan
+            out[:, KQN_COL] = np.nan
             covered = 0
             for r in tdat:
                 irow = int(round(r[0])) - FIRST_TIME
-                out[irow, KQN_COL] = b[irow, KQN_COL] + r[T_COL]
-                covered += 1
+                if 0 <= irow < b.shape[0]:
+                    out[irow, KQN_COL] = b[irow, KQN_COL] + r[T_COL]
+                    covered += 1
 
-            expected = b.shape[0] - (TACTUAL_MIN - FIRST_TIME)
-            if covered != expected:
-                sys.exit('%s z%s: T covers %d rows, expected %d'
-                         % (model, zkm, covered, expected))
+            # every row the figures actually plot must be covered
+            need = b.shape[0] - (TACTUAL_MIN - FIRST_TIME)
+            if covered < need:
+                sys.exit('%s z%s: T covers %d rows, need at least %d'
+                         % (model, zkm, covered, need))
 
             np.savetxt(os.path.join(DST, os.path.basename(src)), out)
             n_files += 1

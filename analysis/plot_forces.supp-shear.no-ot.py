@@ -191,7 +191,7 @@ plot_forcecomponent_dqds_vsK_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 
 # axis stuff
 plt.ylim(-10,  17.5); 
-plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.ylabel(r'$-\frac{dQ_{s}}{ds}$   [MPa]')
 plt.xlim(-0.001,  0.003); 
 plt.xlabel(r'$K$    [1/km]')
 ax.xaxis.set_minor_locator(plt.MultipleLocator(0.0005))
@@ -228,7 +228,7 @@ plot_forcecomponent_dqds_vsVc_overturned(tmin,m1000_fixedOP,x_ind,'black','^')
 
 # axis stuff
 plt.ylim(-10,  17.5); 
-plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.ylabel(r'$-\frac{dQ_{s}}{ds}$   [MPa]')
 plt.xlim(1,  4); 
 plt.xlabel(r'$v_{c}$    [cm/yr]')
 ax.xaxis.set_minor_locator(plt.MultipleLocator(0.5))
@@ -263,7 +263,7 @@ plot_forcecomponent_dqds_vsVisc_overturned(tmin,m1000_fixedOP,x_ind,'black','^',
 
 # # axis stuff
 plt.ylim(-10,  17.5); 
-plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.ylabel(r'$-\frac{dQ_{s}}{ds}$   [MPa]')
 # plt.xlim(21,  25); 
 plt.xlabel(r'$\eta$    [Pas]')
 ax.yaxis.set_minor_locator(plt.MultipleLocator(5))

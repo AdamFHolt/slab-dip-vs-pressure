@@ -187,7 +187,7 @@ plot_forcecomponent_fullstressmisfit_overturned(tmin,m1000_bothfree,'black','o')
 plot_forcecomponent_fullstressmisfit_overturned(tmin,m1000_fixedOP,'black','^')
 
 # axis stuff
-plt.ylim(-10,  17.5); 
+plt.ylim(-10,  10); 
 plt.xlim(-0.001,  0.003); 
 plt.ylabel("full stress misfit [MPa]")
 plt.ylabel(r'$(\Delta P  +  \sigma_{slab}) - B_{slab}$   [MPa]')
@@ -274,7 +274,7 @@ plt.ylim(-10,  17.5);
 plt.xlim(-5, 40);
 ax.set_xticks([0, 10, 20, 30, 40])
 
-plt.ylabel(r'$-\frac{dQ}{ds}$   [MPa]')
+plt.ylabel(r'$-\frac{dQ_{s}}{ds}$   [MPa]')
 plt.xlabel(r'($\eta H K v_{c}$)/$L_{eff}$   [MPa]')
 secax = ax.secondary_xaxis('top', functions=(lambda x: x/B_norm, lambda x: x*B_norm))
 secax.set_xlabel(r'$\Lambda$')

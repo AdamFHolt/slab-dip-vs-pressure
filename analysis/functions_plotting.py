@@ -139,6 +139,8 @@ def append_DPcomponents(tmin,model,model_pref,DP_array):
 	for i in range(tmin,min(len(model),len(model_pref))):
 		a = model[i,DP_ind]
 		b = (model[i,Psp_ind]-model_pref[i,1])/model[i,DP_ind]
+		if not (np.isfinite(a) and np.isfinite(b)):   # blanked timestep
+			continue
 		DP_array = np.vstack([DP_array, np.array([[a, b]])])
 
 	return DP_array

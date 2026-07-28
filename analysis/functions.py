@@ -462,42 +462,45 @@ def get_average_stress_and_dips(model_file,drho):
 # 	return stress_profile_gradient_smoothed, gradient_diff
 
 
+def _stdev(vals):
+	# stdev over the values actually used. Callers used to accumulate into a
+	# preallocated array and take the stdev over the whole thing, so skipped
+	# timesteps contributed a spurious zero.
+	return statistics.stdev(vals) if len(vals) > 1 else 0.0
+
+
 def get_misfit_mean_and_stdev(mod,tmin):
 
 	mod_analyze = mod[tmin:,:]
-	misfit_total_woshear = 0; misfit_total_wshear = 0; n = 0
-	array_for_stdev = np.zeros((len(mod_analyze),2))
+	woshear = []; wshear = []
 	for i in range(len(mod_analyze)):
-		misfit_total_woshear = misfit_total_woshear + (mod_analyze[i,3]-mod_analyze[i,4])/1.e6
-		misfit_total_wshear  = misfit_total_wshear  + (mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/1.e6
-		array_for_stdev[i,0] = (mod_analyze[i,3]-mod_analyze[i,4])/1.e6
-		array_for_stdev[i,1] = (mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/1.e6
-		n = n + 1
-	misfit_mean_woshear  = misfit_total_woshear/n 
-	misfit_mean_wshear   = misfit_total_wshear/n
-	misfit_stdev_woshear = statistics.stdev(array_for_stdev[:,0])
-	misfit_stdev_wshear  = statistics.stdev(array_for_stdev[:,1])
+		a = (mod_analyze[i,3]-mod_analyze[i,4])/1.e6
+		b = (mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/1.e6
+		if not (np.isfinite(a) and np.isfinite(b)):   # blanked timestep
+			continue
+		woshear.append(a); wshear.append(b)
+	if len(wshear) == 0:
+		return 0., 0., 0., 0.
 
-	return np.abs(misfit_mean_woshear), np.abs(misfit_mean_wshear), misfit_stdev_woshear, misfit_stdev_wshear
+	return (np.abs(np.mean(woshear)), np.abs(np.mean(wshear)),
+	        _stdev(woshear), _stdev(wshear))
 
 
 def get_misfit_mean_and_stdev_nondim(mod,tmin):
 
 	mod_analyze = mod[tmin:,:]
-	misfit_total_woshear = 0; misfit_total_wshear = 0; n = 0
-	array_for_stdev = np.zeros((len(mod_analyze),2))
+	woshear = []; wshear = []
 	for i in range(len(mod_analyze)):
-		misfit_total_woshear = misfit_total_woshear + 100.*np.abs((mod_analyze[i,3]-mod_analyze[i,4])/mod_analyze[i,4])
-		misfit_total_wshear  = misfit_total_wshear  + 100.*np.abs((mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/mod_analyze[i,4])
-		array_for_stdev[i,0] = 100.*(mod_analyze[i,3]-mod_analyze[i,4])/mod_analyze[i,4]
-		array_for_stdev[i,1] = 100.*(mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/mod_analyze[i,4]
-		n = n + 1
-	misfit_mean_woshear  = misfit_total_woshear/n 
-	misfit_mean_wshear   = misfit_total_wshear/n
-	misfit_stdev_woshear = statistics.stdev(array_for_stdev[:,0])
-	misfit_stdev_wshear  = statistics.stdev(array_for_stdev[:,1])
+		a = 100.*(mod_analyze[i,3]-mod_analyze[i,4])/mod_analyze[i,4]
+		b = 100.*(mod_analyze[i,3]-mod_analyze[i,4]-mod_analyze[i,6]-mod_analyze[i,17])/mod_analyze[i,4]
+		if not (np.isfinite(a) and np.isfinite(b)):   # blanked timestep
+			continue
+		woshear.append(a); wshear.append(b)
+	if len(wshear) == 0:
+		return 0., 0., 0., 0.
 
-	return misfit_mean_woshear, misfit_mean_wshear, misfit_stdev_woshear, misfit_stdev_wshear
+	return (np.mean(np.abs(woshear)), np.mean(np.abs(wshear)),
+	        _stdev(woshear), _stdev(wshear))
 
 
 def get_avg_forces_nondim(mod,tmin):
@@ -507,17 +510,21 @@ def get_avg_forces_nondim(mod,tmin):
 	total_DP    = 0
 	total_shear = 0
 	total_norm  = 0
-	array_stdev   = np.zeros((len(mod_analyze),1))
+	array_stdev   = []
 	n = 0
 	for i in range(len(mod_analyze)):
-		total_anal        = total_anal + mod_analyze[i,4]
 		mod_force		  = mod_analyze[i,3]-mod_analyze[i,6]+mod_analyze[i,17]
+		if not np.isfinite(mod_force):       # blanked timestep
+			continue
+		total_anal        = total_anal + mod_analyze[i,4]
 		total_mod         = total_mod  + mod_force
 		total_DP    = total_DP + mod_analyze[i,3]
 		total_shear = total_shear + ((-1.0 * mod_analyze[i,6])) 
 		total_norm  = total_norm  + ((mod_analyze[i,17]))
-		array_stdev[i,0] = mod_force/mod_analyze[i,4]
+		array_stdev.append(mod_force/mod_analyze[i,4])
 		n = n + 1
+	if n == 0:
+		return 0, 0, 0, 0, 0, 0
 
 	avg_anal 		= total_anal/n
 	avg_mod  		= total_mod/n
@@ -525,7 +532,7 @@ def get_avg_forces_nondim(mod,tmin):
 	avg_shear 		= total_shear/n
 	avg_norm  		= total_norm/n
 
-	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, statistics.stdev(array_stdev[:,0])
+	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, _stdev(array_stdev)
 
 def get_avg_forces_nondim_curvethresh(mod,tmin,curve_thresh):
 
@@ -536,11 +543,15 @@ def get_avg_forces_nondim_curvethresh(mod,tmin,curve_thresh):
 	total_norm  = 0
 	total_K_thresh = 0
 	total_K_full = 0
-	array_stdev   = np.zeros((len(mod_analyze),1))
+	array_stdev   = []
 	n = 0; nfull = 0
 	for i in range(len(mod_analyze)):
-		total_K_full = total_K_full + (mod_analyze[i,11]*1e3)
-		nfull = nfull + 1
+		# a blanked timestep (midplane does not resolve the analysis depth)
+		# carries NaN, and NaN < curve_thresh is False, so the test below
+		# already skips it; K_full has no such test and needs its own
+		if np.isfinite(mod_analyze[i,11]):
+			total_K_full = total_K_full + (mod_analyze[i,11]*1e3)
+			nfull = nfull + 1
 		if (mod_analyze[i,11]*1e3) < curve_thresh:
 			total_anal        = total_anal + mod_analyze[i,4]
 			mod_force		  = mod_analyze[i,3]-mod_analyze[i,6]+mod_analyze[i,17]
@@ -549,10 +560,10 @@ def get_avg_forces_nondim_curvethresh(mod,tmin,curve_thresh):
 			total_shear = total_shear + ((-1.0 * mod_analyze[i,6])) 
 			total_norm  = total_norm  + ((mod_analyze[i,17]))
 			total_K_thresh = total_K_thresh + (mod_analyze[i,11]*1e3)
-			array_stdev[i,0] = mod_force/mod_analyze[i,4]
+			array_stdev.append(mod_force/mod_analyze[i,4])
 			n = n + 1
 
-	K_full = total_K_full/nfull
+	K_full = total_K_full/nfull if nfull > 0 else 0.
 
 	if n == 0:
 		# print(mod)
@@ -565,7 +576,7 @@ def get_avg_forces_nondim_curvethresh(mod,tmin,curve_thresh):
 		avg_norm  		= total_norm/n
 		avg_K_thresh 	= total_K_thresh/n
 
-	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, statistics.stdev(array_stdev[:,0]), avg_K_thresh, K_full
+	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, _stdev(array_stdev), avg_K_thresh, K_full
 
 
 
@@ -578,11 +589,15 @@ def get_avg_forces_curvethresh(mod,tmin,curve_thresh):
 	total_norm  = 0
 	total_K_thresh = 0
 	total_K_full = 0
-	array_stdev   = np.zeros((len(mod_analyze),1))
+	array_stdev   = []
 	n = 0; nfull = 0
 	for i in range(len(mod_analyze)):
-		total_K_full = total_K_full + (mod_analyze[i,11]*1e3)
-		nfull = nfull + 1
+		# a blanked timestep (midplane does not resolve the analysis depth)
+		# carries NaN, and NaN < curve_thresh is False, so the test below
+		# already skips it; K_full has no such test and needs its own
+		if np.isfinite(mod_analyze[i,11]):
+			total_K_full = total_K_full + (mod_analyze[i,11]*1e3)
+			nfull = nfull + 1
 		if (mod_analyze[i,11]*1e3) < curve_thresh:
 			total_anal        = total_anal + mod_analyze[i,4]
 			mod_force		  = mod_analyze[i,3]-mod_analyze[i,6]+mod_analyze[i,17]
@@ -591,10 +606,10 @@ def get_avg_forces_curvethresh(mod,tmin,curve_thresh):
 			total_shear = total_shear + ((-1.0 * mod_analyze[i,6])) 
 			total_norm  = total_norm  + ((mod_analyze[i,17]))
 			total_K_thresh = total_K_thresh + (mod_analyze[i,11]*1e3)
-			array_stdev[i,0] = mod_force/mod_analyze[i,4]
+			array_stdev.append(mod_force/mod_analyze[i,4])
 			n = n + 1
 
-	K_full = total_K_full/nfull
+	K_full = total_K_full/nfull if nfull > 0 else 0.
 
 	if n == 0:
 		# print(mod)
@@ -607,20 +622,16 @@ def get_avg_forces_curvethresh(mod,tmin,curve_thresh):
 		avg_norm  		= total_norm/n
 		avg_K_thresh 	= total_K_thresh/n
 
-	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, statistics.stdev(array_stdev[:,0]), avg_K_thresh, K_full
+	return avg_anal, avg_mod, avg_DP, avg_shear, avg_norm, _stdev(array_stdev), avg_K_thresh, K_full
 
 
 def get_curvature_mean_and_stdev(mod,tmin):
 
 	mod_analyze = mod[tmin:,:]
-	total = 0; n = 0
-	array_for_stdev = np.zeros((len(mod_analyze),1))
-	for i in range(len(mod_analyze)):
-		total  = total + (mod_analyze[i,11]*1000.)
-		array_for_stdev[i,0] = mod_analyze[i,11]*1000.
-		n = n + 1
-	mean  = total/n
-	stdev = statistics.stdev(array_for_stdev[:,0])
+	vals = [mod_analyze[i,11]*1000. for i in range(len(mod_analyze))
+	        if np.isfinite(mod_analyze[i,11])]        # skip blanked timesteps
+	if len(vals) == 0:
+		return 0., 0.
 
-	return np.abs(mean), stdev
+	return np.abs(np.mean(vals)), _stdev(vals)
 	

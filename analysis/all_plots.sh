@@ -21,6 +21,8 @@ python3 plot_DPvsDP.no-ot.py 10000 10000 1000 other
 
 python3 plot_forces.no-ot.py 300000 10000 10000 1000
 
+python3 plot_forces.no-ot.logx.py 300000 10000 10000 1000
+
 python3 plot_forces-bars.no-norm.py 300000 10000 10000 1000
 
 # --- Supplementary figures ---
@@ -35,6 +37,26 @@ python3 plot_Psp-DP-ratio.py 300000 10000 10000 1000
 # python3 plot_onestep_simple-pressure.zoomed.py <model_name> <timestep> <x_center_km>
 # python3 plot_onestep_simple-viscosity.zoomed.py <model_name> <timestep> <x_center_km>
 
-# --- Zip all plots ---
-zip -j plots/DP-comparisons/compilations/all_model_plots.zip plots/DP-comparisons/compilations/*.pdf 
+# --- Zip the figures this script produces ---
+# Listed explicitly rather than globbed: the compilations directory also holds
+# diagnostic variants (coverage-filtered DP-vs-DP, the coverage-check panel),
+# and a *.pdf glob swept those into the bundle.
+COMP=plots/DP-comparisons/compilations
+FIGS=(
+"$COMP/DP-vs-DP.dz10.0.ds10.0.prof-dz1.0km.tmin3.250-to-350km.color-points.no-OT.pdf"
+"$COMP/DP-vs-DP.dz10.0.ds10.0.prof-dz1.0km.tmin3.250-to-350kmB.no-OT.pdf"
+"$COMP/forces-vs-scaling.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.no-ot.pdf"
+"$COMP/forces-vs-scaling.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.no-ot.logx.pdf"
+"$COMP/forces-bars.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.no-norm.pdf"
+"$COMP/forces-vs-scaling-supp.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.no-ot.pdf"
+"$COMP/Leff_distribution.supp.pdf"
+"$COMP/Psp-DP-ratio.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.pdf"
+)
+missing=0
+for f in "${FIGS[@]}"; do
+  [ -f "$f" ] || { echo "MISSING: $f"; missing=1; }
+done
+[ "$missing" -eq 0 ] || echo "WARNING: bundle is incomplete"
+rm -f "$COMP/all_model_plots.zip"   # rebuild, do not update in place
+zip -j "$COMP/all_model_plots.zip" "${FIGS[@]}"
 

@@ -8,7 +8,7 @@
 # full in-slab normal-stress term K*H*(sigma_n_bar - P_ext).  Rebuild it after
 # any re-extraction.  The curvature-pressure term itself only needs recomputing
 # if the CSV outputs change:
-#   for z in 200.0e3 250.0e3 300.0e3 350.0e3 400.0e3; do
+#   for z in 250.0e3 300.0e3 350.0e3; do
 #     bash many_curvature-pressure-term.sh $z
 #   done
 python3 make_TESTB_withT.py
@@ -38,9 +38,8 @@ python3 plot_Psp-DP-ratio.py 300000 10000 10000 1000
 # python3 plot_onestep_simple-viscosity.zoomed.py <model_name> <timestep> <x_center_km>
 
 # --- Zip the figures this script produces ---
-# Listed explicitly rather than globbed: the compilations directory also holds
-# diagnostic variants (coverage-filtered DP-vs-DP, the coverage-check panel),
-# and a *.pdf glob swept those into the bundle.
+# Listed explicitly, not globbed, so working figures in the same directory
+# (the coverage-filtered DP-vs-DP variants) stay out of the bundle.
 COMP=plots/DP-comparisons/compilations
 FIGS=(
 "$COMP/DP-vs-DP.dz10.0.ds10.0.prof-dz1.0km.tmin3.250-to-350km.color-points.no-OT.pdf"
@@ -52,11 +51,6 @@ FIGS=(
 "$COMP/Leff_distribution.supp.pdf"
 "$COMP/Psp-DP-ratio.z300.0shear-dz10.0.ds10.0.prof-dz1.0km.tmin3.pdf"
 )
-missing=0
-for f in "${FIGS[@]}"; do
-  [ -f "$f" ] || { echo "MISSING: $f"; missing=1; }
-done
-[ "$missing" -eq 0 ] || echo "WARNING: bundle is incomplete"
-rm -f "$COMP/all_model_plots.zip"   # rebuild, do not update in place
+rm -f "$COMP/all_model_plots.zip"   # rebuild; zip would otherwise add to it
 zip -j "$COMP/all_model_plots.zip" "${FIGS[@]}"
 

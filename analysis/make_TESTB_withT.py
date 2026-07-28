@@ -19,17 +19,16 @@ Every downstream figure script reads TESTB_withT rather than TESTB, so this
 script must be run before any of them.  TESTB itself, written by
 extract_properties.py, is never modified.
 
-The five depths below cover both depth options in the DP-vs-DP scripts,
-"other" (250, 300, 350 km) and "normal" (200, 300, 400 km), as well as the
-300 km used by every other figure.
+The three depths below are the ones the paper uses: the "other" option of the
+DP-vs-DP scripts (250, 300, 350 km), which includes the 300 km used by every
+other figure. The "normal" option (200, 300, 400 km) is not built.
 
 Rows before t = 11 have no measured T (compute_curvature_pressure_term.py
 starts there, matching tmin = 3 in every figure script) and their column 17 is
 set to NaN so that any consumer which failed to skip them would fail loudly
 rather than silently use an uncorrected value.
 
-Usage:  python3 make_TESTB_withT.py [depth_m ...]
-        (default 200e3 250e3 300e3 350e3 400e3)
+Usage:  python3 make_TESTB_withT.py [depth_m ...]  (default 250e3 300e3 350e3)
 """
 import os
 import shutil
@@ -69,8 +68,7 @@ MODELS = [
 
 
 def main():
-    depths = [float(a) for a in sys.argv[1:]] or [200.e3, 250.e3, 300.e3,
-                                                  350.e3, 400.e3]
+    depths = [float(a) for a in sys.argv[1:]] or [250.e3, 300.e3, 350.e3]
     os.makedirs(DST, exist_ok=True)
 
     n_files = 0

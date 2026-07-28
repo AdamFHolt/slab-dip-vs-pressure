@@ -1,5 +1,12 @@
 #!/bin/python3
 
+# No curvature filtering: every timestep from tmin onward enters the averages.
+# The 0.002 1/km threshold that used to be applied here existed because
+# high-curvature timesteps closed the force balance poorly; with the pressure
+# part of the in-slab normal-stress term included that is no longer the case.
+# Only three models were affected, all of them overturned runs, and none of
+# them closes worse on the full set.
+#
 # In-slab normal stress: this script reads text_files/TESTB_withT/, in which
 # column 17 carries the FULL curvature contribution K*Qn with the redefined
 # Qn = H*(sigma_n_bar - P_ext) and P_ext = (P_subslab + P_wedge)/2, rather than
@@ -112,7 +119,12 @@ m375_fixedOP 	= np.loadtxt((text375_fixedOP))
 # col 1 = visc, col 2 = DP anal, col 3 = full mod, col 4 = DP, col 5 = shear, col 6 = norm, col 6 = K
 fixedSP_array = np.zeros((5,9))
 fixedSP_array[0:5,0] = [50,250,375,500,700]
-curve_thresh = 0.002 # [1/km]
+# a threshold far above any K in the suite keeps every timestep, which is
+# exactly equivalent to removing the condition inside
+# get_avg_forces_curvethresh. Averaging all timesteps also repairs a side
+# effect of the filter, namely that the stdev behind the grey error bars
+# was taken over an array whose excluded entries were left at zero.
+curve_thresh = 1.e30 # [1/km], i.e. no threshold
 
 fixedSP_array[0,1], fixedSP_array[0,2], fixedSP_array[0,3], fixedSP_array[0,4], fixedSP_array[0,5], fixedSP_array[0,6], fixedSP_array[0,7], fixedSP_array[0,8]  = get_avg_forces_curvethresh(m50_fixedSP,tmin,curve_thresh)
 fixedSP_array[1,1], fixedSP_array[1,2], fixedSP_array[1,3], fixedSP_array[1,4], fixedSP_array[1,5], fixedSP_array[1,6], fixedSP_array[1,7], fixedSP_array[1,8]  = get_avg_forces_curvethresh(m250_fixedSP,tmin,curve_thresh)
@@ -377,7 +389,7 @@ ax2.axhline(y=0, color='silver',linestyle='--',linewidth=1, zorder=0)
 ax2.set_xticks( [50,250, 375, 500,725] )
 ax2.set_xticklabels( [] )
 plt.ylabel(r'$K$  [1/km]')
-plt.ylim(-0.00075,0.0025);
+plt.ylim(-0.00075,0.003);
 plt.xlim(-50,825);
 
 

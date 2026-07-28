@@ -3,6 +3,16 @@
 # Run from: /home/holt/Projects/ASPECT/subd_2D/compositional/analysis/
 # Standard params: analysis_depth=300km, shear-dz=10km, ds=10km, prof-dz=1km
 
+# --- Prerequisite ---
+# Every force plot below reads text_files/TESTB_withT/, where column 17 is the
+# full in-slab normal-stress term K*H*(sigma_n_bar - P_ext).  Rebuild it after
+# any re-extraction.  The curvature-pressure term itself only needs recomputing
+# if the CSV outputs change:
+#   for z in 200.0e3 250.0e3 300.0e3 350.0e3 400.0e3; do
+#     bash many_curvature-pressure-term.sh $z
+#   done
+python3 make_TESTB_withT.py
+
 # --- Main figures ---
 
 python3 plot_DPvsDP.color-points.no-ot.py 10000 10000 1000 other

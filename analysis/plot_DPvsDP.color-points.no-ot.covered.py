@@ -48,7 +48,11 @@ dz = float(sys.argv[3])                 # m (height used to extract horizontal p
 depths = str(sys.argv[4])               # "normal" (230e3, 330e3, 430e3) or "other" (250e3, 300e3, 350e3)
 curvature_thresh = 1e9
 
-tactual_min = 11 # first time step to use
+# first time step to use. T is now measured from t = 8 as well, but t = 8 to 10
+# close the balance far less well (RMS about 3x higher, and the largest
+# residuals in the whole record) for reasons unrelated to midplane coverage,
+# which flags none of them. 11 stays.
+tactual_min = 11
 tmin = tactual_min - 8
 
 if depths == "normal":

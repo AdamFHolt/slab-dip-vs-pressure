@@ -40,12 +40,31 @@ def get_vs_near_slab_center(horiz_prof, x_center, y_center_km, ymax, x_col, y_co
     return vs_near, vx_near, vy_near
 
 
-model_name=str(sys.argv[1])            
+model_name=str(sys.argv[1])
 max_time=int(sys.argv[2])   # largest number in csv_outputs/ filenames
 analysis_depth = float(sys.argv[3])     # m (depth for DP extraction and central point of shear stress derivative)
 analysis_depth_dz = float(sys.argv[4])  # m (depth interval for shear stress derivative)
 ds = float(sys.argv[5])                 # m (distance from slab to pull out DP)
 dz = float(sys.argv[6])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
+
+# Optional arguments.  All three default to the historical behaviour, so an
+# existing 6-argument call is byte-for-byte unchanged.
+#
+#   argv[7]  output subdirectory under text_files/     (default TESTC)
+#   argv[8]  Savitzky-Golay smoothing length: "legacy" for the hardcoded 601
+#            CONTOUR POINTS, or a number of km for an arc-length window
+#            (default legacy)
+#   argv[9]  "noplots" to skip the per-timestep evolution figures, which
+#            dominate the runtime and would otherwise overwrite the existing
+#            ones in plots/evolution/  (default: write them)
+#
+# Columns 0-29 are unchanged.  Columns 30-37 are new midplane diagnostics; see
+# the header written alongside the data.
+out_subdir  = str(sys.argv[7]) if len(sys.argv) > 7 else 'TESTC'
+smooth_arg  = str(sys.argv[8]) if len(sys.argv) > 8 else 'legacy'
+make_plots  = not (len(sys.argv) > 9 and str(sys.argv[9]) == 'noplots')
+smooth_km   = None if smooth_arg == 'legacy' else float(smooth_arg)
+LEGACY_WINDOW = 601
 
 # model properties
 xmax=5800.e3
@@ -58,13 +77,13 @@ models_loc =  'raw_outputs/'
 stats_file = ''.join([models_loc,str(model_name),'/statistics'])
 model_output_dt  = 50 # output dt as set in ASPECT .prm file (for getting the dimensional time)
 num_header_lines = 16 # num header lines in stats_files (for getting the dimensional time)
-saved_stresses_name = ''.join(['text_files/TESTC/',model_name,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
+saved_stresses_name = ''.join(['text_files/',out_subdir,'/',model_name,'.z',str(analysis_depth/1.e3),'.shear-dz',str(analysis_depth_dz/1.e3),'.ds',str(ds/1.e3),'.prof-dz',str(dz/1.e3),'km.txt'])
 os.makedirs(os.path.dirname(saved_stresses_name), exist_ok=True)
 print(saved_stresses_name)
 
 # where to put the plots
 plot_loc   = ''.join(['plots/evolution/',str(model_name)])
-if not os.path.exists(plot_loc):
+if make_plots and not os.path.exists(plot_loc):
     os.mkdir(plot_loc)
 
 # column numbers of the relevant properties in the .csv file. 
@@ -83,9 +102,9 @@ ymin_plot2=ymax-600.e3; grid_res2=0.25e3
 X_low2, Y_low2 = create_grid(xmin_plot2,xmax_plot2,ymin_plot2,ymax,grid_res2)
 
 first_time=8
-saved_stresses = np.zeros(((max_time-first_time),30)) 
-                                                     
-ind = 0 
+saved_stresses = np.zeros(((max_time-first_time),39))
+
+ind = 0
 
 for time in range(first_time,max_time,1):
 
@@ -99,7 +118,9 @@ for time in range(first_time,max_time,1):
     model_data  = np.loadtxt(csv_filename, delimiter=',', skiprows=1)
 
     # print "interpolating model outputs to regular grid..."
-    visc   = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,visc_col], (X_low, Y_low), method='linear')
+    # the full-domain viscosity grid is only used by the evolution figure
+    if make_plots:
+        visc   = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,visc_col], (X_low, Y_low), method='linear')
     llith  = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,c_llith_col], (X_low2, Y_low2), method='linear')
 
     # get lithosphere contour, and then trim it to get slab mid-plane
@@ -131,10 +152,50 @@ for time in range(first_time,max_time,1):
     vc, vsp, vop, trench_loc = get_platevels_from_horiz_prof(surf_prof,x_col,y_col,c_crust_col,vx_col,ymax)
     print("vc = %.1f cm/yr; vsp = %.1f cm/yr; vop = %.1f cm/yr; trench at %.0f km" % (vc,vsp,vop,trench_loc/1e3)) 
 
+    # midplane geometry, needed both for the smoothing window and to know
+    # whether the analysis depth is actually covered by the contour
+    s_mid       = llith_points[:,2]                  # cumulative arc length, km
+    depth_mid   = llith_points[:,1]                  # km
+    npts_mid    = len(llith_points)
+    arc_mid     = s_mid[-1] - s_mid[0]
+    dsm         = np.median(np.diff(s_mid))          # km per contour point
+
+    # Savitzky-Golay window.  Legacy mode keeps the historical 601 points, which
+    # is a different physical length in every model because the contour spacing
+    # varies; arc-length mode fixes the physical length instead.
+    if smooth_km is None:
+        window = LEGACY_WINDOW
+    else:
+        window = int(round(smooth_km/dsm))
+        if window % 2 == 0:
+            window = window + 1
+    wmax   = npts_mid if npts_mid % 2 else npts_mid - 1
+    window = int(max(5, min(window, wmax)))
+    window_km = window * dsm
+
+    # Is the analysis depth inside the contour, and far enough from its ends
+    # that the smoothing there is still local?  When a slab necks, c_llith
+    # drops below 0.5 in the shallow section and the midplane simply stops
+    # existing there; get_dip_at_certain_depth and get_curvature_at_certain_depth
+    # then return the nearest available point without complaint, which can be
+    # a hundred km deeper than requested and sits at the filter edge.
+    zkm       = analysis_depth/1.e3
+    i_near    = int(np.argmin(np.abs(depth_mid - zkm)))
+    depth_gap = 0.0 if (depth_mid.min() <= zkm <= depth_mid.max()) \
+                    else float(np.abs(depth_mid[i_near] - zkm))
+    edge_margin = float(min(s_mid[i_near] - s_mid[0], s_mid[-1] - s_mid[i_near]))
+    coverage_ok = 1.0 if (depth_gap == 0.0 and edge_margin >= 0.5*window_km) else 0.0
+    if coverage_ok < 1.0:
+        print("WARNING t=%d: midplane covers %.1f-%.1f km depth, %d pts, "
+              "window %.1f km; depth gap %.1f km, edge margin %.1f km -> "
+              "dip/K at %.0f km are NOT local measurements"
+              % (time, depth_mid.min(), depth_mid.max(), npts_mid,
+                 window_km, depth_gap, edge_margin, zkm))
+
     # get dip of mid-plane (and smooth)
     dips_unsmoothed = get_dip_slab_midplane(llith_points) # degrees
-    dips = savgol_filter(dips_unsmoothed[:,0],601,3)
-    K, dK, K_unsmoothed, dK_unsmoothed = get_curvature_slab_midplane(llith_points,dips) # K [rads/m], dK [rads/m^2]
+    dips = savgol_filter(dips_unsmoothed[:,0],window,3)
+    K, dK, K_unsmoothed, dK_unsmoothed = get_curvature_slab_midplane(llith_points,dips,window) # K [rads/m], dK [rads/m^2]
 
     # get dips at the relevant depths
     dip_midmant,       xloc_dip,       sloc_dip 		= get_dip_at_certain_depth(dips,llith_points,analysis_depth)
@@ -284,8 +345,13 @@ for time in range(first_time,max_time,1):
     saved_stresses[ind,:] = time, DP_mod_shall, DP_mod_deep, DP_mod, DP_anal, dip_midmant, slab_stress_term, slab_stress_term_b,  \
                             slab_stress_term_c,  slabnorm_thick, Snorm_contrib, K_midmant, dK_midmant, K_midmant_shall, K_midmant_deep, \
                             Pleft, Pright, slabnorm_stress_fullterm, slabnorm_stress_fullterm_TEST, vc, vsp, \
-                            vs_mid, dvs_ds, Lv, Lk, dQds_scaling_splitL, slab_visc_mid, slab_visc_x_km, slab_visc_y_km, L_total_inv
+                            vs_mid, dvs_ds, Lv, Lk, dQds_scaling_splitL, slab_visc_mid, slab_visc_x_km, slab_visc_y_km, L_total_inv, \
+                            depth_mid.min(), depth_mid.max(), npts_mid, arc_mid, window, window_km, depth_gap, edge_margin, coverage_ok
     ind = ind + 1
+
+    if not make_plots:
+        del model_data
+        continue
 
     ###################### plotting - 1 #########################
     fig=plt.figure()
@@ -371,3 +437,27 @@ for time in range(first_time,max_time,1):
 
 
 np.savetxt(saved_stresses_name, saved_stresses)
+
+# one description of the new diagnostic columns per output directory
+cols_name = os.path.join(os.path.dirname(saved_stresses_name), 'COLUMNS.txt')
+if not os.path.exists(cols_name):
+    with open(cols_name, 'w') as fh:
+        fh.write(
+            'Columns 0-29 are unchanged from the original extraction.\n'
+            'Columns 30-38 describe the slab-midplane contour that dip and\n'
+            'curvature are read off, so that timesteps where the analysis\n'
+            'depth is not actually resolved can be identified:\n\n'
+            '  30  midplane shallowest depth [km]\n'
+            '  31  midplane deepest depth [km]\n'
+            '  32  number of midplane contour points\n'
+            '  33  midplane arc length [km]\n'
+            '  34  Savitzky-Golay window [contour points]\n'
+            '  35  Savitzky-Golay window [km]\n'
+            '  36  depth gap [km]: 0 if the analysis depth lies inside the\n'
+            '      contour, else how far outside it falls\n'
+            '  37  edge margin [km]: arc length from the nearest contour point\n'
+            '      to whichever end of the contour is closer\n'
+            '  38  coverage flag: 1 if column 36 is 0 AND column 37 is at least\n'
+            '      half of column 35, else 0.  A 0 means dip, K and hence the\n'
+            '      in-slab normal-stress term at this timestep are edge values,\n'
+            '      not local measurements at the analysis depth.\n')

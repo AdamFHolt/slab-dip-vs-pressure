@@ -173,7 +173,12 @@ def get_dip_slab_midplane(llith_points):
 	return dips 
 
 
-def get_curvature_slab_midplane(llith_points_tmp,dips):
+def get_curvature_slab_midplane(llith_points_tmp,dips,window=601):
+	# `window` is the Savitzky-Golay length in CONTOUR POINTS. The default 601
+	# is the historical hardcoded value; extract_properties.py can instead pass
+	# a window derived from a target arc length, so that the smoothing covers
+	# the same physical distance in models whose contours are sampled at
+	# different spacings (0.18 to 0.26 km across this suite).
 
 	# get curvature 
 	K_unsmoothed = np.zeros((len(llith_points_tmp),1))
@@ -191,7 +196,7 @@ def get_curvature_slab_midplane(llith_points_tmp,dips):
 
 		K_unsmoothed[i] = np.deg2rad(ddip)/(ds*1.e3)                # rad/m
 
-	K = savgol_filter(K_unsmoothed[:,0],601,3)
+	K = savgol_filter(K_unsmoothed[:,0],window,3)
 
 	# get dcurvature/ds 
 	dKds_unsmoothed = np.zeros((len(llith_points_tmp),1))
@@ -209,7 +214,7 @@ def get_curvature_slab_midplane(llith_points_tmp,dips):
 
 		dKds_unsmoothed[i] = dK/(ds*1.e3)                          # rad/m^2
 
-	dKds = savgol_filter(dKds_unsmoothed[:,0],601,3)
+	dKds = savgol_filter(dKds_unsmoothed[:,0],window,3)
 
 	return K, dKds, K_unsmoothed, dKds_unsmoothed
 

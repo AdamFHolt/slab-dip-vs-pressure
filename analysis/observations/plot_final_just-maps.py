@@ -158,14 +158,14 @@ for i in range(len(segment_data)):
         Lambda = np.abs(stress_scaling) / B_seg
         x2, y2 = m2(lon_center, lat_center)
         # the outline is the flag: qualifying segments get a black ring, excluded
-        # ones only a hairline grey one, enough to separate neighbouring points
+        # ones a white one, which still separates neighbouring points
         if Lambda > lambda_thresh:
-            edgecolor = 'lightgray'
-            edgethick = 0.25
+            edgecolor = 'white'
+            edgethick = 0.4
             zord = 10
         else:
             edgecolor = 'black'
-            edgethick = 0.55
+            edgethick = 0.4
             zord = 11
         ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.navia_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
@@ -193,9 +193,20 @@ qual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
                      markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='black',
                      markeredgewidth=0.6, label=r'$\Lambda$ < 0.1')
 nonqual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
-                        markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='lightgray',
-                        markeredgewidth=0.3, label=r'$\Lambda$ $\geq$ 0.1')
+                        markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='white',
+                        markeredgewidth=0.5, label=r'$\Lambda$ $\geq$ 0.1')
 ax1.legend(handles=[qual_handle, nonqual_handle], loc='upper left', bbox_to_anchor=(0.02, 0.0),
+           ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
+
+# same convention, repeated below the Lambda map
+lam_face = cmc.navia_r(norm2(0.05))
+qual_handle2 = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
+                      markerfacecolor=lam_face, markeredgecolor='black',
+                      markeredgewidth=0.6, label=r'$\Lambda$ < 0.1')
+nonqual_handle2 = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
+                         markerfacecolor=lam_face, markeredgecolor='white',
+                         markeredgewidth=0.5, label=r'$\Lambda$ $\geq$ 0.1')
+ax2.legend(handles=[qual_handle2, nonqual_handle2], loc='upper left', bbox_to_anchor=(0.02, 0.0),
            ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
 
 cp_bar = plt.colorbar(cp, ax=ax1, extend='max', shrink=0.5, pad=0.05)

@@ -44,6 +44,7 @@ diffusivity = 8.044e-7  # m^2/s
 alpha = 3.28e-5         # 1/K
 plate_thick = 88e3      # m
 crust_thick = 7e3       # m
+slab_contour_color = 'red'   # Slab2 depth contours
 
 cmyr_to_ms = 1e-2 / 3.154e7
 
@@ -92,9 +93,9 @@ for grd_file in slab_files:
     lon2d, lat2d = np.meshgrid(lon_arr, lat_arr)
     levels = np.arange(-600, 1, 100)
     x2d, y2d = m1(lon2d, lat2d)
-    ax1.contour(x2d, y2d, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5, zorder=10)
+    ax1.contour(x2d, y2d, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5, zorder=10)
     x2d2, y2d2 = m2(lon2d, lat2d)
-    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5, zorder=10)
+    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5, zorder=10)
 
 # ------------------------------------------------
 # -------- Read in the segment data --------------

@@ -44,6 +44,7 @@ diffusivity = float(sys.argv[4])  # m^2/s [ref=8.044e-7]
 plate_thick = float(sys.argv[5])  # m [ref=88e3]
 crust_thick = float(7e3)          # m [ref=7e3]
 cooling_model = 'plate-cooling'
+slab_contour_color = 'red'   # Slab2 depth contours
 
 # conversion factors
 cmyr_to_ms = 1e-2 / 3.154e7
@@ -106,10 +107,10 @@ for grd_file in slab_files:
     lon2d, lat2d = np.meshgrid(lon_arr, lat_arr)
     x2d, y2d = m1(lon2d, lat2d)
     levels = np.arange(-600, 1, 100) 
-    cs = ax1.contour(x2d, y2d, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+    cs = ax1.contour(x2d, y2d, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5,zorder=10)
 
     x2d2, y2d2 = m2(lon2d, lat2d)
-    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5,zorder=10)
 
 # ------------------------------------------------
 # -------- Read in the segment data --------------
@@ -156,13 +157,15 @@ for i in range(len(segment_data)):
         B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)  # MPa
         Lambda = np.abs(stress_scaling) / B_seg
         x2, y2 = m2(lon_center, lat_center)
+        # the outline is the flag: qualifying segments get a black ring, excluded
+        # ones only a hairline grey one, enough to separate neighbouring points
         if Lambda > lambda_thresh:
             edgecolor = 'lightgray'
-            edgethick = 0.35
+            edgethick = 0.25
             zord = 10
         else:
             edgecolor = 'black'
-            edgethick = 0.35
+            edgethick = 0.55
             zord = 11
         ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.navia_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
@@ -184,14 +187,14 @@ for i in range(len(segment_data)):
 
 DP_array = np.array(DP_array)
 
-# legend: black outline marks qualifying segments (Lambda < threshold)
+# legend: outline colour marks qualifying segments (Lambda < threshold)
 from matplotlib.lines import Line2D
 qual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
-                     markerfacecolor='white', markeredgecolor='black', markeredgewidth=0.6,
-                     label=r'$\Lambda$ < 0.1')
+                     markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='black',
+                     markeredgewidth=0.6, label=r'$\Lambda$ < 0.1')
 nonqual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
-                        markerfacecolor='white', markeredgecolor='lightgray', markeredgewidth=0.6,
-                        label=r'$\Lambda$ $\geq$ 0.1')
+                        markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='lightgray',
+                        markeredgewidth=0.3, label=r'$\Lambda$ $\geq$ 0.1')
 ax1.legend(handles=[qual_handle, nonqual_handle], loc='upper left', bbox_to_anchor=(0.02, 0.0),
            ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
 

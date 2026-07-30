@@ -14,6 +14,7 @@ from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
 from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl
 from functions import load_data_file, stats_data_file, stats_DP
+from functions import qualifying_mask, DPmean_fixed
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
 myriad_pro = fm.FontProperties(fname=font_path)
@@ -40,6 +41,7 @@ diffusivity = float(8.044e-7)         # m^2/s [ref=1e-6]
 plate_thick = float(88e3)         # m [ref=88e3]
 crust_thick = float(7e3)         # m [ref=7e3]
 cooling_model = 'plate-cooling'
+lambda_thresh = 0.1               # threshold for nondimensional scaling parameter Lambda
 
 # conversion factors
 cmyr_to_ms = 1e-2 / 3.154e7
@@ -62,23 +64,32 @@ G = gridspec.GridSpec(2,3)
 T_vals = np.arange(1080, 1450+10, 10)
 plate_thick_vals = np.arange(75e3, 135e3+2e3, 2e3)
 
+# The segment population is frozen at the reference parameters (the star), so the
+# sweep averages DP over the same segments everywhere and the field is continuous.
+# Re-selecting on Lambda at every parameter combination instead makes the mean step
+# as segments cross the threshold, which shows up as kinked contours.  The same
+# reference population is used for both the crust and no-crust families, so the
+# difference between them is the eclogite crust term alone.
+ref_data = load_data_file(slab_visc, alpha, Tm, diffusivity, plate_thick, crust_thick, cooling_model)
+ref_mask = qualifying_mask(ref_data, lambda_thresh)
+print('reference population: %d of %d segments, mean DP = %.2f MPa'
+      % (ref_mask.sum(), len(ref_data), DPmean_fixed(ref_data, ref_mask)))
+
 # orginal exploration (crust thick = 7 km)
 DPmean_thresh_grid = np.zeros((len(plate_thick_vals), len(T_vals)))
-# Loop over all combinations of T and plate thickness and compute DPmean_thresh.
+# Loop over all combinations of T and plate thickness and average over ref_mask.
 for i, plate_thick_val in enumerate(plate_thick_vals):
     for j, T_val in enumerate(T_vals):
         data = load_data_file(slab_visc, alpha, float(T_val), diffusivity, float(plate_thick_val), crust_thick, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=0.1)
-        DPmean_thresh_grid[i, j] = DPmean_thresh
+        DPmean_thresh_grid[i, j] = DPmean_fixed(data, ref_mask)
 
 # orginal exploration (crust thick = 0 km)
 DPmean_thresh_grid_nocrust = np.zeros((len(plate_thick_vals), len(T_vals)))
-# Loop over all combinations of T and plate thickness and compute DPmean_thresh.
+# Loop over all combinations of T and plate thickness and average over ref_mask.
 for i, plate_thick_val in enumerate(plate_thick_vals):
     for j, T_val in enumerate(T_vals):
         data = load_data_file(slab_visc, alpha, float(T_val), diffusivity, float(plate_thick_val), 0.0, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data,thresh=0.1)
-        DPmean_thresh_grid_nocrust[i, j] = DPmean_thresh
+        DPmean_thresh_grid_nocrust[i, j] = DPmean_fixed(data, ref_mask)
 
 plate_thick_vals_km = plate_thick_vals / 1e3
 
@@ -153,8 +164,7 @@ for i, k_val in enumerate(k_vals):
         alpha_val = round(alpha_val, 8)
         k_val = round(k_val, 9)
         data = load_data_file(slab_visc, alpha_val, Tm, k_val, plate_thick, crust_thick, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data, thresh=0.1)
-        DPmean_thresh_grid2[i, j] = DPmean_thresh
+        DPmean_thresh_grid2[i, j] = DPmean_fixed(data, ref_mask)
 
 
 # Create the subplot (ax3) for the colored grid.

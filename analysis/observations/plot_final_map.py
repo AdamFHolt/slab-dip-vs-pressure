@@ -15,6 +15,7 @@ from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
 from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff, compute_B_pl
 from functions import load_data_file, stats_data_file, stats_DP
+from functions import qualifying_mask, DPmean_fixed
 from cmcrameri import cm as cmc
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
@@ -44,6 +45,7 @@ diffusivity = float(sys.argv[4])  # m^2/s [ref=8.044e-7]
 plate_thick = float(sys.argv[5])  # m [ref=88e3]
 crust_thick = float(7e3)          # m [ref=7e3]
 cooling_model = 'plate-cooling'
+slab_contour_color = 'red'   # Slab2 depth contours
 
 # conversion factors
 cmyr_to_ms = 1e-2 / 3.154e7
@@ -106,10 +108,10 @@ for grd_file in slab_files:
     lon2d, lat2d = np.meshgrid(lon_arr, lat_arr)
     x2d, y2d = m1(lon2d, lat2d)
     levels = np.arange(-600, 1, 100) 
-    cs = ax1.contour(x2d, y2d, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+    cs = ax1.contour(x2d, y2d, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5,zorder=10)
 
     x2d2, y2d2 = m2(lon2d, lat2d)
-    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors='red', linestyles='solid', linewidths=0.5,zorder=10)
+    ax2.contour(x2d2, y2d2, slab_data, levels=levels, colors=slab_contour_color, linestyles='solid', linewidths=0.5,zorder=10)
 
 # ------------------------------------------------
 # -------- Read in the segment data --------------
@@ -156,13 +158,15 @@ for i in range(len(segment_data)):
         B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)  # MPa
         Lambda = np.abs(stress_scaling) / B_seg
         x2, y2 = m2(lon_center, lat_center)
+        # the outline is the flag: qualifying segments get a black ring, excluded
+        # ones only a hairline grey one, enough to separate neighbouring points
         if Lambda > lambda_thresh:
             edgecolor = 'lightgray'
-            edgethick = 0.35
+            edgethick = 0.25
             zord = 10
         else:
             edgecolor = 'black'
-            edgethick = 0.35
+            edgethick = 0.55
             zord = 11
         ck = ax2.scatter(x2, y2, s=23, c=Lambda, cmap=cmc.navia_r, norm=norm2, edgecolors=edgecolor, linewidths=edgethick, zorder=zord)
 
@@ -183,14 +187,14 @@ for i in range(len(segment_data)):
 
 DP_array = np.array(DP_array)
 
-# legend: black outline marks qualifying segments (Lambda < threshold)
+# legend: outline colour marks qualifying segments (Lambda < threshold)
 from matplotlib.lines import Line2D
 qual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
-                     markerfacecolor='white', markeredgecolor='black', markeredgewidth=0.6,
-                     label=r'$\Lambda$ < 0.1')
+                     markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='black',
+                     markeredgewidth=0.6, label=r'$\Lambda$ < 0.1')
 nonqual_handle = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
-                        markerfacecolor='white', markeredgecolor='lightgray', markeredgewidth=0.6,
-                        label=r'$\Lambda$ $\geq$ 0.1')
+                        markerfacecolor=plt.get_cmap('plasma_r')(norm1(30.)), markeredgecolor='lightgray',
+                        markeredgewidth=0.3, label=r'$\Lambda$ $\geq$ 0.1')
 ax1.legend(handles=[qual_handle, nonqual_handle], loc='upper left', bbox_to_anchor=(0.02, 0.0),
            ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
 
@@ -243,16 +247,25 @@ for seg in boundaries:
 T_vals = np.arange(1080, 1450+10, 10)
 plate_thick_vals = np.arange(75e3, 135e3+2e3, 2e3)
 
-# Initialize a grid to store the DPmean_thresh values.
+# The segment population is frozen at the reference parameters (the star): the
+# sweep averages DP over the same segments everywhere.  Re-selecting on Lambda at
+# every parameter combination instead makes the mean step discontinuously as
+# segments cross the threshold, which shows up as kinked contours; the two fields
+# differ by at most 0.6 MPa, and the qualifying count only ranges 62-70 of 80.
+ref_data = load_data_file(slab_visc, alpha, Tm, diffusivity, plate_thick, crust_thick, cooling_model)
+ref_mask = qualifying_mask(ref_data, lambda_thresh)
+print('reference population: %d of %d segments, mean DP = %.2f MPa'
+      % (ref_mask.sum(), len(ref_data), DPmean_fixed(ref_data, ref_mask)))
+
+# Initialize a grid to store the mean-DP values.
 # The grid shape will be (# of plate_thick_vals, # of T_vals)
 DPmean_thresh_grid = np.zeros((len(plate_thick_vals), len(T_vals)))
 
-# Loop over all combinations of T and plate thickness and compute DPmean_thresh.
+# Loop over all combinations of T and plate thickness and average over ref_mask.
 for i, plate_thick_val in enumerate(plate_thick_vals):
     for j, T_val in enumerate(T_vals):
         data = load_data_file(slab_visc, alpha, float(T_val), diffusivity, float(plate_thick_val), crust_thick, cooling_model)
-        DPmean_thresh, DPmean_tot = stats_DP(data,lambda_thresh)  # Lambda < 0.1
-        DPmean_thresh_grid[i, j] = DPmean_thresh
+        DPmean_thresh_grid[i, j] = DPmean_fixed(data, ref_mask)
 
         
 # get reference mean

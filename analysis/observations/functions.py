@@ -194,6 +194,28 @@ def stats_DP(array,thresh,col=2):
     return DPmean_thresh, DPmean_all
 
 
+def qualifying_mask(array, thresh, col=2):
+    """
+    Boolean mask of the segments that pass the selection cut in this file.
+    Used to freeze the segment population at the reference parameters so that
+    parameter sweeps average over a fixed set (see DPmean_fixed).
+    """
+    return np.abs(array[:, col]) < thresh
+
+
+def DPmean_fixed(array, mask):
+    """
+    Mean DP over a fixed set of segments.
+
+    Companion to stats_DP.  stats_DP re-selects the population at every
+    parameter combination, so a segment crossing the threshold makes the mean
+    step discontinuously and parameter-sweep contours come out jagged.  Passing
+    a mask taken once at the reference parameters keeps the population fixed and
+    the field continuous; segment order is identical in every extraction file.
+    """
+    return array[mask, 0].mean()
+
+
 def compute_DP_hs(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick):
 
     # DT=1300.		# K

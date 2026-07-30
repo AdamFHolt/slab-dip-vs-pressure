@@ -50,6 +50,29 @@ Ma_to_s = 1e6 * 3.154e7
 plotname=''.join(['plots/DP-param-exploration.png'])
 plotname_pdf=''.join(['plots/DP-param-exploration.pdf'])
 
+def _label_points(cs, xlim, ylim, avoid, placed, pad=0.07):
+    """One label point per contour level: the point on the level's longest
+    visible run that sits farthest from the reference star and from the labels
+    already placed, so the crust and no-crust families do not collide."""
+    xr, yr = xlim[1] - xlim[0], ylim[1] - ylim[0]
+    pts = []
+    for segs in cs.allsegs:
+        best = None
+        for seg in segs:
+            vis = seg[(seg[:, 0] >= xlim[0] + pad * xr) & (seg[:, 0] <= xlim[1] - pad * xr) &
+                      (seg[:, 1] >= ylim[0] + pad * yr) & (seg[:, 1] <= ylim[1] - pad * yr)]
+            if len(vis) > 1 and (best is None or len(vis) > len(best)):
+                best = vis
+        if best is None:
+            continue
+        others = placed + [avoid]
+        clear = lambda p: min(((p[0] - q[0]) / xr)**2 + ((p[1] - q[1]) / yr)**2 for q in others)
+        p = max(best[:: max(1, len(best) // 40)], key=clear)
+        placed.append((p[0], p[1]))
+        pts.append((p[0], p[1]))
+    return pts
+
+
 # ------------------------------------------------
 # --- Set up the map ---
 # ------------------------------------------------
@@ -99,40 +122,20 @@ ax3 = plt.subplot(G[0, 0])
 contour_levels1 = np.arange(20, 40+2, 2)
 contour_levels1_minor = np.arange(21, 40, 2)
 contours1 = ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid, levels=contour_levels1, colors='black', linewidths=1, linestyles='solid')
-labels1 = ax3.clabel(contours1, levels=contour_levels1, inline=False, fontsize=8, fmt='%d')
-for txt in labels1:
-    txt.set_bbox(dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
 ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid, levels=contour_levels1_minor, colors='black', linewidths=0.5, linestyles='dashed')
 
 contour_levels2 = np.arange(20, 40+2, 2)
 contour_levels2_minor = np.arange(21, 40, 2)
 contours2 = ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid_nocrust, levels=contour_levels2, colors='red', linewidths=1, linestyles='solid')
-labels2 = ax3.clabel(contours2, levels=contour_levels2, inline=False, fontsize=8, fmt='%d')
-for txt in labels2:
-    txt.set_bbox(dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
 ax3.contour(T_vals, plate_thick_vals_km, DPmean_thresh_grid_nocrust, levels=contour_levels2_minor, colors='red', linewidths=0.5, linestyles='dashed')
 
-# Force right-side labels on lines that exit through the bottom before reaching T=1450
-def _rightmost_label(ax, cs, level, xlim, ylim, color, fontsize=8):
-    lidx = np.where(np.isclose(cs.levels, level))[0]
-    if len(lidx) == 0:
-        return
-    best_x, best_y = -np.inf, None
-    for seg in cs.allsegs[lidx[0]]:
-        mask = (seg[:,0] >= xlim[0]) & (seg[:,0] <= xlim[1]) & \
-               (seg[:,1] >= ylim[0]) & (seg[:,1] <= ylim[1])
-        if mask.any():
-            pts = seg[mask]
-            i = np.argmax(pts[:,0])
-            if pts[i,0] > best_x:
-                best_x, best_y = pts[i,0], pts[i,1]
-    if best_y is not None:
-        ax.text(best_x, best_y, str(int(level)), fontsize=fontsize, color=color,
-                ha='right', va='bottom',
-                bbox=dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
-
-_rightmost_label(ax3, contours1, 30, (1250, 1450), (80, 135), 'black')
-_rightmost_label(ax3, contours1, 32, (1250, 1450), (80, 135), 'black')
+# label both families once the two sets of lines exist, keeping them apart
+xlim3, ylim3 = (1250, 1450), (80, 135)
+placed3 = []
+ax3.clabel(contours1, inline=True, inline_spacing=2, fontsize=8, fmt='%d',
+           manual=_label_points(contours1, xlim3, ylim3, (Tm, plate_thick/1e3), placed3))
+ax3.clabel(contours2, inline=True, inline_spacing=2, fontsize=8, fmt='%d',
+           manual=_label_points(contours2, xlim3, ylim3, (Tm, plate_thick/1e3), placed3))
 
 # plot paramters of the map
 ax3.plot(Tm, plate_thick/1e3, 'k*', markersize=9)
@@ -145,6 +148,7 @@ ax3.set_ylim(80, 135)
 ax3.set_xticks(np.arange(1250, 1450+50, 50))
 ax3.set_yticks(np.arange(80, 131, 10))
 ax3.tick_params(axis='both', labelsize=9)
+ax3.set_box_aspect(1)
 ax3.labelsize = 12
 
 
@@ -176,13 +180,12 @@ alpha_vals_e5 = alpha_vals/1e-5
 contour_levels3 = np.arange(20, 44+2, 2)
 contour_levels3_minor = np.arange(21, 44, 2)
 contours3 = ax4.contour(alpha_vals_e5, k_vals_e6, DPmean_thresh_grid2, levels=contour_levels3, colors='black', linewidths=1, linestyles='solid')
-labels3 = ax4.clabel(contours3, levels=contour_levels3, inline=False, fontsize=8, fmt='%d')
-for txt in labels3:
-    txt.set_bbox(dict(boxstyle='square,pad=0.1', fc='white', ec='none'))
 ax4.contour(alpha_vals_e5, k_vals_e6, DPmean_thresh_grid2, levels=contour_levels3_minor, colors='black', linewidths=0.5, linestyles='dashed')
 
-_rightmost_label(ax4, contours3, 30, (2.7, 3.8), (0.7, 1.3), 'black')
-_rightmost_label(ax4, contours3, 32, (2.7, 3.8), (0.7, 1.3), 'black')
+xlim4, ylim4 = (2.7, 3.8), (0.7, 1.3)
+ax4.clabel(contours3, inline=True, inline_spacing=2, fontsize=8, fmt='%d',
+           manual=_label_points(contours3, xlim4, ylim4, (alpha/1e-5, diffusivity/1e-6), []))
+
 
 # plot paramters of the map
 ax4.plot(alpha/1e-5, diffusivity/1e-6, 'k*', markersize=9)
@@ -193,6 +196,7 @@ ax4.set_ylabel(r'$\kappa$    [$10^{-6}$ m$^{2}s^{-1}$]')
 ax4.set_xlim(2.7, 3.8)
 ax4.set_ylim(0.7, 1.3)
 ax4.tick_params(axis='both', labelsize=9)
+ax4.set_box_aspect(1)
 ax4.labelsize = 12
 
 

@@ -43,3 +43,13 @@ analysis/observations/data/Muller2008/age.3.6.xyz
 
 # Session notes (local working notes, not tracked)
 SESSION_NOTES*.md
+
+# observations_new/ (fixed trench segmentation): the input datasets under its data/
+# are a hardlink mirror of analysis/observations/data, already tracked there - don't
+# index them twice. data/segment_data*.txt stays tracked: it is what the fix changes.
+analysis/observations_new/data/Slab2/
+analysis/observations_new/data/Muller2008/
+analysis/observations_new/data/Lallemand/
+analysis/observations_new/data/PB2002/
+analysis/observations_new/*.log
+analysis/observations_new/plots/*.zip

@@ -120,3 +120,14 @@ All regenerated in `plots/`, all swapped in:
   `DP-param-exploration.pdf` as a main-text "Fig 7b sensitivity panel" when it
   is Fig S9. Confirm the rest, in particular that the Fig S3 and Fig S8 caption
   rows point at the K/v_c/H_eff map and the 2e22/8e22 map pair respectively.
+
+## Draft paragraph for the response letter
+
+> During revision we found that the code dividing the trenches into segments
+> discarded the remainder at the end of each plate-boundary string, which left a
+> gap at the Japan/Izu-Bonin cusp. We have fixed this and re-run the
+> observational analysis. The segment count rises from 80 to 85, and the
+> numbers throughout Sections 3.4 and 4 and in Figures 6, 7 and S3-S8 have been
+> updated accordingly. All previously qualifying segments still qualify, the
+> fraction of segments with Λ < 0.1 increases slightly (86% to 89%), and the mean
+> ΔP is unchanged. None of the conclusions are affected.

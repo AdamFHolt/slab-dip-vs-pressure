@@ -34,7 +34,26 @@ fraction improves, 86.2% → 89.4%.**
 | 23 | 548 | "rises to almost all segments (95.0%)" (η = 2 × 10²²) | **94.1%** |
 | 26 | 650 | "86% at our reference slab viscosity" | **89%** |
 | 38 | Fig S3 caption | "K < 0.002 km⁻¹ (92% of segments)" | **94%** — same 80 of 85 |
-| 44 | Fig S8 caption | "over the 69 segments that satisfy Λ < 0.1" | **76** |
+| 44 | Fig S9 caption (not S8; corrected 2026-09-22 against the docx) | "over the 69 segments that satisfy Λ < 0.1" | **76** |
+
+## Verified 2026-09-22 against `~/Downloads/Holt_etal_GJI_manuscript.docx`
+
+Every row above was recomputed from `observations_new/text_files` and
+`observations/text_files` (script kept in the session scratchpad; numbers agree with
+the table to the quoted precision). The Fig S3 caption already reads 94% in the docx;
+the main-text "92%" (Sec 3.2) does not. Two pre-existing inaccuracies, present with the
+OLD data too and independent of the segmentation fix:
+
+- Sec 4.3 "mean ΔP values between ~28 and 38 MPa (Figure 7b)": the fixed-mask field over
+  the plotted window (1250–1450 °C, 80–135 km) is 28.5–40.1 MPa, both old and new; 40 MPa
+  is reached only in the 1450 °C / 135 km corner. Suggest "~28 and 40 MPa".
+- Sec 4.3 "change the mean ΔP value by < 25%": that corner is +27% (40.1/31.7); the α–κ
+  window is −17%..+22% and the eclogite term −14%. Suggest "by up to ~25%" or "< 30%".
+
+"at most 0.6 MPa" (Fig 7 and Fig S9 captions) still holds: new max |fixed − reselected|
+is 0.53 MPa in the Fig 7b window, 0.21 in the S9a window, 0.52 for the no-crust contours.
+Λ range is 5.5e-4..0.453 (write ~5 × 10⁻⁴ or ~6 × 10⁻⁴), median 0.050. Eclogite removal
+is 4.4 MPa (was 4.35), still "4 MPa".
 
 No change needed: mean ΔP 31.7 MPa (p. 24, line 599); the Fig 7b range "~28 to 38 MPa";
 "~70% of segments" using 300 km curvature (p. 19, line 456 — now 73%); "exceed 60 MPa

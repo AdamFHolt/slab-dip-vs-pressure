@@ -5,6 +5,13 @@ import scipy.integrate
 from scipy.interpolate import griddata
 from scipy.signal import savgol_filter
 import sys, os, math, statistics
+import re
+
+def nominal_plate_thickness(model_name):
+	# subducting-plate thickness the model was set up with [km]: "_H70km" in the
+	# model name, otherwise the original 100 km
+	m = re.search(r'_H(\d+)km', model_name)
+	return float(m.group(1)) if m else 100.
 
 def create_grid(xmin,xmax,ymin,ymax,grid_res):
 

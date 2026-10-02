@@ -23,7 +23,7 @@ from matplotlib.gridspec import GridSpec
 import sys, os, subprocess
 from scipy.signal import savgol_filter
 from scipy.interpolate import splrep, splev
-from functions import get_misfit_mean_and_stdev, get_curvature_mean_and_stdev, get_misfit_mean_and_stdev_nondim
+from functions import nominal_plate_thickness, get_misfit_mean_and_stdev, get_curvature_mean_and_stdev, get_misfit_mean_and_stdev_nondim
 from functions_plotting import plot_forcecomponent_dqds_vsK
 from functions_plotting import plot_forcecomponent_dqds_vsVc, plot_forcecomponent_dqds_vsVisc
 from functions_plotting import plot_forcecomponent_dqds_vsK_overturned
@@ -51,7 +51,7 @@ analysis_depth  = float(sys.argv[1])
 analysis_depth_dz = float(sys.argv[2])     # m (depth for DP extraction and central point of shear stress derivative)
 ds = float(sys.argv[3])                 # m (distance from slab to pull out DP)
 dz = float(sys.argv[4])                 # m (height used to extract horizontal profiles, i.e., points +/- this dz)
-coeff = 100./1497.0  # H [km] / L_eff [km], i.e. H=100km / L_eff=1497km
+L_eff = 1497.0  # km
 
 tactual_min = 11 # first time step to use
 tmin = tactual_min - 8
@@ -124,7 +124,7 @@ DP_ind   = 3
 dip_ind  = 5
 vc_ind   = 19
 vs_ind   = 20
-coeff = 100./1497.0  # H [km] / L_eff [km], i.e. H=100km / L_eff=1497km
+L_eff = 1497.0  # km
 
 x_ind = vc_ind
 x_label = "V K visc [Pa]"
@@ -134,21 +134,21 @@ cmyr_to_ms = 0.01/(365.25*24*3600)
 
 mant_visc = 2.5e20
 
-m50_bothfree[:,vs_ind] 	=  coeff * m50_bothfree[:,K_ind]    * 50 * mant_visc   * m50_bothfree[:,vc_ind]   * cmyr_to_ms * 1e-6
-m50_fixedSP[:,vs_ind] 	=  coeff * m50_fixedSP[:,K_ind]     * 50 * mant_visc   * m50_fixedSP[:,vc_ind]    * cmyr_to_ms * 1e-6
-m50_fixedOP[:,vs_ind] 	=  coeff * m50_fixedOP[:,K_ind]     * 50 * mant_visc   * m50_fixedOP[:,vc_ind]    * cmyr_to_ms * 1e-6
-m250_bothfree[:,vs_ind] 	=  coeff * m250_bothfree[:,K_ind]   * 250 * mant_visc  * m250_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
-m250_fixedSP[:,vs_ind] 	=  coeff * m250_fixedSP[:,K_ind]    * 250 * mant_visc  * m250_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m250_fixedOP[:,vs_ind] 	=  coeff * m250_fixedOP[:,K_ind]    * 250 * mant_visc  * m250_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m375_bothfree[:,vs_ind] 	=  coeff * m375_bothfree[:,K_ind]   * 375 * mant_visc  * m375_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
-m375_fixedSP[:,vs_ind] 	=  coeff * m375_fixedSP[:,K_ind]    * 375 * mant_visc  * m375_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m375_fixedOP[:,vs_ind] 	=  coeff * m375_fixedOP[:,K_ind]    * 375 * mant_visc  * m375_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m500_bothfree[:,vs_ind] 	=  coeff * m500_bothfree[:,K_ind]   * 500 * mant_visc  * m500_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
-m500_fixedSP[:,vs_ind] 	=  coeff * m500_fixedSP[:,K_ind]    * 500 * mant_visc  * m500_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m500_fixedOP[:,vs_ind] 	=  coeff * m500_fixedOP[:,K_ind]    * 500 * mant_visc  * m500_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
-m1000_bothfree[:,vs_ind] =  coeff * m1000_bothfree[:,K_ind]  * 1000 * mant_visc * m1000_bothfree[:,vc_ind] * cmyr_to_ms * 1e-6
-m1000_fixedSP[:,vs_ind] 	=  coeff * m1000_fixedSP[:,K_ind]   * 1000 * mant_visc * m1000_fixedSP[:,vc_ind]  * cmyr_to_ms * 1e-6
-m1000_fixedOP[:,vs_ind] 	=  coeff * m1000_fixedOP[:,K_ind]   * 1000 *mant_visc  *  m1000_fixedOP[:,vc_ind] * cmyr_to_ms * 1e-6
+m50_bothfree[:,vs_ind] 	=  nominal_plate_thickness(name1_bothfree)/L_eff * m50_bothfree[:,K_ind]    * 50 * mant_visc   * m50_bothfree[:,vc_ind]   * cmyr_to_ms * 1e-6
+m50_fixedSP[:,vs_ind] 	=  nominal_plate_thickness(name1_fixedSP)/L_eff * m50_fixedSP[:,K_ind]     * 50 * mant_visc   * m50_fixedSP[:,vc_ind]    * cmyr_to_ms * 1e-6
+m50_fixedOP[:,vs_ind] 	=  nominal_plate_thickness(name1_fixedOP)/L_eff * m50_fixedOP[:,K_ind]     * 50 * mant_visc   * m50_fixedOP[:,vc_ind]    * cmyr_to_ms * 1e-6
+m250_bothfree[:,vs_ind] 	=  nominal_plate_thickness(name3_bothfree)/L_eff * m250_bothfree[:,K_ind]   * 250 * mant_visc  * m250_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m250_fixedSP[:,vs_ind] 	=  nominal_plate_thickness(name3_fixedSP)/L_eff * m250_fixedSP[:,K_ind]    * 250 * mant_visc  * m250_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m250_fixedOP[:,vs_ind] 	=  nominal_plate_thickness(name3_fixedOP)/L_eff * m250_fixedOP[:,K_ind]    * 250 * mant_visc  * m250_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m375_bothfree[:,vs_ind] 	=  nominal_plate_thickness(name7_bothfree)/L_eff * m375_bothfree[:,K_ind]   * 375 * mant_visc  * m375_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m375_fixedSP[:,vs_ind] 	=  nominal_plate_thickness(name7_fixedSP)/L_eff * m375_fixedSP[:,K_ind]    * 375 * mant_visc  * m375_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m375_fixedOP[:,vs_ind] 	=  nominal_plate_thickness(name7_fixedOP)/L_eff * m375_fixedOP[:,K_ind]    * 375 * mant_visc  * m375_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m500_bothfree[:,vs_ind] 	=  nominal_plate_thickness(name4_bothfree)/L_eff * m500_bothfree[:,K_ind]   * 500 * mant_visc  * m500_bothfree[:,vc_ind]  * cmyr_to_ms * 1e-6
+m500_fixedSP[:,vs_ind] 	=  nominal_plate_thickness(name4_fixedSP)/L_eff * m500_fixedSP[:,K_ind]    * 500 * mant_visc  * m500_fixedSP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m500_fixedOP[:,vs_ind] 	=  nominal_plate_thickness(name4_fixedOP)/L_eff * m500_fixedOP[:,K_ind]    * 500 * mant_visc  * m500_fixedOP[:,vc_ind]   * cmyr_to_ms * 1e-6
+m1000_bothfree[:,vs_ind] =  nominal_plate_thickness(name5_bothfree)/L_eff * m1000_bothfree[:,K_ind]  * 1000 * mant_visc * m1000_bothfree[:,vc_ind] * cmyr_to_ms * 1e-6
+m1000_fixedSP[:,vs_ind] 	=  nominal_plate_thickness(name5_fixedSP)/L_eff * m1000_fixedSP[:,K_ind]   * 1000 * mant_visc * m1000_fixedSP[:,vc_ind]  * cmyr_to_ms * 1e-6
+m1000_fixedOP[:,vs_ind] 	=  nominal_plate_thickness(name5_fixedOP)/L_eff * m1000_fixedOP[:,K_ind]   * 1000 *mant_visc  *  m1000_fixedOP[:,vc_ind] * cmyr_to_ms * 1e-6
 
 gs=GridSpec(1,3)
 

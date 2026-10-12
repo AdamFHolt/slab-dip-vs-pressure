@@ -34,7 +34,7 @@ A seventh argument "pooled" draws every plate configuration on one row of
 panels instead of one row each (same markers and colours; ".pooled" in the
 output name).
 
-Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled] [nodrho71] [alleta]]]
+Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled] [nodrho71] [alleta] [closure]]]
 """
 import os
 import sys
@@ -75,8 +75,11 @@ pooled_fig = 'pooled' in sys.argv[7:]
 with_drho71 = 'nodrho71' not in sys.argv[7:]
 # "alleta" adds the paper's eta' = 50 and 375 models, which exist only at H = 100
 all_eta = 'alleta' in sys.argv[7:]
+# "closure": the Fig. 3 pair instead -- DP + sigma_slab vs B_slab, and the residual
+# (DP + sigma_slab - B_slab) vs curvature K
+closure_fig = 'closure' in sys.argv[7:]
 plot_name = 'plots/DP-comparisons/compilations/forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -131,6 +134,10 @@ OVERTURNED = {('free', 1000, 100), ('free', 500, 130), ('free', 1000, 130),
               ('FixedOP', 375, 100)}       # as in the paper
 # the B-matched run: drho = 71.43 so that B = drho*g*H = 49 MPa at H = 70 km
 DRHO = {'drho71': 71.43}
+# last output used, where it is earlier than the extraction window's end: the
+# eta' = 50 fixed-SP slab necks at 250 km on its final output (thickness 66 ->
+# 44 km, dQ/ds jumping to 6.5 MPa), so that output is left out (2026-10-12)
+LAST_OUTPUT = {('FixedSP', 50, 100): 22}
 
 def load(bc, eta, H):
     m = name(bc, eta, H)
@@ -140,6 +147,7 @@ def load(bc, eta, H):
         return None
     d = np.loadtxt(f)[tmin:]
     d = d[d[:, cov_ind] == 1]
+    d = d[d[:, 0] <= LAST_OUTPUT.get((bc, eta, H), 1e9)]
     Hn = nominal_plate_thickness(m)                       # km
     B = DRHO.get(bc, drho) * g * Hn * 1.e3 * 1e-6         # MPa
     # n = 1: eta*H*K*v_c/L_eff;  n > 1: eta*H^n*K*v_c/(n*L^n)   [MPa]
@@ -149,7 +157,8 @@ def load(bc, eta, H):
     DP = d[:, DP_ind] / 1.e6                              # MPa
     Bslab = d[:, anal_ind] / 1.e6                         # drho*g*H*cos(dip), MPa
     full = (d[:, DP_ind] - d[:, anal_ind] + d[:, ss_ind] - d[:, sn_ind]) / 1.e6
-    return dict(scal=scal, dqds=dqds, dpmis=dpmis, full=full, B=B, Hn=Hn, DP=DP, Bslab=Bslab)
+    K = np.abs(d[:, K_ind]) * 1.e6                        # |K|, 1e-3/km, as in Fig. 3
+    return dict(scal=scal, dqds=dqds, dpmis=dpmis, full=full, B=B, Hn=Hn, DP=DP, Bslab=Bslab, K=K)
 
 data = {(bc, e, H): load(bc, e, H) for bc in BCS for e in ETAS for H in HS}
 if with_drho71:
@@ -205,7 +214,8 @@ print('  all H  N=%3d  r=%.3f (MPa)  r=%.3f (over B)  slope=%.2f'
 # --- figure: one row of three panels per plate configuration, or one row for all
 rows = ['all'] if pooled_fig else bcs_present
 nrow = len(rows)
-fig, axs = plt.subplots(nrow, 3, figsize=(7.0, 2.6*nrow), squeeze=False)
+ncol = 2 if closure_fig else 3
+fig, axs = plt.subplots(nrow, ncol, figsize=(7.0/3*ncol, 2.6*nrow), squeeze=False)
 
 def scatter(ax, x, y, bc, e, H):
     if bc == 'drho71':       # B-matched run: free plates, drawn as diamonds
@@ -220,23 +230,37 @@ def scatter(ax, x, y, bc, e, H):
 
 for (bc, e, H), d in data.items():
     row = 0 if pooled_fig else bcs_present.index('free' if bc == 'drho71' else bc)
-    scatter(axs[row, 0], d['Bslab'], d['DP'], bc, e, H)
-    scatter(axs[row, 1], d['scal'], d['dqds'], bc, e, H)
-    scatter(axs[row, 2], d['scal'], d['dpmis'], bc, e, H)
+    if closure_fig:      # full = DP + sigma_slab - B_slab, sigma_slab = dQ/ds + K*Qn
+        scatter(axs[row, 0], d['Bslab'], d['full'] + d['Bslab'], bc, e, H)
+        scatter(axs[row, 1], d['K'], d['full'], bc, e, H)
+    else:
+        scatter(axs[row, 0], d['Bslab'], d['DP'], bc, e, H)
+        scatter(axs[row, 1], d['scal'], d['dqds'], bc, e, H)
+        scatter(axs[row, 2], d['scal'], d['dpmis'], bc, e, H)
 
-lims = [(-5, 45, -5, 45), (-5, 40, -10, 30), (-5, 40, -15, 30)]
-xlabels = [r'$B_{slab}$   [MPa]', scal_label, scal_label]
-ylabels = [r'$\Delta P$   [MPa]', r'$dQ_s/ds$   [MPa]', r'$B_{slab} - \Delta P$   [MPa]']
+if closure_fig:
+    lims = [(-5, 45, -5, 45), (-0.2, 3.2, -10, 10)]
+    xlabels = [r'$B_{slab}$   [MPa]', r'$|K|$   [10$^{-3}$ km$^{-1}$]']
+    ylabels = [r'$\Delta P + \sigma_{slab}$   [MPa]', r'$\Delta P + \sigma_{slab} - B_{slab}$   [MPa]']
+    one_to_one = [True, False]
+else:
+    lims = [(-5, 45, -5, 45), (-5, 40, -10, 30), (-5, 40, -15, 30)]
+    xlabels = [r'$B_{slab}$   [MPa]', scal_label, scal_label]
+    ylabels = [r'$\Delta P$   [MPa]', r'$dQ_s/ds$   [MPa]', r'$B_{slab} - \Delta P$   [MPa]']
+    one_to_one = [True, True, True]
 for row, bc in enumerate(rows):
-    for ax, (x0, x1, y0, y1), xl, yl in zip(axs[row], lims, xlabels, ylabels):
+    for ax, (x0, x1, y0, y1), xl, yl, oto in zip(axs[row], lims, xlabels, ylabels, one_to_one):
         xx = np.linspace(x0, x1, 10)
-        ax.plot(xx, xx, color='gray', linestyle='--', linewidth=1, zorder=-1)
+        if oto:
+            ax.plot(xx, xx, color='gray', linestyle='--', linewidth=1, zorder=-1)
         ax.axhline(0, color='lightgray', linewidth=1, zorder=0)
         ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
         ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
         ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
         ax.set_xlabel(xl); ax.set_ylabel(yl)
         ax.set_aspect((x1 - x0)/(y1 - y0), adjustable='box')
+        if closure_fig and ax is axs[row, 1]:
+            ax.set_yticks([-10, -5, 0, 5, 10])
     axs[row, 0].set_title(', '.join(bc_label[b] for b in bcs_present) if bc == 'all' else bc_label[bc],
                           loc='left', fontsize=7)
 

@@ -28,7 +28,7 @@ MODELS = {
  ('free',250,130): (P+'250plates_H130km', 26), ('free',500,130): (P+'500plates_H130km', 30), ('free',1000,130): (P+'1000plates_H130km', 33),
  ('FixedSP',250,70): (P+'FixedSP_250plates_H70km', 34), ('FixedSP',500,70): (P+'FixedSP_500plates_H70km', 32), ('FixedSP',1000,70): (P+'FixedSP_1000plates_H70km', 30),
  ('FixedSP',250,100): (P+'FixedSP_250plates', 30), ('FixedSP',500,100): ('2D_compositional_subd_FixedSP_lower-res_new2', 30), ('FixedSP',1000,100): (P+'FixedSP_1000plates2', 30),
- ('FixedSP',250,130): (P+'FixedSP_250plates_H130km', 46), ('FixedSP',500,130): (P+'FixedSP_500plates_H130km', 42),
+ ('FixedSP',250,130): (P+'FixedSP_250plates_H130km', 46), ('FixedSP',500,130): (P+'FixedSP_500plates_H130km', 42), ('FixedSP',1000,130): (P+'FixedSP_1000plates_H130km', 37),
  ('FixedOP',250,70): (P+'FixedOP_250plates_H70km', 36), ('FixedOP',500,70): (P+'FixedOP_500plates_H70km', 33), ('FixedOP',1000,70): (P+'FixedOP_1000plates_H70km', 36),
  ('FixedOP',250,100): (P+'FixedOP_250plates', 28), ('FixedOP',500,100): ('2D_compositional_subd_FixedOP_lower-res_new', 28), ('FixedOP',1000,100): (P+'FixedOP_1000plates', 30),
  ('FixedOP',250,130): (P+'FixedOP_250plates_H130km', 33), ('FixedOP',500,130): (P+'FixedOP_500plates_H130km', 40), ('FixedOP',1000,130): (P+'FixedOP_1000plates_H130km', 42),

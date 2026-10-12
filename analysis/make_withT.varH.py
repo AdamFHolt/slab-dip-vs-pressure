@@ -22,13 +22,19 @@ TF = os.path.join(mw.HERE, 'text_files')
 mw.DST = os.path.join(TF, 'withT_varH')
 mw.TDIR = os.path.join(TF, 'curvature_pressure_term_varH')
 
-H100 = {'': ['2D_compositional_subd_lower-res_new_250plates',
+H100 = {'': ['2D_compositional_subd_lower-res_new_50plates',
+             '2D_compositional_subd_lower-res_new_250plates',
+             '2D_compositional_subd_lower-res_new_375plates',
              '2D_compositional_subd_lower-res_new2',
              '2D_compositional_subd_lower-res_new_1000plates'],
-        'FixedSP': ['2D_compositional_subd_lower-res_new_FixedSP_250plates',
+        'FixedSP': ['2D_compositional_subd_lower-res_new_FixedSP_50plates',
+                    '2D_compositional_subd_lower-res_new_FixedSP_250plates',
+                    '2D_compositional_subd_lower-res_new_FixedSP_375plates',
                     '2D_compositional_subd_FixedSP_lower-res_new2',
                     '2D_compositional_subd_lower-res_new_FixedSP_1000plates2'],
-        'FixedOP': ['2D_compositional_subd_lower-res_new_FixedOP_250plates',
+        'FixedOP': ['2D_compositional_subd_lower-res_new_FixedOP_50plates',
+                    '2D_compositional_subd_lower-res_new_FixedOP_375plates',
+                    '2D_compositional_subd_lower-res_new_FixedOP_250plates',
                     '2D_compositional_subd_FixedOP_lower-res_new',
                     '2D_compositional_subd_lower-res_new_FixedOP_1000plates']}
 VARH = (['2D_compositional_subd_lower-res_new_%s%dplates_H%dkm' % (bc, e, h)

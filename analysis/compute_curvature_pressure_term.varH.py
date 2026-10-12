@@ -27,7 +27,8 @@ H100 = ('2D_compositional_subd_lower-res_new_250plates',
         '2D_compositional_subd_FixedOP_lower-res_new',
         '2D_compositional_subd_lower-res_new_FixedOP_1000plates')
 
-src = 'extracted_coverage' if sys.argv[1] in H100 else 'extracted_varH'
+# any model without _H<n>km in its name is an H = 100 run from the paper's suite
+src = 'extracted_coverage' if (sys.argv[1] in H100 or '_H' not in sys.argv[1].split('new')[-1]) else 'extracted_varH'
 cpt.TXT = cpt.TXT.replace('extracted_archive', src)
 cpt.OUTDIR = cpt.ANALYSIS + 'text_files/curvature_pressure_term_varH'
 cpt.main()

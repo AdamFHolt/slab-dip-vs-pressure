@@ -34,7 +34,7 @@ A seventh argument "pooled" draws every plate configuration on one row of
 panels instead of one row each (same markers and colours; ".pooled" in the
 output name).
 
-Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled]]]
+Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled] [nodrho71] [alleta]]]
 """
 import os
 import sys
@@ -69,9 +69,14 @@ tactual_min = 11
 tmin = tactual_min - 8
 
 suffix = '.z%s.shear-dz%s.ds%s.prof-dz%skm' % (analysis_depth/1.e3, analysis_depth_dz/1.e3, ds/1.e3, dz/1.e3)
-pooled_fig = len(sys.argv) > 7 and sys.argv[7] == 'pooled'
+pooled_fig = 'pooled' in sys.argv[7:]
+# the B-matched drho71 run is a supplement control (it shows that thickness, not
+# buoyancy, sets dQ/ds); "nodrho71" leaves it out for the main-text figure
+with_drho71 = 'nodrho71' not in sys.argv[7:]
+# "alleta" adds the paper's eta' = 50 and 375 models, which exist only at H = 100
+all_eta = 'alleta' in sys.argv[7:]
 plot_name = 'plots/DP-comparisons/compilations/forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -79,13 +84,19 @@ mant_visc  = 2.5e20
 cmyr_to_ms = 0.01/(365.25*24*3600)
 drho, g    = 50., 9.81
 
-H100 = {'free':    {250: '2D_compositional_subd_lower-res_new_250plates',
+H100 = {'free':    {50: '2D_compositional_subd_lower-res_new_50plates',
+                    250: '2D_compositional_subd_lower-res_new_250plates',
+                    375: '2D_compositional_subd_lower-res_new_375plates',
                     500: '2D_compositional_subd_lower-res_new2',
                     1000: '2D_compositional_subd_lower-res_new_1000plates'},
-        'FixedSP': {250: '2D_compositional_subd_lower-res_new_FixedSP_250plates',
+        'FixedSP': {50: '2D_compositional_subd_lower-res_new_FixedSP_50plates',
+                    250: '2D_compositional_subd_lower-res_new_FixedSP_250plates',
+                    375: '2D_compositional_subd_lower-res_new_FixedSP_375plates',
                     500: '2D_compositional_subd_FixedSP_lower-res_new2',
                     1000: '2D_compositional_subd_lower-res_new_FixedSP_1000plates2'},
-        'FixedOP': {250: '2D_compositional_subd_lower-res_new_FixedOP_250plates',
+        'FixedOP': {50: '2D_compositional_subd_lower-res_new_FixedOP_50plates',
+                    250: '2D_compositional_subd_lower-res_new_FixedOP_250plates',
+                    375: '2D_compositional_subd_lower-res_new_FixedOP_375plates',
                     500: '2D_compositional_subd_FixedOP_lower-res_new',
                     1000: '2D_compositional_subd_lower-res_new_FixedOP_1000plates'}}
 
@@ -97,10 +108,10 @@ def name(bc, eta, H):
     return '2D_compositional_subd_lower-res_new_%s%dplates_H%dkm' % ('' if bc == 'free' else bc + '_', eta, H)
 
 BCS  = ['free', 'FixedSP', 'FixedOP']
-ETAS = [250, 500, 1000]
+ETAS = [50, 250, 375, 500, 1000] if all_eta else [250, 500, 1000]
 HS   = [70, 100, 130]
 bc_label = {'free': 'free plates', 'FixedSP': 'fixed SP', 'FixedOP': 'fixed OP'}
-colors  = {250: 'peru', 500: 'maroon', 1000: 'black'}
+colors  = {50: 'tan', 250: 'peru', 375: 'firebrick', 500: 'maroon', 1000: 'black'}
 markers = {70: 'v', 100: 'o', 130: 's'}
 # Overturned slabs, plotted hollow and left out of the statistics as in Fig. 6.
 # The H = 100 entries are the paper's classification (eta' = 1000 free, and
@@ -116,7 +127,8 @@ markers = {70: 'v', 100: 'o', 130: 's'}
 OVERTURNED = {('free', 1000, 100), ('free', 500, 130), ('free', 1000, 130),
               ('FixedOP', 500, 100), ('FixedOP', 1000, 100),
               ('FixedOP', 250, 130), ('FixedOP', 500, 130), ('FixedOP', 1000, 130),
-              ('FixedOP', 1000, 70)}
+              ('FixedOP', 1000, 70),
+              ('FixedOP', 375, 100)}       # as in the paper
 # the B-matched run: drho = 71.43 so that B = drho*g*H = 49 MPa at H = 70 km
 DRHO = {'drho71': 71.43}
 
@@ -140,7 +152,8 @@ def load(bc, eta, H):
     return dict(scal=scal, dqds=dqds, dpmis=dpmis, full=full, B=B, Hn=Hn, DP=DP, Bslab=Bslab)
 
 data = {(bc, e, H): load(bc, e, H) for bc in BCS for e in ETAS for H in HS}
-data[('drho71', 500, 70)] = load('drho71', 500, 70)
+if with_drho71:
+    data[('drho71', 500, 70)] = load('drho71', 500, 70)
 data = {k: v for k, v in data.items() if v is not None}
 bcs_present = [bc for bc in BCS if any(k[0] == bc for k in data)]
 

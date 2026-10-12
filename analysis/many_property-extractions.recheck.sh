@@ -4,11 +4,15 @@
 # that nothing already on disk is overwritten.
 #
 # This exists to test the midplane-coverage fix described in
-# extract_properties.py: when a slab necks, the c_llith = 0.5 contour stops
-# existing in the shallow section, and dip and curvature "at 300 km" silently
-# become edge values read off a contour that starts far deeper.  The new
-# columns 30-38 record that, and the smoothing window can now be set as an arc
-# length rather than as a fixed number of contour points.
+# extract_properties.py: when the c_llith = 0.5 contour loses its shallow
+# section, dip and curvature "at 300 km" silently become edge values read off
+# a contour that starts far deeper.  The new columns 30-38 record that, and the
+# smoothing window can now be set as an arc length rather than as a fixed
+# number of contour points.  (2026-10-09: the lost shallow section was not
+# necking but the fixed-SP trench retreating past the left edge of the
+# hard-coded high-res window; extract_properties.py now widens the window
+# when the midplane touches an edge, and the three affected fixed-SP H = 100
+# models here, 375, new2 and 1000plates2, were re-extracted with it.)
 #
 # Usage:
 #   bash many_property-extractions.recheck.sh extracted_coverage legacy

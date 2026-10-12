@@ -57,6 +57,9 @@ dz = float(sys.argv[6])                 # m (height used to extract horizontal p
 #   argv[9]  "noplots" to skip the per-timestep evolution figures, which
 #            dominate the runtime and would otherwise overwrite the existing
 #            ones in plots/evolution/  (default: write them)
+#   argv[10] slab-mantle density contrast drho [kg/m3] for the analytical
+#            buoyancy B_slab = drho*g*H*cos(dip) (default 50; the B-matched
+#            run new_500plates_H70km_drho71 needs 71.43)
 #
 # Columns 0-29 are unchanged.  Columns 30-37 are new midplane diagnostics; see
 # the header written alongside the data.
@@ -69,7 +72,7 @@ LEGACY_WINDOW = 601
 # model properties
 xmax=5800.e3
 ymax=1450.e3
-drho = 50. # kg/m3
+drho = float(sys.argv[10]) if len(sys.argv) > 10 else 50. # kg/m3
 
 # ASPECT output 
 csvs_loc =  'csv_outputs/'
@@ -96,10 +99,18 @@ sxx_col = 3;    syy_col = 7;        sxy_col = 4;
 xmin_plot=0; ymin_plot=500.e3; grid_res=2.5e3
 X_low, Y_low = create_grid(xmin_plot,xmax,ymin_plot,ymax,grid_res)
 
-# higher res grid for detailed calculations
+# higher res grid for detailed calculations.  This window fits the free-plate
+# and fixed-OP runs, but a fixed-SP trench retreats past its left edge late in
+# a run (1970-2650 km by 90 Myr against xmin_plot2 = 2500 km), which clips the
+# c_llith = 0.5 contour: the midplane then starts at the window edge, far
+# deeper than cutoff_shall, dip and K become edge values, and once the whole
+# slab is outside the trimming returns nothing.  So the window is rebuilt per
+# timestep and widened (by window_step on whichever side is touched) until the
+# trimmed midplane is clear of both edges; an untouched window is identical to
+# the historical one.
 xmin_plot2=2500.e3; xmax_plot2=3750.e3
 ymin_plot2=ymax-600.e3; grid_res2=0.25e3
-X_low2, Y_low2 = create_grid(xmin_plot2,xmax_plot2,ymin_plot2,ymax,grid_res2)
+window_step=500.e3
 
 first_time=8
 saved_stresses = np.zeros(((max_time-first_time),39))
@@ -121,14 +132,28 @@ for time in range(first_time,max_time,1):
     # the full-domain viscosity grid is only used by the evolution figure
     if make_plots:
         visc   = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,visc_col], (X_low, Y_low), method='linear')
-    llith  = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,c_llith_col], (X_low2, Y_low2), method='linear')
 
-    # get lithosphere contour, and then trim it to get slab mid-plane
-    llith_cont = plt.contour(X_low2/1.e3, (ymax-Y_low2)/1.e3, llith, levels=[0.5])
-    print(llith_cont)
-    llith_points_tmp = llith_cont.allsegs[0][0]
+    # get lithosphere contour, and then trim it to get slab mid-plane; widen
+    # the window and redo the step if the midplane touches a window edge
     cutoff_shall = 110.; cutoff_deep  = 575.;
-    llith_points = get_slab_midplane(llith_points_tmp,cutoff_shall,cutoff_deep)
+    xmin2, xmax2 = xmin_plot2, xmax_plot2
+    while True:
+        X_low2, Y_low2 = create_grid(xmin2,xmax2,ymin_plot2,ymax,grid_res2)
+        llith  = griddata((model_data[:,x_col], model_data[:,y_col]), model_data[:,c_llith_col], (X_low2, Y_low2), method='linear')
+        llith_cont = plt.contour(X_low2/1.e3, (ymax-Y_low2)/1.e3, llith, levels=[0.5])
+        segs = llith_cont.allsegs[0]
+        llith_points = get_slab_midplane(segs[0],cutoff_shall,cutoff_deep) if len(segs) > 0 else np.zeros((0,3))
+        edge_km  = 2.*grid_res2/1.e3
+        at_left  = len(llith_points) == 0 or llith_points[:,0].min() < xmin2/1.e3 + edge_km
+        at_right = len(llith_points) == 0 or llith_points[:,0].max() > xmax2/1.e3 - edge_km
+        if not (at_left or at_right):
+            break
+        xmin2_new = max(xmin2 - window_step, 0.)   if at_left  else xmin2
+        xmax2_new = min(xmax2 + window_step, xmax) if at_right else xmax2
+        if xmin2_new == xmin2 and xmax2_new == xmax2:
+            raise RuntimeError("midplane touches the domain boundary at t = %d" % time)
+        xmin2, xmax2 = xmin2_new, xmax2_new
+        print("midplane touches the window edge: widening to %.0f-%.0f km" % (xmin2/1.e3, xmax2/1.e3))
 
     # get horizontal profiles and slab locations 
     midmant_prof = extract_horiz_prof(model_data,analysis_depth,ymax,dz,x_col,y_col)
@@ -174,11 +199,14 @@ for time in range(first_time,max_time,1):
     window_km = window * dsm
 
     # Is the analysis depth inside the contour, and far enough from its ends
-    # that the smoothing there is still local?  When a slab necks, c_llith
-    # drops below 0.5 in the shallow section and the midplane simply stops
-    # existing there; get_dip_at_certain_depth and get_curvature_at_certain_depth
-    # then return the nearest available point without complaint, which can be
-    # a hundred km deeper than requested and sits at the filter edge.
+    # that the smoothing there is still local?  Before the window above was
+    # made self-widening, a fixed-SP slab that had retreated past x = 2500 km
+    # lost its shallow section to the window edge (this was first read as
+    # necking: the full-domain contour is in fact continuous), and
+    # get_dip_at_certain_depth / get_curvature_at_certain_depth then returned
+    # the nearest available point without complaint, which could be a hundred
+    # km deeper than requested and sat at the filter edge.  The columns stay
+    # as a check.
     zkm       = analysis_depth/1.e3
     i_near    = int(np.argmin(np.abs(depth_mid - zkm)))
     depth_gap = 0.0 if (depth_mid.min() <= zkm <= depth_mid.max()) \

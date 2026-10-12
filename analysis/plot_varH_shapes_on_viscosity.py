@@ -45,7 +45,7 @@ assert FIELD in ('viscosity', 'pressure')
 P = '2D_compositional_subd_lower-res_new_'
 YMAX = 1450e3
 ZREF = 250.          # km, alignment depth
-ETAS = [50, 250, 375, 500, 1000]; BCS = ['free', 'FixedSP', 'FixedOP']
+ETAS = [50, 250, 375, 500, 1000]; BCS = ['FixedSP', 'free', 'FixedOP']   # row order
 # H = 100 panels exactly as in many_simple-plots_viscosity.sh: (model, output, x_center_km)
 H100 = {('free',50): (P+'50plates', 16, 3250), ('free',250): (P+'250plates', 16, 3250), ('free',375): (P+'375plates', 17, 3250),
         ('free',500): ('2D_compositional_subd_lower-res_new2', 17, 3350), ('free',1000): (P+'1000plates', 18, 3250),
@@ -131,7 +131,7 @@ def draw(ax, X, Z, lv, out, xlim):
             ax.plot(seg[:, 0] + shift, seg[:, 1], **STYLE[H])
     ax.set_xlim(xlim); ax.set_ylim(1000, 0); ax.set_aspect('equal', adjustable='box')
     ax.tick_params(direction='out', length=2, labelsize=TICK_FS)
-    ax.set_xlabel('x [km]', fontsize=LABEL_FS); ax.set_ylabel('depth [km]', fontsize=LABEL_FS)
+    ax.set_xlabel('x [km]', fontsize=LABEL_FS); ax.set_ylabel('z [km]', fontsize=LABEL_FS)
 
 if __name__ == '__main__':
     with Pool(15) as pool:
@@ -146,16 +146,18 @@ if __name__ == '__main__':
         bc, eta = key; i, j = BCS.index(bc), ETAS.index(eta); ax = axs[i, j]
         draw(ax, X, Z, lv, out, xlim)
         ax.annotate('%.1f Myr' % myr, xy=(0.03, 0.04), xycoords='axes fraction', ha='left', va='bottom', fontsize=8)
+        box = dict(boxstyle='square,pad=0.35', facecolor='white', edgecolor='black', linewidth=0.8)
         if i == 0:
-            ax.set_title("$\\eta'$ = %d" % eta, fontsize=11, pad=6)
+            ax.annotate("$\\eta'$ = %d" % eta, xy=(0.5, 1.06), xycoords='axes fraction', ha='center', va='bottom',
+                        fontsize=11, bbox=box)
         if j == 0:
             ax.annotate(BC_LABEL[bc], xy=(-0.42, 0.5), xycoords='axes fraction', ha='center', va='center',
-                        rotation=90, fontsize=11)
+                        rotation=90, fontsize=11, bbox=box)
         if i < 2:
             ax.set_xlabel(''); ax.tick_params(labelbottom=False)
         if j > 0:
             ax.set_ylabel(''); ax.tick_params(labelleft=False)
-        if i == 0 and j == 1 and FIELD == 'viscosity':
+        if bc == 'free' and eta == 250 and FIELD == 'viscosity':
             from matplotlib.lines import Line2D
             leg = ax.legend(handles=[Line2D([], [], label='70 km', **STYLE[70]), Line2D([], [], label='130 km', **STYLE[130])],
                             title='Variable H', loc='lower left', bbox_to_anchor=(0.03, 0.36), fontsize=7, title_fontsize=7.5, frameon=True, facecolor='none',

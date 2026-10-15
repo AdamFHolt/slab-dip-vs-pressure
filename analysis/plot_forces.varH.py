@@ -34,7 +34,7 @@ A seventh argument "pooled" draws every plate configuration on one row of
 panels instead of one row each (same markers and colours; ".pooled" in the
 output name).
 
-Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled] [nodrho71] [alleta] [closure]]]
+Usage:  python3 plot_forces.varH.py 300.e3 10.e3 10.e3 1.e3 [n [L_km [pooled] [nodrho71] [alleta] [closure|closureK]]]
 """
 import os
 import sys
@@ -75,11 +75,13 @@ pooled_fig = 'pooled' in sys.argv[7:]
 with_drho71 = 'nodrho71' not in sys.argv[7:]
 # "alleta" adds the paper's eta' = 50 and 375 models, which exist only at H = 100
 all_eta = 'alleta' in sys.argv[7:]
-# "closure": the Fig. 3 pair instead -- DP + sigma_slab vs B_slab, and the residual
-# (DP + sigma_slab - B_slab) vs curvature K
-closure_fig = 'closure' in sys.argv[7:]
+# "closure": Fig. 3 instead -- DP + sigma_slab vs B_slab, one panel per plate
+# thickness.  "closureK": its supplement companion, the residual
+# DP + sigma_slab - B_slab against |K| in the same three panels.  Every output.
+closure_fig  = 'closure' in sys.argv[7:]
+closureK_fig = 'closureK' in sys.argv[7:]
 plot_name = 'plots/DP-comparisons/compilations/forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -143,7 +145,8 @@ def load(bc, eta, H):
     m = name(bc, eta, H)
     f = 'text_files/withT_varH/' + m + suffix + '.txt'
     if not os.path.exists(f):
-        print('skipping %s (no withT_varH file)' % m)
+        if not (eta in (50, 375) and H != 100):     # those were only ever run at H = 100
+            print('skipping %s (no withT_varH file)' % m)
         return None
     d = np.loadtxt(f)[tmin:]
     d = d[d[:, cov_ind] == 1]
@@ -211,10 +214,88 @@ lam = np.concatenate([d['scal']/d['B'] for d in ds_]); q = np.concatenate([d['dq
 print('  all H  N=%3d  r=%.3f (MPa)  r=%.3f (over B)  slope=%.2f'
       % (len(scal), pearsonr(scal, dqds)[0], pearsonr(lam, q)[0], np.sum(scal*dqds)/np.sum(scal**2)))
 
+# --- closure figures (Fig. 3 and its supplement companion): one panel per H.
+# Colour is eta', marker the plate configuration, hollow = overturned.  The median
+# |residual| of the non-overturned models and any points outside the axes are
+# printed, not drawn (they belong in the caption).  Text is larger than the
+# three-row figures so the single row reads at the same size in print.
+if closure_fig or closureK_fig:
+    mpl.rcParams.update({'axes.labelsize': 9, 'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
+    from matplotlib.lines import Line2D
+    bc_marker = {'FixedSP': 'v', 'free': 'o', 'FixedOP': '^', 'drho71': 'D'}
+    if closure_fig:
+        # Fig. 3 (300 km) starts at -2.5 MPa; the supplement depths keep -5, which
+        # their lowest points need
+        lo = -2.5 if analysis_depth == 300.e3 else -5
+        (x0, x1, y0, y1) = (lo, 40, lo, 40)
+        xlab, ylab = r'$B_{slab}$   [MPa]', r'$\Delta P + \sigma_{slab}$   [MPa]'
+    else:
+        (x0, x1, y0, y1) = (-0.2, 3.2, -10, 10)
+        xlab, ylab = r'$|K|$   [10$^{-3}$ km$^{-1}$]', r'$\Delta P + \sigma_{slab} - B_{slab}$   [MPa]'
+    fig, axs = plt.subplots(1, 3, figsize=(7.0, 2.6), sharey=True)
+    for ax, H, lab in zip(axs, HS, 'abc'):
+        keys = [k for k in data if k[2] == H]
+        n_off = {True: 0, False: 0}     # keyed by 'overturned'
+        for (bc, e, Hk) in keys:
+            d = data[(bc, e, Hk)]
+            x = d['Bslab'] if closure_fig else d['K']
+            y = d['full'] + d['Bslab'] if closure_fig else d['full']
+            n_off[(bc, e, Hk) in OVERTURNED] += np.sum((x < x0) | (x > x1) | (y < y0) | (y > y1))
+            m = bc_marker[bc]
+            if (bc, e, Hk) in OVERTURNED:
+                ax.scatter(x, y, s=10, facecolors='none', edgecolor=colors[e], linewidth=0.4,
+                           marker=m, alpha=0.7, zorder=3)
+            else:
+                ax.scatter(x, y, s=10, color=colors[e], edgecolor='black' if bc != 'drho71' else 'white',
+                           linewidth=0.25, marker=m, zorder=3)
+        res = np.concatenate([data[k]['full'] for k in keys if k not in OVERTURNED])
+        if closure_fig:
+            ax.plot([x0, x1], [x0, x1], color='gray', linestyle='--', linewidth=1, zorder=1)
+            ax.set_xticks([0, 10, 20, 30, 40]); ax.set_yticks([0, 10, 20, 30, 40])
+        else:
+            ax.set_yticks([-10, -5, 0, 5, 10])
+        ax.axhline(0, color='lightgray', linewidth=1, zorder=0)
+        ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
+        ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+        ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
+        ax.set_aspect((x1 - x0)/(y1 - y0), adjustable='box')
+        ax.set_title('H = %d km' % H, fontsize=9)
+        # panel label on the title's baseline, flush with the axes' left edge
+        ax.set_title(lab + ')', loc='left', fontsize=9)
+        ax.set_xlabel(xlab)
+        print('closure H=%d: N=%d normal, median |res| %.2f MPa; off scale: %d normal, %d overturned'
+              % (H, len(res), np.median(np.abs(res)), n_off[False], n_off[True]))
+    axs[0].set_ylabel(ylab)
+    # two columns: eta' colours on the left, plate-configuration markers and the
+    # overturned symbol on the right (a blank pads the left column to four rows)
+    blank = Line2D([], [], linestyle='', label=' ')
+    eta_h = [Line2D([], [], marker='o', color=colors[e], markeredgecolor='black', markeredgewidth=0.25,
+                    linestyle='', markersize=4, label="\u03b7' = %d" % e) for e in ETAS]
+    # plain-text eta (Myriad has the glyph, not the prime) so both columns share one row height
+    bc_h = [Line2D([], [], marker=bc_marker[b], color='gray', markeredgecolor='black', markeredgewidth=0.25,
+                   linestyle='', markersize=4, label=bc_label[b]) for b in ['FixedSP', 'free', 'FixedOP']] + \
+           [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray',
+                   linestyle='', markersize=4, label='overturned')]
+    if ('drho71', 500, 70) in data:
+        eta_h.append(Line2D([], [], marker='D', color=colors[500], linestyle='', markersize=4,
+                            label=r'$\Delta\rho$ = 71'))
+    eta_h += [blank] * (len(bc_h) - len(eta_h))
+    # Fig. 3: the empty upper left; the residual panels: the empty lower half
+    leg = axs[0].legend(handles=eta_h + bc_h, ncol=2, loc='upper left' if closure_fig else 'lower left',
+                        fontsize=6.5, frameon=True, fancybox=False, edgecolor='black', facecolor='white',
+                        framealpha=1, borderpad=0.5, labelspacing=0.35, handletextpad=0.1,
+                        handlelength=1.2, columnspacing=0.8, borderaxespad=0.6)
+    leg.get_frame().set_linewidth(0.5)
+    plt.tight_layout()
+    plt.savefig(plot_name + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(plot_name + '.pdf', bbox_inches='tight')
+    print('wrote', plot_name + '.png/.pdf')
+    sys.exit(0)
+
 # --- figure: one row of three panels per plate configuration, or one row for all
 rows = ['all'] if pooled_fig else bcs_present
 nrow = len(rows)
-ncol = 2 if closure_fig else 3
+ncol = 3
 fig, axs = plt.subplots(nrow, ncol, figsize=(7.0/3*ncol, 2.6*nrow), squeeze=False)
 
 def scatter(ax, x, y, bc, e, H):
@@ -230,24 +311,14 @@ def scatter(ax, x, y, bc, e, H):
 
 for (bc, e, H), d in data.items():
     row = 0 if pooled_fig else bcs_present.index('free' if bc == 'drho71' else bc)
-    if closure_fig:      # full = DP + sigma_slab - B_slab, sigma_slab = dQ/ds + K*Qn
-        scatter(axs[row, 0], d['Bslab'], d['full'] + d['Bslab'], bc, e, H)
-        scatter(axs[row, 1], d['K'], d['full'], bc, e, H)
-    else:
-        scatter(axs[row, 0], d['Bslab'], d['DP'], bc, e, H)
-        scatter(axs[row, 1], d['scal'], d['dqds'], bc, e, H)
-        scatter(axs[row, 2], d['scal'], d['dpmis'], bc, e, H)
+    scatter(axs[row, 0], d['Bslab'], d['DP'], bc, e, H)
+    scatter(axs[row, 1], d['scal'], d['dqds'], bc, e, H)
+    scatter(axs[row, 2], d['scal'], d['dpmis'], bc, e, H)
 
-if closure_fig:
-    lims = [(-5, 45, -5, 45), (-0.2, 3.2, -10, 10)]
-    xlabels = [r'$B_{slab}$   [MPa]', r'$|K|$   [10$^{-3}$ km$^{-1}$]']
-    ylabels = [r'$\Delta P + \sigma_{slab}$   [MPa]', r'$\Delta P + \sigma_{slab} - B_{slab}$   [MPa]']
-    one_to_one = [True, False]
-else:
-    lims = [(-5, 45, -5, 45), (-5, 40, -10, 30), (-5, 40, -15, 30)]
-    xlabels = [r'$B_{slab}$   [MPa]', scal_label, scal_label]
-    ylabels = [r'$\Delta P$   [MPa]', r'$dQ_s/ds$   [MPa]', r'$B_{slab} - \Delta P$   [MPa]']
-    one_to_one = [True, True, True]
+lims = [(-5, 45, -5, 45), (-5, 40, -10, 30), (-5, 40, -15, 30)]
+xlabels = [r'$B_{slab}$   [MPa]', scal_label, scal_label]
+ylabels = [r'$\Delta P$   [MPa]', r'$dQ_s/ds$   [MPa]', r'$B_{slab} - \Delta P$   [MPa]']
+one_to_one = [True, True, True]
 for row, bc in enumerate(rows):
     for ax, (x0, x1, y0, y1), xl, yl, oto in zip(axs[row], lims, xlabels, ylabels, one_to_one):
         xx = np.linspace(x0, x1, 10)
@@ -259,8 +330,6 @@ for row, bc in enumerate(rows):
         ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
         ax.set_xlabel(xl); ax.set_ylabel(yl)
         ax.set_aspect((x1 - x0)/(y1 - y0), adjustable='box')
-        if closure_fig and ax is axs[row, 1]:
-            ax.set_yticks([-10, -5, 0, 5, 10])
     axs[row, 0].set_title(', '.join(bc_label[b] for b in bcs_present) if bc == 'all' else bc_label[bc],
                           loc='left', fontsize=7)
 

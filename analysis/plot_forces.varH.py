@@ -80,7 +80,10 @@ all_eta = 'alleta' in sys.argv[7:]
 # DP + sigma_slab - B_slab against |K| in the same three panels.  Every output.
 closure_fig  = 'closure' in sys.argv[7:]
 closureK_fig = 'closureK' in sys.argv[7:]
-plot_name = 'plots/DP-comparisons/compilations/forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
+# the closure figures (Fig. 3 and its supplement versions) go to manuscript_figs/
+out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if (closure_fig or closureK_fig) else '')
+os.makedirs(out_dir, exist_ok=True)
+plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
             + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38

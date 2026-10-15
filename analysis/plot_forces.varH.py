@@ -80,11 +80,15 @@ all_eta = 'alleta' in sys.argv[7:]
 # DP + sigma_slab - B_slab against |K| in the same three panels.  Every output.
 closure_fig  = 'closure' in sys.argv[7:]
 closureK_fig = 'closureK' in sys.argv[7:]
+# "fig5": Fig. 5 -- DP vs B_slab, dQ/ds vs the scaling and B_slab - DP vs the
+# scaling (n and L from arguments 5-6) side by side, every model of every H in
+# the same panels, in the style of the submitted figure (plot_forces.no-ot.py)
+fig5_fig     = 'fig5' in sys.argv[7:]
 # the closure figures (Fig. 3 and its supplement versions) go to manuscript_figs/
-out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if (closure_fig or closureK_fig) else '')
+out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if (closure_fig or closureK_fig or fig5_fig) else '')
 os.makedirs(out_dir, exist_ok=True)
 plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + ('.fig5' if fig5_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -290,6 +294,61 @@ if closure_fig or closureK_fig:
                         handlelength=1.2, columnspacing=0.8, borderaxespad=0.6)
     leg.get_frame().set_linewidth(0.5)
     plt.tight_layout()
+    plt.savefig(plot_name + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(plot_name + '.pdf', bbox_inches='tight')
+    print('wrote', plot_name + '.png/.pdf')
+    sys.exit(0)
+
+# --- Fig. 5, all models pooled.  Marker styles as plot_forces.no-ot.py and
+# functions_plotting.py (s = 10, thin black edge, overturned hollow); colour
+# eta', marker the plate configuration; legend as in Fig. 3.  The Lambda top
+# axes of the submitted figure are left off: Lambda = scaling/B and B differs
+# between the three H.
+if fig5_fig:
+    from matplotlib.lines import Line2D
+    mpl.rcParams.update({'axes.labelsize': 9, 'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
+    bc_marker = {'FixedSP': 'v', 'free': 'o', 'FixedOP': '^'}
+    fig, (axP, axQ, axM) = plt.subplots(1, 3, figsize=(7.0, 2.6))
+    for (bc, e, H), d in data.items():
+        m = bc_marker[bc]
+        for ax, x, y in ((axP, d['Bslab'], d['DP']), (axQ, d['scal'], d['dqds']), (axM, d['scal'], d['dpmis'])):
+            if (bc, e, H) in OVERTURNED:
+                ax.scatter(x, y, s=10, facecolors='none', edgecolor=colors[e], marker=m,
+                           linewidth=0.4, alpha=0.7, zorder=2)
+            else:
+                ax.scatter(x, y, s=10, color=colors[e], edgecolor='black', marker=m,
+                           linewidth=0.25, zorder=4 if (ax is axP and bc == 'FixedSP') else 3)
+    for ax, (x0, x1, y0, y1), xl, yl, lab in (
+            (axP, (-3, 40, -3, 40), r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'a'),
+            (axQ, (-5, 40, -10, 30), scal_label, r'$-dQ_{s}/ds$   [MPa]', 'b'),
+            (axM, (-5, 40, -10, 30), scal_label, r'$-(\Delta P - B_{slab})$   [MPa]', 'c')):
+        if ax is axP:
+            ax.plot([x0, x1], [x0, x1], color='black', linewidth=1, zorder=2)
+            ax.set_yticks([0, 10, 20, 30, 40])
+        else:
+            ax.plot([x0, x1], [x0, x1], color='gray', linestyle='--', linewidth=1, zorder=1)
+        ax.set_xticks([0, 10, 20, 30, 40])
+        ax.axhline(0, color='lightgray', linewidth=1, zorder=0)
+        ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
+        ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+        ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
+        ax.set_aspect((x1 - x0)/(y1 - y0), adjustable='box')
+        ax.set_xlabel(xl); ax.set_ylabel(yl)
+        ax.text(0.04, 0.96, lab + ')', transform=ax.transAxes, ha='left', va='top', fontsize=9, zorder=10)
+    # legend: one boxed row above all three panels (inside any panel it would
+    # cover points); eta' colours, then plate configuration and overturned
+    eta_h = [Line2D([], [], marker='o', color=colors[e], markeredgecolor='black', markeredgewidth=0.25,
+                    linestyle='', markersize=4, label="η' = %d" % e) for e in ETAS]
+    bc_h = [Line2D([], [], marker=bc_marker[b], color='gray', markeredgecolor='black', markeredgewidth=0.25,
+                   linestyle='', markersize=4, label=bc_label[b]) for b in ['FixedSP', 'free', 'FixedOP']] + \
+           [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray',
+                   linestyle='', markersize=4, label='overturned')]
+    plt.tight_layout()
+    leg = fig.legend(handles=eta_h + bc_h, ncol=len(eta_h + bc_h), loc='lower center',
+                     bbox_to_anchor=(0.5, 0.91), fontsize=6.5, frameon=True, fancybox=False,
+                     edgecolor='black', facecolor='white', framealpha=1, borderpad=0.5,
+                     handletextpad=0.1, handlelength=1.2, columnspacing=1.0)
+    leg.get_frame().set_linewidth(0.5)
     plt.savefig(plot_name + '.png', dpi=300, bbox_inches='tight')
     plt.savefig(plot_name + '.pdf', bbox_inches='tight')
     print('wrote', plot_name + '.png/.pdf')

@@ -84,11 +84,16 @@ closureK_fig = 'closureK' in sys.argv[7:]
 # scaling (n and L from arguments 5-6) side by side, every model of every H in
 # the same panels, in the style of the submitted figure (plot_forces.no-ot.py)
 fig5_fig     = 'fig5' in sys.argv[7:]
+# "fig5lam": the same with panels b) and c) in Lambda space -- x = scaling/B,
+# y = (-dQ/ds)/B and (B_slab - DP)/B, each model over its own nominal
+# B = drho*g*H (the Earth maps' definition), so every H shares one set of axes
+fig5lam_fig  = 'fig5lam' in sys.argv[7:]
+fig5_fig     = fig5_fig or fig5lam_fig
 # the closure figures (Fig. 3 and its supplement versions) go to manuscript_figs/
 out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if (closure_fig or closureK_fig or fig5_fig) else '')
 os.makedirs(out_dir, exist_ok=True)
 plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + ('.fig5' if fig5_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.L%d' % L_eff if fig5_fig else '') + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + (('.fig5lam' if fig5lam_fig else '.fig5') if fig5_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -308,26 +313,49 @@ if fig5_fig:
     from matplotlib.lines import Line2D
     mpl.rcParams.update({'axes.labelsize': 9, 'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
     bc_marker = {'FixedSP': 'v', 'free': 'o', 'FixedOP': '^'}
+    LAM_LIMS, LAM_TICKS = (-0.1, 0.8, -0.2, 0.6), [0, 0.2, 0.4, 0.6, 0.8]
+    if fig5lam_fig:
+        # residual fraction (B_slab - DP)/B in bins of Lambda, normal runs only:
+        # where it stays under ~0.1 is the threshold the Earth maps can use
+        ok = [d for k, d in data.items() if k not in OVERTURNED]
+        lam = np.concatenate([d['scal']/d['B'] for d in ok])
+        res = np.concatenate([d['dpmis']/d['B'] for d in ok])
+        Hs  = np.concatenate([np.full(len(d['scal']), d['Hn']) for d in ok])
+        print('Lambda range %.3f to %.3f; (B_slab - DP)/B against Lambda, normal runs:' % (lam.min(), lam.max()))
+        print('  %-13s %4s %7s %7s %7s %7s  %s' % ('Lambda bin', 'N', 'median', 'p75', 'p90', 'f<0.1', 'N by H 70/100/130'))
+        for a, b in ((-1, 0), (0, 0.05), (0.05, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.3), (0.3, 0.5), (0.5, 2)):
+            m = (lam >= a) & (lam < b)
+            if m.sum():
+                print('  [%5.2f,%5.2f) %4d %7.3f %7.3f %7.3f %7.2f  %s' % (a, b, m.sum(), np.median(res[m]),
+                      np.percentile(res[m], 75), np.percentile(res[m], 90), np.mean(res[m] < 0.1),
+                      '/'.join(str(np.sum(m & np.isclose(Hs, h, atol=5))) for h in HS)))
+        print('  r(Lambda, dQ/ds/B) = %.3f, r(Lambda, residual/B) = %.3f'
+              % (pearsonr(lam, np.concatenate([d['dqds']/d['B'] for d in ok]))[0], pearsonr(lam, res)[0]))
     fig, (axP, axQ, axM) = plt.subplots(1, 3, figsize=(7.0, 2.6))
     for (bc, e, H), d in data.items():
         m = bc_marker[bc]
-        for ax, x, y in ((axP, d['Bslab'], d['DP']), (axQ, d['scal'], d['dqds']), (axM, d['scal'], d['dpmis'])):
+        nb = d['B'] if fig5lam_fig else 1.     # Lambda space: divide by the nominal B
+        for ax, x, y in ((axP, d['Bslab'], d['DP']), (axQ, d['scal']/nb, d['dqds']/nb), (axM, d['scal']/nb, d['dpmis']/nb)):
             if (bc, e, H) in OVERTURNED:
                 ax.scatter(x, y, s=10, facecolors='none', edgecolor=colors[e], marker=m,
                            linewidth=0.4, alpha=0.7, zorder=2)
             else:
                 ax.scatter(x, y, s=10, color=colors[e], edgecolor='black', marker=m,
                            linewidth=0.25, zorder=4 if (ax is axP and bc == 'FixedSP') else 3)
+    if fig5lam_fig:
+        panels_bc = ((axQ, LAM_LIMS, r'$\Lambda$', r'$-(dQ_{s}/ds)\,/\,B$', 'b'),
+                     (axM, LAM_LIMS, r'$\Lambda$', r'$-(\Delta P - B_{slab})\,/\,B$', 'c'))
+    else:
+        panels_bc = ((axQ, (-5, 40, -10, 30), scal_label, r'$-dQ_{s}/ds$   [MPa]', 'b'),
+                     (axM, (-5, 40, -10, 30), scal_label, r'$-(\Delta P - B_{slab})$   [MPa]', 'c'))
     for ax, (x0, x1, y0, y1), xl, yl, lab in (
-            (axP, (-3, 40, -3, 40), r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'a'),
-            (axQ, (-5, 40, -10, 30), scal_label, r'$-dQ_{s}/ds$   [MPa]', 'b'),
-            (axM, (-5, 40, -10, 30), scal_label, r'$-(\Delta P - B_{slab})$   [MPa]', 'c')):
+            ((axP, (-3, 40, -3, 40), r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'a'),) + panels_bc):
         if ax is axP:
             ax.plot([x0, x1], [x0, x1], color='black', linewidth=1, zorder=2)
             ax.set_yticks([0, 10, 20, 30, 40])
         else:
             ax.plot([x0, x1], [x0, x1], color='gray', linestyle='--', linewidth=1, zorder=1)
-        ax.set_xticks([0, 10, 20, 30, 40])
+        ax.set_xticks(LAM_TICKS if (fig5lam_fig and ax is not axP) else [0, 10, 20, 30, 40])
         ax.axhline(0, color='lightgray', linewidth=1, zorder=0)
         ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
         ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)

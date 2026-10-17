@@ -65,7 +65,7 @@ def main():
     model = sys.argv[1]
     depth = float(sys.argv[2]) if len(sys.argv) > 2 else 300.e3
     zkm = '%.1f' % (depth / 1.e3)
-    src = 'extracted_varH' if model.endswith(VARH) else 'extracted_coverage'
+    src = 'extracted_varH' if '_H' in model else 'extracted_coverage'
     txt = np.loadtxt(ANALYSIS + 'text_files/%s/%s' % (src, model) + SUFFIX % zkm)
     os.makedirs(OUTDIR, exist_ok=True)
 
@@ -74,6 +74,9 @@ def main():
         time = irow + FIRST_TIME
         dip_deg, K, H_txt, cov = txt[irow, 5], txt[irow, 11], txt[irow, 9], txt[irow, 38]
         dqds_txt = -txt[irow, 6]                     # paper sign, Pa/m
+        if not H_txt > 0:                            # degenerate geometry (e.g. dip > 180 deg)
+            print('%s t=%d: H = %.0f m, skipped' % (model, time, H_txt), flush=True)
+            continue
         csv = ANALYSIS + 'csv_outputs/%s/full.%d.csv' % (model, time)
         if not os.path.exists(csv):
             print('%s t=%d: MISSING CSV' % (model, time), flush=True)

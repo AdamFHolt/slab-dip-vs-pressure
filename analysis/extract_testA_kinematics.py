@@ -51,7 +51,7 @@ FIRST_TIME = 8
 T_START = 11            # first timestep the figures use
 
 SUFFIX = '.z%s.shear-dz10.0.ds10.0.prof-dz1.0km.txt'
-VARH = 'H70km', 'H130km'
+VARH = 'H70km', 'H130km'   # kept for importers; models with '_H' in the name read extracted_varH
 
 
 def horiz_center(x, y, llith, ulith, depth):
@@ -80,7 +80,7 @@ def main():
     model = sys.argv[1]
     depth = float(sys.argv[2]) if len(sys.argv) > 2 else 300.e3
     zkm = '%.1f' % (depth / 1.e3)
-    src = 'extracted_varH' if model.endswith(VARH) else 'extracted_coverage'
+    src = 'extracted_varH' if '_H' in model else 'extracted_coverage'
     txt = np.loadtxt(ANALYSIS + 'text_files/%s/%s' % (src, model) + SUFFIX % zkm)
     os.makedirs(OUTDIR, exist_ok=True)
 

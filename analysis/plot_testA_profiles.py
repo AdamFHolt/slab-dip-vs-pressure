@@ -27,7 +27,7 @@ zkm = '%.1f' % (depth / 1.e3)
 fig, axs = plt.subplots(len(args), 4, figsize=(13, 2.8 * len(args)), squeeze=False)
 for row, arg in enumerate(args):
     model, time = arg.split(':'); time = int(time)
-    src = 'extracted_varH' if model.endswith(A.VARH) else 'extracted_coverage'
+    src = 'extracted_varH' if '_H' in model else 'extracted_coverage'
     txt = np.loadtxt(A.ANALYSIS + 'text_files/%s/%s' % (src, model) + A.SUFFIX % zkm)
     dip_deg, K, H_txt = txt[time - A.FIRST_TIME, 5], txt[time - A.FIRST_TIME, 11], txt[time - A.FIRST_TIME, 9]
     d = pd.read_csv(A.ANALYSIS + 'csv_outputs/%s/full.%d.csv' % (model, time),

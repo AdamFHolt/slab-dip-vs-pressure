@@ -101,14 +101,22 @@ inset_fig    = means_fig and 'inset' in sys.argv[7:]
 # model-mean inset like b)'s -- the quantity the Earth maps use.  The
 # absolute residual panel is dropped (it is this one times each model's B)
 lamd_fig     = fig5_fig and not fig5lam_fig and 'lamd' in sys.argv[7:]
+# "Hsize" (with means): the model means' marker size encodes the plate
+# thickness, H = 70 / 100 / 130 km small / medium / large (insets too)
+Hsize_fig    = means_fig and 'Hsize' in sys.argv[7:]
+MEAN_S       = {70: 16, 100: 30, 130: 50} if Hsize_fig else {70: 30, 100: 30, 130: 30}
+INSET_S      = {70: 5, 100: 9, 130: 15} if Hsize_fig else {70: 9, 100: 9, 130: 9}
+# "strip" (with lamd, one row): one boxed row like the default, each group
+# introduced by a bold header ("viscosity ratio η':" 50 250 ...)
+strip_fig    = lamd_fig and 'strip' in sys.argv[7:]
 # the manuscript figures go to manuscript_figs/: Fig. 3 and its supplement
-# versions (closure, closureK) and Fig. 5 (fig5 means inset lamd); the other Fig. 5
-# variants (every output, means, means inset without lamd, Lambda space) to compilations/
-manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig and lamd_fig)
+# versions (closure, closureK) and Fig. 5 (fig5 means inset lamd Hsize strip);
+# the other Fig. 5 variants to compilations/
+manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig and lamd_fig and Hsize_fig and strip_fig)
 out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if manuscript_fig else '')
 os.makedirs(out_dir, exist_ok=True)
 plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.L%d' % L_eff if fig5_fig else '') + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + (('.fig5lam' if fig5lam_fig else '.fig5') if fig5_fig else '') + ('.means' if means_fig else '') + ('.inset' if inset_fig else '') + ('.lamd' if lamd_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.L%d' % L_eff if fig5_fig else '') + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + (('.fig5lam' if fig5lam_fig else '.fig5') if fig5_fig else '') + ('.means' if means_fig else '') + ('.inset' if inset_fig else '') + ('.lamd' if lamd_fig else '') + ('.Hsize' if Hsize_fig else '') + ('.strip' if strip_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -390,10 +398,10 @@ if fig5_fig:
                 ax.errorbar(xm, ym, xerr=np.std(x), yerr=np.std(y), fmt='none', ecolor=colors[e],
                             elinewidth=0.4, alpha=0.5, capsize=0, zorder=3)
                 if ot:
-                    ax.scatter(xm, ym, s=30, facecolors='none', edgecolor=colors[e], marker=m,
+                    ax.scatter(xm, ym, s=MEAN_S[H], facecolors='none', edgecolor=colors[e], marker=m,
                                linewidth=0.75, zorder=4, clip_on=False)
                 else:
-                    ax.scatter(xm, ym, s=30, color=colors[e], edgecolor='black', marker=m,
+                    ax.scatter(xm, ym, s=MEAN_S[H], color=colors[e], edgecolor='black', marker=m,
                                linewidth=0.4, zorder=5, clip_on=False)
             elif (bc, e, H) in OVERTURNED:
                 ax.scatter(x, y, s=10, facecolors='none', edgecolor=colors[e], marker=m,
@@ -464,9 +472,9 @@ if fig5_fig:
                 nb = d['B'] if overB else 1.
                 m, xm, ym = bc_marker[bc], np.mean(d['scal'])/nb, np.mean(d[key])/nb
                 if (bc, e, H) in OVERTURNED:
-                    axI.scatter(xm, ym, s=9, facecolors='white', edgecolor=colors[e], marker=m, linewidth=0.6, zorder=4)
+                    axI.scatter(xm, ym, s=INSET_S[H], facecolors='white', edgecolor=colors[e], marker=m, linewidth=0.6, zorder=4)
                 else:
-                    axI.scatter(xm, ym, s=9, color=colors[e], edgecolor='black', marker=m, linewidth=0.25, zorder=5)
+                    axI.scatter(xm, ym, s=INSET_S[H], color=colors[e], edgecolor='black', marker=m, linewidth=0.25, zorder=5)
             axI.plot([ix0, ix1], [ix0, ix1], color='gray', linestyle='--', linewidth=0.7, zorder=1)
             x0, x1, y0, y1 = main_lims
             axI.add_patch(mpl.patches.Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, edgecolor='black',
@@ -486,7 +494,61 @@ if fig5_fig:
                    linestyle='', markersize=4, label=bc_label[b]) for b in ['FixedSP', 'free', 'FixedOP']] + \
            [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray',
                    linestyle='', markersize=4, label='overturned')]
+    if Hsize_fig:
+        bc_h += [Line2D([], [], marker='o', color='gray', markeredgecolor='black', markeredgewidth=0.25,
+                        linestyle='', markersize=np.sqrt(MEAN_S[h]) * 0.75,
+                        label=('H = %d km' if h == HS[0] else '%d km') % h) for h in HS]
     plt.tight_layout()
+    if strip_fig:
+        nH = len(HS) if Hsize_fig else 0
+        for h_, e in zip(eta_h, ETAS):
+            h_.set_label('%d' % e)
+        for h_, h in zip(bc_h[len(bc_h) - nH:], HS):
+            h_.set_label('%d km' % h)
+        header = lambda t: Line2D([], [], linestyle='', marker='', label=t)
+        bc_h[1].set_label('free')          # short labels, so the strip fits the panels' width
+        hs = [header("viscosity ratio η':")] + eta_h + [header('plates:')] + bc_h[:len(bc_h) - nH]
+        if Hsize_fig:
+            hs += [header('thickness:')] + bc_h[len(bc_h) - nH:]
+        leg = fig.legend(handles=hs, ncol=len(hs), loc='lower center', bbox_to_anchor=(0.5, 0.91),
+                         fontsize=6.5, frameon=False, borderpad=0.5, handletextpad=0.1, handlelength=1.0,
+                         columnspacing=0.5)
+        for h_, t in zip(hs, leg.get_texts()):
+            if h_.get_marker() in ('', 'None', None):
+                t.set_fontweight('bold')
+        # centre the strip over the panel frames, just above the top tick labels
+        fig.canvas.draw()
+        r_ = fig.canvas.get_renderer()
+        inv = fig.transFigure.inverted()
+        x_c = 0.5 * (axP.get_position().x0 + axL.get_position().x1)
+        top = max(inv.transform(a.get_tightbbox(r_))[1, 1] for a in (axP, axQ, axL))
+        leg.set_bbox_to_anchor((x_c, top + 0.03), transform=fig.transFigure)
+        fig.canvas.draw()
+        # the box is drawn here rather than as the legend frame: the frame
+        # counts the empty handle slot before the first header, which puts the
+        # content right of centre.  Box = visible content + equal padding,
+        # content shifted so the box is centred over the panels
+        lb = leg.get_window_extent()
+        tx = [t.get_window_extent(r_) for t in leg.get_texts()]
+        cx0, cx1 = tx[0].x0, tx[-1].x1
+        shift = (x_c - inv.transform(((cx0 + cx1) / 2, 0))[0])
+        leg.set_bbox_to_anchor((x_c + shift, top + 0.03), transform=fig.transFigure)
+        fig.canvas.draw()
+        tx = [t.get_window_extent(r_) for t in leg.get_texts()]
+        hb = [h.get_window_extent(r_) for h in leg.legend_handles]
+        cx0, cx1 = tx[0].x0, tx[-1].x1
+        cy0 = min(b.y0 for b in tx + hb if b.height > 0); cy1 = max(b.y1 for b in tx + hb if b.height > 0)
+        pad = 0.5 * 6.5 / 72 * fig.dpi       # borderpad of 0.5 font sizes
+        (bx0, by0), (bx1, by1) = inv.transform(((cx0 - pad, cy0 - pad), (cx1 + pad, cy1 + pad)))
+        fig.patches.append(mpl.patches.Rectangle((bx0, by0), bx1 - bx0, by1 - by0, transform=fig.transFigure,
+                                                 facecolor='white', edgecolor='black', linewidth=0.5, zorder=-1))
+        lb = mpl.transforms.Bbox.from_extents(cx0 - pad, cy0 - pad, cx1 + pad, cy1 + pad)
+        span = (axP.get_tightbbox(r_).x0, axL.get_tightbbox(r_).x1)
+        print('strip legend %.2f in wide, panels (with labels) %.2f in' % (lb.width / fig.dpi, (span[1] - span[0]) / fig.dpi))
+        plt.savefig(plot_name + '.png', dpi=300, bbox_inches='tight')
+        plt.savefig(plot_name + '.pdf', bbox_inches='tight')
+        print('wrote', plot_name + '.png/.pdf')
+        sys.exit(0)
     leg_y = 0.91
     leg = fig.legend(handles=eta_h + bc_h, ncol=len(eta_h + bc_h), loc='lower center',
                      bbox_to_anchor=(0.5, leg_y), fontsize=6.5, frameon=True, fancybox=False,

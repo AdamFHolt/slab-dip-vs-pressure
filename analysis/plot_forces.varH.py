@@ -96,14 +96,19 @@ means_fig    = fig5_fig and 'means' in sys.argv[7:]
 # "inset" (with means): a small inset in panels b) and c) with every model
 # mean, overturned (hollow) included, on axes wide enough for them
 inset_fig    = means_fig and 'inset' in sys.argv[7:]
+# "lamd" (with fig5, not fig5lam): panel c) becomes the residual fraction
+# (B_slab - DP)/B against Lambda = scaling/B (nominal B = drho*g*H), with the
+# model-mean inset like b)'s -- the quantity the Earth maps use.  The
+# absolute residual panel is dropped (it is this one times each model's B)
+lamd_fig     = fig5_fig and not fig5lam_fig and 'lamd' in sys.argv[7:]
 # the manuscript figures go to manuscript_figs/: Fig. 3 and its supplement
-# versions (closure, closureK) and Fig. 5 (fig5 means inset); the other Fig. 5
-# variants (every output, means without insets, Lambda space) to compilations/
-manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig)
+# versions (closure, closureK) and Fig. 5 (fig5 means inset lamd); the other Fig. 5
+# variants (every output, means, means inset without lamd, Lambda space) to compilations/
+manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig and lamd_fig)
 out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if manuscript_fig else '')
 os.makedirs(out_dir, exist_ok=True)
 plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
-            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.L%d' % L_eff if fig5_fig else '') + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + (('.fig5lam' if fig5lam_fig else '.fig5') if fig5_fig else '') + ('.means' if means_fig else '') + ('.inset' if inset_fig else '')
+            + ('' if n_exp == 1 else '.n%d' % n_exp) + ('.L%d' % L_eff if fig5_fig else '') + ('.pooled' if pooled_fig else '') + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '') + ('.closure' if closure_fig else '') + ('.closureK' if closureK_fig else '') + (('.fig5lam' if fig5lam_fig else '.fig5') if fig5_fig else '') + ('.means' if means_fig else '') + ('.inset' if inset_fig else '') + ('.lamd' if lamd_fig else '')
 
 K_ind = 11; ss_ind = 17; sn_ind = 6; anal_ind = 4; DP_ind = 3; vc_ind = 19; cov_ind = 38
 
@@ -324,7 +329,7 @@ if fig5_fig:
     mpl.rcParams.update({'axes.labelsize': 9, 'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
     bc_marker = {'FixedSP': 'v', 'free': 'o', 'FixedOP': '^'}
     LAM_LIMS, LAM_TICKS = (-0.1, 0.8, -0.2, 0.6), [0, 0.2, 0.4, 0.6, 0.8]
-    if fig5lam_fig:
+    if fig5lam_fig or lamd_fig:
         # residual fraction (B_slab - DP)/B in bins of Lambda, normal runs only:
         # where it stays under ~0.1 is the threshold the Earth maps can use
         ok = [d for k, d in data.items() if k not in OVERTURNED]
@@ -350,11 +355,22 @@ if fig5_fig:
             ys = np.array([np.mean(d[key])/b for d, b in zip(ok, nbs)])
             print('model means %-15s N=%d  r=%.3f  slope=%.2f  rms=%.2f' % (lab_, len(xs), pearsonr(xs, ys)[0],
                   np.sum(xs*ys)/np.sum(xs**2), np.sqrt(np.mean((ys - xs)**2))))
-    fig, (axP, axQ, axM) = plt.subplots(1, 3, figsize=(7.0, 2.6))
+    if lamd_fig:
+        fig, (axP, axQ, axL) = plt.subplots(1, 3, figsize=(7.0, 2.6))
+        axM = None
+    else:
+        fig, (axP, axQ, axM) = plt.subplots(1, 3, figsize=(7.0, 2.6))
+        axL = None
+    # extents of b), c) (as set below), for the model means drawn unclipped
+    lims_m = LAM_LIMS if fig5lam_fig else (-4, 16, -4, 16)
+    mean_lims = {axQ: lims_m, axM: lims_m, axL: (-0.1, 0.3, -0.1, 0.3)}
     for (bc, e, H), d in data.items():
         m = bc_marker[bc]
         nb = d['B'] if fig5lam_fig else 1.     # Lambda space: divide by the nominal B
-        for ax, x, y in ((axP, d['Bslab'], d['DP']), (axQ, d['scal']/nb, d['dqds']/nb), (axM, d['scal']/nb, d['dpmis']/nb)):
+        panels_xy = ((axP, d['Bslab'], d['DP']), (axQ, d['scal']/nb, d['dqds']/nb), (axM, d['scal']/nb, d['dpmis']/nb))
+        if lamd_fig:
+            panels_xy = panels_xy[:2] + ((axL, d['scal']/d['B'], d['dpmis']/d['B']),)
+        for ax, x, y in panels_xy:
             if means_fig and ax is not axP:
                 ot = (bc, e, H) in OVERTURNED
                 # every output, pale and small, behind the model means; overturned
@@ -364,12 +380,21 @@ if fig5_fig:
                                alpha=0.35, zorder=2)
                 else:
                     ax.scatter(x, y, s=4, color=colors[e], marker=m, linewidth=0, alpha=0.45, zorder=2)
-                if not ot:          # overturned runs: background here, means in the inset
-                    xm, ym = np.mean(x), np.mean(y)
-                    ax.errorbar(xm, ym, xerr=np.std(x), yerr=np.std(y), fmt='none', ecolor=colors[e],
-                                elinewidth=0.4, alpha=0.5, capsize=0, zorder=3)
+                # model mean with +-1 sigma whiskers; overturned hollow and behind
+                # the normal means.  Markers may run over the axes edge (clip off),
+                # so only means inside the axes are drawn; the rest are in the inset
+                xm, ym = np.mean(x), np.mean(y)
+                x0_, x1_, y0_, y1_ = mean_lims[ax]
+                if not (x0_ <= xm <= x1_ and y0_ <= ym <= y1_):
+                    continue
+                ax.errorbar(xm, ym, xerr=np.std(x), yerr=np.std(y), fmt='none', ecolor=colors[e],
+                            elinewidth=0.4, alpha=0.5, capsize=0, zorder=3)
+                if ot:
+                    ax.scatter(xm, ym, s=30, facecolors='none', edgecolor=colors[e], marker=m,
+                               linewidth=0.75, zorder=4, clip_on=False)
+                else:
                     ax.scatter(xm, ym, s=30, color=colors[e], edgecolor='black', marker=m,
-                               linewidth=0.4, zorder=5)
+                               linewidth=0.4, zorder=5, clip_on=False)
             elif (bc, e, H) in OVERTURNED:
                 ax.scatter(x, y, s=10, facecolors='none', edgecolor=colors[e], marker=m,
                            linewidth=0.4, alpha=0.7, zorder=2)
@@ -384,6 +409,8 @@ if fig5_fig:
         lims_bc = (-4, 16, -4, 16) if means_fig else (-5, 40, -10, 30)
         panels_bc = ((axQ, lims_bc, scal_label, r'$-dQ_{s}/ds$   [MPa]', 'b'),
                      (axM, lims_bc, scal_label, r'$-(\Delta P - B_{slab})$   [MPa]', 'c'))
+    if lamd_fig:
+        panels_bc = panels_bc[:1] + ((axL, (-0.1, 0.3, -0.1, 0.3), r'$\Lambda$', r'$-(\Delta P - B_{slab})\,/\,B$', 'c'),)
     for ax, (x0, x1, y0, y1), xl, yl, lab in (
             ((axP, (-3, 40, -3, 40), r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'a'),) + panels_bc):
         if ax is axP:
@@ -395,18 +422,29 @@ if fig5_fig:
                       [-4, 0, 4, 8, 12, 16] if (means_fig and ax is not axP) else [0, 10, 20, 30, 40])
         if means_fig and not fig5lam_fig and ax is not axP:
             ax.set_yticks([-4, 0, 4, 8, 12, 16])
+        if ax is axL:
+            ax.set_xticks([-0.1, 0, 0.1, 0.2, 0.3]); ax.set_yticks([-0.1, 0, 0.1, 0.2, 0.3])
         ax.axhline(0, color='lightgray', linewidth=1, zorder=0)
         ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
         ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
         ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
         ax.set_aspect((x1 - x0)/(y1 - y0), adjustable='box')
         ax.set_xlabel(xl); ax.set_ylabel(yl)
-        ax.text(0.04, 0.96, lab + ')', transform=ax.transAxes, ha='left', va='top', fontsize=9, zorder=10)
+        # white backing so the label does not sit on the x = 0 line
+        ax.text(0.04, 0.96, lab + ')', transform=ax.transAxes, ha='left', va='top', fontsize=9, zorder=10,
+                bbox=dict(facecolor='white', edgecolor='none', pad=1))
     if inset_fig:
         # lower right of b) and c), which the normal means leave empty (the inset
         # may run over the right axis): model means only, no background, the main
         # panel's extent outlined
-        for axO, key in ((axQ, 'dqds'), (axM, 'dpmis')):
+        # (axes, quantity, divide by B, main extent, inset extent and ticks)
+        insets = [(axQ, 'dqds', False, lims_bc, (-5, 50, -5, 30), [0, 20, 40], [0, 10, 20, 30])]
+        if lamd_fig:
+            insets.append((axL, 'dpmis', True, (-0.1, 0.3, -0.1, 0.3), (-0.1, 0.8, -0.1, 0.5),
+                           [0, 0.4, 0.8], [0, 0.2, 0.4]))
+        else:
+            insets.append((axM, 'dpmis', False, lims_bc, (-5, 50, -5, 30), [0, 20, 40], [0, 10, 20, 30]))
+        for axO, key, overB, main_lims, inset_lims, ixt, iyt in insets:
             axI = axO.inset_axes([0.62, 0.14, 0.41, 0.36])
             # white backing under the inset and its tick labels, so the pale
             # background points do not run into them
@@ -414,19 +452,27 @@ if fig5_fig:
                                                 facecolor='white', edgecolor='none', clip_on=False, zorder=9))
             for sp in axO.spines.values():       # axes lines over the backing, under the inset
                 sp.set_zorder(9.5)
-            (ix0, ix1, iy0, iy1) = (-5, 50, -5, 30)
+            # short white gaps in the main right axis just above and below the
+            # inset, so the axis line does not run straight into its edges
+            # (c)'s Lambda inset has its 0.8 tick label right on the main axis
+            # line, so its lower gap reaches down past the label)
+            for y_gap, h_gap in ((0.50, 0.02), (0.07, 0.07) if overB else (0.12, 0.02)):
+                axO.add_patch(mpl.patches.Rectangle((0.95, y_gap), 0.10, h_gap, transform=axO.transAxes,
+                                                    facecolor='white', edgecolor='none', clip_on=False, zorder=9.8))
+            (ix0, ix1, iy0, iy1) = inset_lims
             for (bc, e, H), d in data.items():
-                m, xm, ym = bc_marker[bc], np.mean(d['scal']), np.mean(d[key])
+                nb = d['B'] if overB else 1.
+                m, xm, ym = bc_marker[bc], np.mean(d['scal'])/nb, np.mean(d[key])/nb
                 if (bc, e, H) in OVERTURNED:
                     axI.scatter(xm, ym, s=9, facecolors='white', edgecolor=colors[e], marker=m, linewidth=0.6, zorder=4)
                 else:
                     axI.scatter(xm, ym, s=9, color=colors[e], edgecolor='black', marker=m, linewidth=0.25, zorder=5)
             axI.plot([ix0, ix1], [ix0, ix1], color='gray', linestyle='--', linewidth=0.7, zorder=1)
-            x0, x1, y0, y1 = lims_bc
+            x0, x1, y0, y1 = main_lims
             axI.add_patch(mpl.patches.Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, edgecolor='black',
                                                 linewidth=0.4, linestyle=':', zorder=2))
             axI.set_xlim(ix0, ix1); axI.set_ylim(iy0, iy1)
-            axI.set_xticks([0, 20, 40]); axI.set_yticks([0, 10, 20, 30])
+            axI.set_xticks(ixt); axI.set_yticks(iyt)
             axI.tick_params(labelsize=5.5, length=2, width=0.4, pad=1)
             for sp in axI.spines.values():
                 sp.set_linewidth(0.5)
@@ -441,8 +487,9 @@ if fig5_fig:
            [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray',
                    linestyle='', markersize=4, label='overturned')]
     plt.tight_layout()
+    leg_y = 0.91
     leg = fig.legend(handles=eta_h + bc_h, ncol=len(eta_h + bc_h), loc='lower center',
-                     bbox_to_anchor=(0.5, 0.91), fontsize=6.5, frameon=True, fancybox=False,
+                     bbox_to_anchor=(0.5, leg_y), fontsize=6.5, frameon=True, fancybox=False,
                      edgecolor='black', facecolor='white', framealpha=1, borderpad=0.5,
                      handletextpad=0.1, handlelength=1.2, columnspacing=1.0)
     leg.get_frame().set_linewidth(0.5)

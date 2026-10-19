@@ -13,7 +13,7 @@ the output whose slab-tip depth is closest to the H = 100 tip in the snapshot
 250 km depth coincides with the H = 100 slab.
 
 Usage: python3 plot_varH_shapes_on_viscosity.py [pressure]   (from analysis/)
-Writes plots/evolution/simple/varH_shapes_on_viscosity.png/.pdf (3x5 composite) and one
+Writes plots/DP-comparisons/compilations/manuscript_figs/varH_shapes_on_viscosity.png/.pdf (3x5 composite, Fig. 2) and one
 PDF/PNG per panel in plots/evolution/simple/zoomed/varH_overlay/.
 
 With the argument "pressure" the same grid shows the dynamic pressure instead
@@ -136,7 +136,10 @@ def draw(ax, X, Z, lv, out, xlim):
 if __name__ == '__main__':
     with Pool(15) as pool:
         res = pool.map(panel, list(H100))
-    composite = 'plots/evolution/simple/' + ('varH_shapes_on_viscosity' if FIELD == 'viscosity' else 'varH_grid_pressure')
+    # the Fig. 2 composite goes to manuscript_figs/ (Adam 2026-10-19); the pressure
+    # companion and all per-panel files stay under plots/evolution/simple/
+    composite = ('plots/DP-comparisons/compilations/manuscript_figs/varH_shapes_on_viscosity' if FIELD == 'viscosity'
+                 else 'plots/evolution/simple/varH_grid_pressure')
     panel_dir = 'plots/evolution/simple/zoomed/' + ('varH_overlay' if FIELD == 'viscosity' else 'grid_pressure')
     os.makedirs(panel_dir, exist_ok=True)
     TICK_FS, LABEL_FS = 7, 8          # a touch larger in the composite

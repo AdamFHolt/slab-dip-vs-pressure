@@ -70,9 +70,11 @@ tmin = tactual_min - 8
 
 suffix = '.z%s.shear-dz%s.ds%s.prof-dz%skm' % (analysis_depth/1.e3, analysis_depth_dz/1.e3, ds/1.e3, dz/1.e3)
 pooled_fig = 'pooled' in sys.argv[7:]
-# the B-matched drho71 run is a supplement control (it shows that thickness, not
-# buoyancy, sets dQ/ds); "nodrho71" leaves it out for the main-text figure
-with_drho71 = 'nodrho71' not in sys.argv[7:]
+# the B-matched drho71 run (drho = 71.43 at H = 70, so B matches H = 100) showed
+# that thickness, not buoyancy, sets dQ/ds; it is out of the manuscript (Adam,
+# 2026-10-19) and excluded by default -- "drho71" adds it; "nodrho71" is still
+# accepted so the recorded figure commands keep working
+with_drho71 = 'drho71' in sys.argv[7:] and 'nodrho71' not in sys.argv[7:]
 # "alleta" adds the paper's eta' = 50 and 375 models, which exist only at H = 100
 all_eta = 'alleta' in sys.argv[7:]
 # "closure": Fig. 3 instead -- DP + sigma_slab vs B_slab, one panel per plate

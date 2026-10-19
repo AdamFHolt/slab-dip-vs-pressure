@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Slab shapes at the last analysed output of every model in the variable-H
-compilation (free, fixed-SP, fixed-OP x H = 70/100/130 x eta' = 250/500/1000,
-plus the B-matched drho71 run), to classify them as normal or overturned.
-
+Supplement figure: slab shape at the last analysed output of every model in the
+variable-H compilation (fixed SP, free, fixed OP x H = 70/100/130 km x
+eta' = 250/500/1000), the basis of the normal / overturned classification used
+in Figs 3-5 (OVERTURNED in plot_forces.varH.py; overturned runs drawn dashed).
 Each panel overlays the c_llith = 0.5 contour (5 km grid, x relative to where
-the slab top crosses 300 km depth) for the three eta' at one (BC, H).  The
-printed table gives, for the deepest 600 km of the slab, the horizontal offset
-of the tip from the slab's furthest-right point: a tip well to the LEFT of that
-point (negative offset) means the slab folded back toward the SP, i.e. it is
-overturned.  Classification remains a judgement call from the figure.
-
+the slab top crosses 300 km depth) for the three eta' at one (plates, H).
+The printed table gives, for the deepest 600 km of the slab, the horizontal
+offset of the tip from the slab's furthest-right point: a tip well to the LEFT
+(negative offset) means the slab folded back toward the SP.  The
+classification itself is the judgement call recorded in OVERTURNED.
 Usage: python3 plot_varH_final_shapes.py   (from analysis/)
-Writes plots/tmp/varH_final_shapes.png
+Writes plots/DP-comparisons/compilations/manuscript_figs/final_shapes_supp.png/.pdf
 """
 import numpy as np, matplotlib
 matplotlib.use('Agg')
@@ -32,7 +31,6 @@ MODELS = {
  ('FixedOP',250,70): (P+'FixedOP_250plates_H70km', 36), ('FixedOP',500,70): (P+'FixedOP_500plates_H70km', 33), ('FixedOP',1000,70): (P+'FixedOP_1000plates_H70km', 36),
  ('FixedOP',250,100): (P+'FixedOP_250plates', 28), ('FixedOP',500,100): ('2D_compositional_subd_FixedOP_lower-res_new', 28), ('FixedOP',1000,100): (P+'FixedOP_1000plates', 30),
  ('FixedOP',250,130): (P+'FixedOP_250plates_H130km', 33), ('FixedOP',500,130): (P+'FixedOP_500plates_H130km', 40), ('FixedOP',1000,130): (P+'FixedOP_1000plates_H130km', 42),
- ('drho71',500,70): (P+'500plates_H70km_drho71', 39),
 }
 YMAX = 1450e3
 
@@ -54,14 +52,30 @@ def contour(key):
     offset = tip[0] - deep[:, 0].max()          # km; strongly negative = folded back
     return key, seg, x_ref, tip[1], offset
 
+OVERTURNED = {('free', 1000, 100), ('free', 500, 130), ('free', 1000, 130),
+              ('FixedOP', 500, 100), ('FixedOP', 1000, 100),
+              ('FixedOP', 250, 130), ('FixedOP', 500, 130), ('FixedOP', 1000, 130),
+              ('FixedOP', 1000, 70)}        # as plot_forces.varH.py (eta' = 375 is not in this compilation)
+
 if __name__ == '__main__':
+    import os
+    import matplotlib as mpl
+    import matplotlib.font_manager as fm
+    from matplotlib.lines import Line2D
+    font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+    if os.path.exists(font_path):
+        fm.fontManager.addfont(font_path)
+        mpl.rcParams['font.family'] = 'Myriad Pro'
+    mpl.rcParams.update({'font.size': 7, 'axes.labelsize': 9, 'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
     with Pool(14) as pool:
         res = pool.map(contour, list(MODELS))
     out = {r[0]: r for r in res}
-    bcs = ['free', 'FixedSP', 'FixedOP']; Hs = [70, 100, 130]
-    col = {250: 'tab:blue', 500: 'tab:orange', 1000: 'tab:red'}
-    fig, axs = plt.subplots(3, 3, figsize=(12, 10), sharex=True, sharey=True)
-    print('%-8s %5s %4s  %-45s %7s %10s' % ('bc', 'eta', 'H', 'model (last output)', 'tip km', 'tip offset km'))
+    bcs = ['FixedSP', 'free', 'FixedOP']; Hs = [70, 100, 130]          # rows as Fig. 2
+    bc_label = {'FixedSP': 'fixed SP', 'free': 'free plates', 'FixedOP': 'fixed OP'}
+    col = {250: 'peru', 500: 'maroon', 1000: 'black'}                  # the paper's eta' colours
+    fig, axs = plt.subplots(3, 3, figsize=(7.0, 5.6), sharex=True, sharey=True)
+    print('%-8s %5s %4s  %-45s %7s %10s  %s' % ('bc', 'eta', 'H', 'model (last output)', 'tip km', 'tip offset km', ''))
+    n = 0
     for i, bc in enumerate(bcs):
         for j, H in enumerate(Hs):
             ax = axs[i, j]
@@ -69,17 +83,32 @@ if __name__ == '__main__':
                 key = (bc, eta, H)
                 if key not in out: continue
                 _, seg, x_ref, ztip, off = out[key]
-                ax.plot(seg[:, 0] - x_ref, seg[:, 1], color=col[eta], lw=1, label=r"$\eta'$=%d" % eta)
-                print('%-8s %5d %4d  %-45s %7.0f %10.0f' % (bc, eta, H, MODELS[key][0].replace('2D_compositional_subd_', '') + ' (%d)' % (MODELS[key][1] - 1), ztip, off))
-            if bc == 'free' and H == 70:
-                _, seg, x_ref, ztip, off = out[('drho71', 500, 70)]
-                ax.plot(seg[:, 0] - x_ref, seg[:, 1], color='tab:orange', lw=1, ls='--', label='500, drho71')
-                print('%-8s %5d %4d  %-45s %7.0f %10.0f' % ('drho71', 500, 70, MODELS[('drho71', 500, 70)][0].replace('2D_compositional_subd_', '') + ' (38)', ztip, off))
-            ax.axhline(660, color='gray', lw=0.5, ls=':')
+                ot = key in OVERTURNED
+                ax.plot(seg[:, 0] - x_ref, seg[:, 1], color=col[eta], lw=0.9, ls=(0, (3, 1.5)) if ot else '-',
+                        zorder=3 if ot else 4)
+                print('%-8s %5d %4d  %-45s %7.0f %10.0f  %s' % (bc, eta, H, MODELS[key][0].replace('2D_compositional_subd_', '')
+                      + ' (%d)' % (MODELS[key][1] - 1), ztip, off, 'overturned' if ot else ''))
+            ax.axhline(660, color='gray', lw=0.5, ls=':', zorder=1)
             ax.set_xlim(-800, 1200); ax.set_ylim(1450, 0); ax.set_aspect('equal')
-            ax.set_title('%s, H = %d km' % (bc, H), fontsize=10)
-            if i == 2: ax.set_xlabel('x - x(slab top at 300 km)  [km]')
-            if j == 0: ax.set_ylabel('depth [km]')
-            ax.legend(fontsize=7, loc='lower right')
-    plt.tight_layout(); plt.savefig('plots/tmp/varH_final_shapes.png', dpi=150)
-    print('wrote plots/tmp/varH_final_shapes.png')
+            ax.set_xticks([-500, 0, 500, 1000]); ax.set_yticks([0, 500, 1000])
+            ax.tick_params(length=2.5)
+            ax.text(0.03, 0.95, 'abcdefghi'[n] + ')', transform=ax.transAxes, ha='left', va='top', fontsize=9, zorder=10,
+                    bbox=dict(facecolor='white', edgecolor='none', pad=1))
+            ax.text(0.97, 0.95, '%s, H = %d km' % (bc_label[bc], H), transform=ax.transAxes, ha='right', va='top', fontsize=8, zorder=10,
+                    bbox=dict(facecolor='white', edgecolor='none', pad=1))
+            if i == 0 and j == 0:
+                ax.text(-780, 660, '660 km', color='gray', fontsize=6.5, ha='left', va='bottom')
+            if i == 2: ax.set_xlabel('$x - x$(slab top at 300 km)   [km]')
+            if j == 0: ax.set_ylabel('depth   [km]')
+            n += 1
+    hs = [Line2D([], [], color=col[e], lw=1.2, label="\u03b7' = %d" % e) for e in [250, 500, 1000]] + \
+         [Line2D([], [], color='gray', lw=1.2, ls=(0, (3, 1.5)), label='overturned')]
+    leg = axs[0, 0].legend(handles=hs, loc='lower left', fontsize=6.5, frameon=True, fancybox=False, edgecolor='black',
+                           facecolor='white', framealpha=1, borderpad=0.5, labelspacing=0.3, handlelength=1.6, borderaxespad=0.5)
+    leg.get_frame().set_linewidth(0.5)
+    plt.tight_layout(h_pad=0.6, w_pad=0.6)
+    out_dir = 'plots/DP-comparisons/compilations/manuscript_figs/'
+    os.makedirs(out_dir, exist_ok=True)
+    plt.savefig(out_dir + 'final_shapes_supp.png', dpi=600, bbox_inches='tight')
+    plt.savefig(out_dir + 'final_shapes_supp.pdf', bbox_inches='tight')
+    print('wrote', out_dir + 'final_shapes_supp.png/.pdf')

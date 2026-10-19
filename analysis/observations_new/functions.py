@@ -239,6 +239,26 @@ def compute_DP_hs(age, dip, Tm, k, rho0, alpha, crust_density, crust_thick):
     return DP
 
 
+# Length scale of the moment-balance scaling of the in-slab shear-force
+# gradient, dQ_s/ds ~ eta*H^3*K*v_c/(3*L_K^3), fitted to the models with their
+# nominal plate thickness (analysis/plot_LK_fit.py; 206 km at 300 km depth,
+# model bootstrap 194-212 km, rounded).  Replaces the linear form
+# eta*H*K*v_c/L_eff with L_eff = 1497 km of the submitted manuscript.
+L_K = 200e3   # m
+
+
+def compute_scaling(K, vc, slab_visc, H_eff, L_K=L_K):
+    """
+    Moment-balance scaling of the in-slab shear-force gradient,
+    eta * H^3 * K * v_c / (3 * L_K^3), in MPa.
+
+    K in 1/m, vc in m/s, slab_visc in Pa s, H_eff and L_K in m.  Same
+    expression as the models' (analysis/plot_forces.varH.py, n = 3), where
+    H is the nominal plate thickness; here H_eff stands in for it.
+    """
+    return slab_visc * H_eff**3 * K * vc / (3. * L_K**3) * 1e-6
+
+
 def compute_H_eff(age, Tm, k, plate_thick, frac=0.9):
     """
     Return the depth (m) at which the plate cooling temperature reaches frac*Tm.

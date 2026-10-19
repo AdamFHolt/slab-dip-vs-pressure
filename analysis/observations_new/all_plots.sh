@@ -18,10 +18,11 @@ python3 plot_param_exploration.py
 # full map: ref
 python3 plot_final_map.py 4e22 3.28e-5 1333 8.044e-7 88e3
 
-# just-maps: ref, low visc, high visc
+# just-maps: ref, and the high-viscosity supplement case (2e23: the first
+# viscosity at which a substantial share of segments fail Lambda < 0.1 under
+# the cubic scaling; the 2e22/8e22 pair was dropped 2026-10-19)
 python3 plot_final_just-maps.py 4e22 3.28e-5 1333 8.044e-7 88e3
-python3 plot_final_just-maps.py 2e22 3.28e-5 1333 8.044e-7 88e3
-python3 plot_final_just-maps.py 8e22 3.28e-5 1333 8.044e-7 88e3
+python3 plot_final_just-maps.py 2e23 3.28e-5 1333 8.044e-7 88e3
 
 # Lambda / DP summary stats (abstract + Section 3.4 numbers)
 python3 print_stats.py

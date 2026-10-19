@@ -13,7 +13,7 @@ import math
 from scipy.interpolate import RegularGridInterpolator
 from functions import read_pb2002_boundaries, plot_ocean_age
 from functions import haversine, calculate_bearing, destination_point
-from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff, compute_B_pl
+from functions import make_strictly_ascending, compute_DP_hs, compute_DP_pl, compute_H_eff, compute_B_pl, compute_scaling
 from functions import load_data_file, stats_data_file, stats_DP
 from cmcrameri import cm as cmc
 import matplotlib.font_manager as fm
@@ -125,7 +125,7 @@ segment_data = np.array(data, dtype=float)
 # ------------------------------------------------
 DPmin, DPmax = 10, 60
 norm1 = mcolors.Normalize(vmin=DPmin, vmax=DPmax)
-norm2 = mcolors.LogNorm(vmin=0.02, vmax=0.5)  # Lambda, log scale
+norm2 = mcolors.LogNorm(vmin=0.005, vmax=0.2)  # Lambda, log scale (was 0.02-0.5 for the linear scaling; the cubic form puts the median at 0.014)
 DP_array = []
 min_dp=1e9
 max_dp=0
@@ -151,9 +151,9 @@ for i in range(len(segment_data)):
 
     if not np.isnan(dip_shall) and age < 250 and not np.isnan(vc) and not np.isnan(K):
 
-        # compute/plot Lambda = (ηH|dθ/ds|vc)/(L_eff B) ---
+        # compute/plot Lambda = [ηH³|dθ/ds|vc/(3 L_K³)] / B ---
         H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
-        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.497e6 * 1e-6  # MPa
+        stress_scaling = compute_scaling(K, vc * cmyr_to_ms, slab_visc, H_eff)  # MPa, eta*H^3*K*v_c/(3*L_K^3)
         B_seg = compute_B_pl(age, Tm, k=diffusivity, rho0=3330., alpha=alpha, crust_density=3450, crust_thick=crust_thick, plate_thick=plate_thick)  # MPa
         Lambda = np.abs(stress_scaling) / B_seg
         x2, y2 = m2(lon_center, lat_center)
@@ -199,7 +199,7 @@ ax1.legend(handles=[qual_handle, nonqual_handle], loc='upper left', bbox_to_anch
            ncol=2, columnspacing=1.0, fontsize=8, frameon=False, handletextpad=0.05)
 
 # same convention, repeated below the Lambda map
-lam_face = cmc.navia_r(norm2(0.05))
+lam_face = cmc.navia_r(norm2(0.03))
 qual_handle2 = Line2D([0], [0], marker='o', linestyle='None', markersize=5,
                       markerfacecolor=lam_face, markeredgecolor='black',
                       markeredgewidth=0.6, label=r'$\Lambda$ < 0.1')
@@ -213,8 +213,8 @@ cp_bar = plt.colorbar(cp, ax=ax1, extend='max', shrink=0.5, pad=0.05)
 cp_bar.set_ticks([10, 20, 30, 40, 50, 60])
 cp_bar.ax.set_title(r'$\Delta P$  [MPa]', fontsize=10, pad=8)
 ck_bar = plt.colorbar(ck, ax=ax2, extend='both', shrink=0.5, pad=0.05)
-ck_bar.set_ticks([0.02, 0.05, 0.1, 0.2, 0.5])
-ck_bar.set_ticklabels(['0.02', '0.05', '0.1', '0.2', '0.5'])
+ck_bar.set_ticks([0.005, 0.01, 0.02, 0.05, 0.1, 0.2])
+ck_bar.set_ticklabels(['0.005', '0.01', '0.02', '0.05', '0.1', '0.2'])
 ck_bar.ax.set_title(r'$\Lambda$', fontsize=10, pad=8)
 
 # ------------------------------------------------

@@ -19,7 +19,7 @@ PLATE_THICK = 88000.0
 CRUST_THICK = 7000.0
 COOLING     = 'plate-cooling'
 
-VISCOSITIES = [2e22, 4e22, 8e22]
+VISCOSITIES = [4e22, 1e23, 2e23]
 
 BASE = ('text_files/maps.slab{v}.alpha{a}.T{T}.k{k}'
         '.platethick{pt}.crustthick{ct}.{cm}.txt')

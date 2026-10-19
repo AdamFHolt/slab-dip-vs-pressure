@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 Supplementary figure: breakdown of the nondimensional scaling parameter
-Lambda = [(eta*H*|dtheta/ds|*v_c)/L_eff] / B into its two ingredients:
-  (a) the dimensional shear-stress scaling (eta*H*|dtheta/ds|*v_c)/L_eff [MPa]
+Lambda = [eta*H^3*|dtheta/ds|*v_c/(3*L_K^3)] / B into its two ingredients:
+  (a) the dimensional shear-force-gradient scaling eta*H^3*|dtheta/ds|*v_c/(3*L_K^3) [MPa]
   (b) the depth-integrated slab buoyancy B = Drho*g*H [MPa] (no cos(theta))
 Both use the reference parameter set (Richards et al., 2018 "Pk" model with
 T fixed at 1333 C) and reference slab viscosity 4e22 Pa s.
@@ -17,7 +17,7 @@ import numpy as np
 from netCDF4 import Dataset
 import glob
 from functions import read_pb2002_boundaries
-from functions import make_strictly_ascending, compute_H_eff, compute_B_pl
+from functions import make_strictly_ascending, compute_H_eff, compute_B_pl, compute_scaling
 from cmcrameri import cm as cmc
 import matplotlib.font_manager as fm
 font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
@@ -107,7 +107,7 @@ segment_data = np.array(data, dtype=float)
 # ------------------------------------------------
 # ---- compute and plot scaling and B ------------
 # ------------------------------------------------
-norm1 = mcolors.Normalize(vmin=0, vmax=15)   # stress scaling [MPa]
+norm1 = mcolors.Normalize(vmin=0, vmax=6)    # scaling [MPa] (was 0-15 for the linear form; cubic median 0.8, p90 2.3, max 12)
 norm2 = mcolors.Normalize(vmin=30, vmax=80)  # B [MPa]
 for i in range(len(segment_data)):
 
@@ -130,7 +130,7 @@ for i in range(len(segment_data)):
 
         # Lambda numerator: shear-stress scaling [MPa]
         H_eff = compute_H_eff(age, Tm, k=diffusivity, plate_thick=plate_thick)  # m
-        stress_scaling = K * (vc * cmyr_to_ms) * slab_visc * H_eff / 1.497e6 * 1e-6  # MPa
+        stress_scaling = compute_scaling(K, vc * cmyr_to_ms, slab_visc, H_eff)  # MPa, eta*H^3*K*v_c/(3*L_K^3)
         cs = ax1.scatter(x1, y1, s=23, c=np.abs(stress_scaling), cmap=cmc.navia_r, norm=norm1, edgecolors='black', linewidths=0.4, zorder=10)
 
         # Lambda denominator: net buoyancy B = Drho*g*H (no cos(dip)) [MPa]
@@ -139,8 +139,8 @@ for i in range(len(segment_data)):
         cb = ax2.scatter(x1, y1, s=23, c=B_seg, cmap=cmc.navia, norm=norm2, edgecolors='black', linewidths=0.4, zorder=10)
 
 cs_bar = plt.colorbar(cs, ax=ax1, extend='max', shrink=0.5, pad=0.05)
-cs_bar.set_ticks([0, 5, 10, 15])
-cs_bar.ax.set_title(r'$(\eta H |K|\, v_c)/L_\mathrm{eff}$  [MPa]', fontsize=10, pad=8)
+cs_bar.set_ticks([0, 2, 4, 6])
+cs_bar.ax.set_title(r'$\eta H^3 |K|\, v_c\,/\,(3 L_K^3)$  [MPa]', fontsize=10, pad=8)
 cb_bar = plt.colorbar(cb, ax=ax2, extend='min', shrink=0.5, pad=0.05)
 cb_bar.set_ticks([30, 40, 50, 60, 70, 80])
 cb_bar.ax.set_title(r'$B$  [MPa]', fontsize=10, pad=8)

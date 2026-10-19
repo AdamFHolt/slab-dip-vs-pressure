@@ -109,10 +109,15 @@ INSET_S      = {70: 5, 100: 9, 130: 15} if Hsize_fig else {70: 9, 100: 9, 130: 9
 # "strip" (with lamd, one row): one boxed row like the default, each group
 # introduced by a bold header ("viscosity ratio η':" 50 250 ...)
 strip_fig    = lamd_fig and 'strip' in sys.argv[7:]
+# "lamsupp" (with fig5): supplement figure instead -- Fig. 5a alone, every output
+# coloured by |Lambda| (nominal B) rather than eta', so the outputs that leave the
+# 1:1 line are seen to be the high-Lambda ones (Adam 2026-10-19: a one-panel
+# supplement, not a fourth Fig. 5 panel)
+lamsupp_fig  = fig5_fig and 'lamsupp' in sys.argv[7:]
 # the manuscript figures go to manuscript_figs/: Fig. 3 and its supplement
 # versions (closure, closureK) and Fig. 5 (fig5 means inset lamd Hsize strip);
 # the other Fig. 5 variants to compilations/
-manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig and lamd_fig and Hsize_fig and strip_fig)
+manuscript_fig = closure_fig or closureK_fig or (fig5_fig and not fig5lam_fig and inset_fig and lamd_fig and Hsize_fig and strip_fig) or lamsupp_fig
 out_dir = 'plots/DP-comparisons/compilations/' + ('manuscript_figs/' if manuscript_fig else '')
 os.makedirs(out_dir, exist_ok=True)
 plot_name = out_dir + 'forces-vs-scaling.varH' + suffix + '.tmin%d' % tmin \
@@ -363,6 +368,57 @@ if fig5_fig:
             ys = np.array([np.mean(d[key])/b for d, b in zip(ok, nbs)])
             print('model means %-15s N=%d  r=%.3f  slope=%.2f  rms=%.2f' % (lab_, len(xs), pearsonr(xs, ys)[0],
                   np.sum(xs*ys)/np.sum(xs**2), np.sqrt(np.mean((ys - xs)**2))))
+    if lamsupp_fig:
+        # Fig. 5a alone, every output coloured by |Lambda| (the sign is K's; the
+        # size is what matters), |Lambda| linear 0-0.5 (above saturates: overturned
+        # runs); marker = plate configuration, overturned hollow with a coloured
+        # edge.  Colorbar and the plate legend sit in the empty upper left.
+        from cmcrameri import cm as cmc
+        fig, ax = plt.subplots(figsize=(3.4, 3.2))
+        normC = mpl.colors.Normalize(vmin=0, vmax=0.5)
+        lam_all = np.abs(np.concatenate([d['scal']/d['B'] for d in data.values()]))
+        print('lamsupp: |Lambda| median %.3f, %d of %d outputs > 0.5 (all overturned: %s)'
+              % (np.median(lam_all), (lam_all > 0.5).sum(), len(lam_all),
+                 all(np.all(np.abs(d['scal']/d['B']) <= 0.5) for k, d in data.items() if k not in OVERTURNED)))
+        for (bc, e, H), d in data.items():
+            lam = np.abs(d['scal']/d['B'])
+            if (bc, e, H) in OVERTURNED:
+                ax.scatter(d['Bslab'], d['DP'], s=10, facecolors='none', edgecolor=cmc.navia_r(normC(lam)),
+                           marker=bc_marker[bc], linewidth=0.5, alpha=0.8, zorder=2)
+            else:
+                sc = ax.scatter(d['Bslab'], d['DP'], s=10, c=lam, cmap=cmc.navia_r, norm=normC,
+                                edgecolor='black', marker=bc_marker[bc], linewidth=0.25,
+                                zorder=4 if bc == 'FixedSP' else 3)
+        x0, x1 = -3, 40
+        ax.plot([x0, x1], [x0, x1], color='black', linewidth=1, zorder=2)
+        ax.set_xticks([0, 10, 20, 30, 40]); ax.set_yticks([0, 10, 20, 30, 40])
+        ax.axhline(0, color='lightgray', linewidth=1, zorder=0); ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
+        ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
+        ax.set_xlim(x0, x1); ax.set_ylim(x0, x1); ax.set_aspect(1, adjustable='box')
+        ax.set_xlabel(r'$B_{slab}$   [MPa]'); ax.set_ylabel(r'$\Delta P$   [MPa]')
+        # white backing under the colorbar block (hides the gridline behind it)
+        ax.add_patch(mpl.patches.Rectangle((0.05, 0.70), 0.50, 0.24, transform=ax.transAxes,
+                                           facecolor='white', edgecolor='none', zorder=9))
+        cax = ax.inset_axes([0.10, 0.79, 0.36, 0.04]); cax.set_zorder(10)
+        cb = fig.colorbar(sc, cax=cax, orientation='horizontal', extend='max')
+        cb.set_ticks([0, 0.5]); cb.set_ticklabels(['0', '0.5'])
+        cb.ax.xaxis.set_minor_locator(mpl.ticker.FixedLocator([0.1, 0.2, 0.3, 0.4]))
+        cb.ax.tick_params(labelsize=6, length=2.5, pad=1); cb.ax.tick_params(which='minor', length=1.5)
+        cb.ax.set_title(r'$|\Lambda|$', fontsize=7, pad=4)
+        # plate-configuration legend below the colorbar, grey markers as in Fig. 5
+        bc_h = [Line2D([], [], marker=bc_marker[b], color='gray', markeredgecolor='black', markeredgewidth=0.25,
+                       linestyle='', markersize=4, label=bc_label[b]) for b in ['FixedSP', 'free', 'FixedOP']] + \
+               [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray', linestyle='',
+                       markersize=4, label='overturned')]
+        leg = ax.legend(handles=bc_h, loc='upper left', bbox_to_anchor=(0.03, 0.70), fontsize=6.5, frameon=False,
+                        handletextpad=0.1, handlelength=1.0, labelspacing=0.3, borderaxespad=0)
+        leg.set_zorder(10)
+        plot_name = out_dir + 'fig5a-lambda_supp' + suffix + '.tmin%d.n%d.L%d' % (tmin, n_exp, L_eff) \
+                    + ('' if with_drho71 else '.nodrho71') + ('.alleta' if all_eta else '')
+        plt.savefig(plot_name + '.png', dpi=600, bbox_inches='tight')
+        plt.savefig(plot_name + '.pdf', bbox_inches='tight')
+        print('wrote', plot_name + '.png/.pdf')
+        sys.exit(0)
     if lamd_fig:
         fig, (axP, axQ, axL) = plt.subplots(1, 3, figsize=(7.0, 2.6))
         axM = None

@@ -338,63 +338,27 @@ ax3.labelsize = 12
 # -------- Plot scaling histogram ----------------
 # ------------------------------------------------
 
-# load in scaling & DP values for other slab viscs
-array1  = load_data_file(4e20,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array2  = load_data_file(8e20,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array3  = load_data_file(1e21,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array4  = load_data_file(4e21,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array5  = load_data_file(8e21,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array6  = load_data_file(1e22,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array7  = load_data_file(4e22,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array7b  = load_data_file(6e22,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array8  = load_data_file(8e22,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array9  = load_data_file(1e23,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array9b = load_data_file(2e23,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array9c = load_data_file(3e23,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array10 = load_data_file(4e23,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array11 = load_data_file(8e23,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array12 = load_data_file(1e24,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-array13 = load_data_file(4e24,alpha,Tm,diffusivity,plate_thick,crust_thick,cooling_model)
-
-mean1, std1, perc1 = stats_data_file(array1,lambda_thresh)
-mean2, std2, perc2 = stats_data_file(array2,lambda_thresh)
-mean3, std3, perc3 = stats_data_file(array3,lambda_thresh)
-mean4, std4, perc4 = stats_data_file(array4,lambda_thresh)
-mean5, std5, perc5 = stats_data_file(array5,lambda_thresh)
-mean6, std6, perc6 = stats_data_file(array6,lambda_thresh)
-mean7, std7, perc7 = stats_data_file(array7,lambda_thresh)
-mean7b, std7b, perc7b = stats_data_file(array7b,lambda_thresh)
-mean8, std8, perc8 = stats_data_file(array8,lambda_thresh)
-mean9, std9, perc9 = stats_data_file(array9,lambda_thresh)
-mean9b, std9b, perc9b = stats_data_file(array9b,lambda_thresh)
-mean9c, std9c, perc9c = stats_data_file(array9c,lambda_thresh)
-mean10, std10, perc10 = stats_data_file(array10,lambda_thresh)
-mean11, std11, perc11 = stats_data_file(array11,lambda_thresh)
-mean12, std12, perc12 = stats_data_file(array12,lambda_thresh)
-mean13, std13, perc13 = stats_data_file(array13,lambda_thresh)
-
+# Lambda < threshold against slab viscosity.  Lambda is exactly linear in eta, so
+# the curve is the cumulative distribution of the reference file's Lambda values
+# rescaled by eta/slab_visc: drawn as a thin continuous line (an 85-segment
+# staircase, so its shoulders are features of the segment population, not of the
+# sampling) with markers at evenly log-spaced viscosities on top (1, 2, 4, 7 per
+# decade from 1e22; sparse below, where every segment qualifies).  The reference
+# viscosity is the filled marker.  Set changed 2026-10-19 with the cubic scaling.
 ax4 = plt.subplot(G[1, 2])
-
-color='white'
-edgescolor='black'
-size=70
-ax4.scatter(np.log10(4e20), perc1,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(8e20), perc2,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(1e21), perc3,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(4e21), perc4,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(8e21), perc5,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(1e22), perc6,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(4e22), perc7,  s=size, c='black', edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(6e22), perc7b,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(8e22), perc8,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(1e23), perc9,  s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-# 2e23 and 3e23 added 2026-10-19: with the cubic scaling the fall-off sits between 1e23 and 4e23
-ax4.scatter(np.log10(2e23), perc9b, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(3e23), perc9c, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(4e23), perc10, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(8e23), perc11, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(1e24), perc12, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
-ax4.scatter(np.log10(4e24), perc13, s=size, c=color, edgecolors=edgescolor, linewidths=0.65, zorder=10)
+ref_lam = np.abs(ref_data[:, 2])
+eta_line = np.logspace(20, 25, 2000)
+perc_line = [100. * np.mean(ref_lam * (e / slab_visc) < lambda_thresh) for e in eta_line]
+ax4.plot(np.log10(eta_line), perc_line, color='silver', linewidth=1.5, zorder=5)
+visc_points = [4e20, 1e21, 4e21,
+               1e22, 2e22, 4e22, 7e22, 1e23, 2e23, 4e23, 7e23, 1e24, 2e24, 4e24]
+size = 70
+for v in visc_points:
+    arr = load_data_file(v, alpha, Tm, diffusivity, plate_thick, crust_thick, cooling_model)
+    perc = stats_data_file(arr, lambda_thresh)[2]
+    ax4.scatter(np.log10(v), perc, s=size, c='black' if v == slab_visc else 'white', edgecolors='black',
+                linewidths=0.65, zorder=10)
+    print('  eta %.0e: %.1f%% of segments with Lambda < %.1f' % (v, perc, lambda_thresh))
 
 # ticks on bottom
 ax4.set_xticks([20, 21, 22, 23, 24, 25])

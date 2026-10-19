@@ -117,7 +117,7 @@ for i, plate_thick_val in enumerate(plate_thick_vals):
 plate_thick_vals_km = plate_thick_vals / 1e3
 
 # Create the subplot (ax3) for the colored grid.
-ax3 = plt.subplot(G[0, 0])
+ax3 = plt.subplot(G[0, 1])   # T-thickness panel on the right (swapped 2026-10-19)
 
 contour_levels1 = np.arange(20, 40+2, 2)
 contour_levels1_minor = np.arange(21, 40, 2)
@@ -172,7 +172,7 @@ for i, k_val in enumerate(k_vals):
 
 
 # Create the subplot (ax3) for the colored grid.
-ax4 = plt.subplot(G[0, 1])
+ax4 = plt.subplot(G[0, 0])   # alpha-kappa panel on the left
 
 k_vals_e6 = k_vals/1e-6
 alpha_vals_e5 = alpha_vals/1e-5

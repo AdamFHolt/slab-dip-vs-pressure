@@ -1,6 +1,15 @@
-"""R2 comment 3, option 1: force balance and Fig. 5 metrics for the early outputs
-(t = 8-10, tip ~470-650 km, not in the figures) against the figure outputs (t >= 11).
-Same loading as plot_forces.varH.py (withT_varH, coverage flag, LAST_OUTPUT), n = 3, L_K = 200."""
+"""Reviewer 2, comment 3: the force balance and the Fig. 5 quantities for the early outputs, before
+the slab tip reaches the lower mantle, against the figure outputs (t >= 11, from withT_varH as in
+plot_forces.varH.py: coverage flag, LAST_OUTPUT).  The early outputs, t = 5-10, come from extracted_early
+(many_property-extractions.early.sh, current window-fixed code; the H = 130 rows of extracted_varH at
+t = 8-10 predate the fix) with the curvature-pressure term T of curvature_pressure_term_early added to
+column 17, as make_withT.py does.  n = 3, L_K = 200 km.
+
+Usage:  python3 plot_early_outputs_supp.py 300.0 plots/tmp/slab_tip_depths.varH_early.txt [no57] [tipmin=<km>]
+        ("no57" leaves out the t = 5-7 outputs; "tipmin=450" keeps only early outputs whose slab tip
+        is at least 450 km deep, ".tip450" in the output name)
+Writes plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z<z>.png/pdf
+"""
 import sys, numpy as np
 from scipy.stats import pearsonr
 sys.path.insert(0, '.')
@@ -32,6 +41,8 @@ for fn in ['plots/tmp/slab_tip_depths.txt', sys.argv[2]]:
     for line in open(fn):
         m, t, dd = line.split(); tips[(m, int(t))] = float(dd)
 
+with57 = 'no57' not in sys.argv[3:]
+tipmin = ([float(a.split('=')[1]) for a in sys.argv[3:] if a.startswith('tipmin=')] or [None])[0]
 rows = []   # (key, t, tip, DP, Bslab, B, dqds, scal, full)
 for bc in H100:
     for eta in [50, 250, 375, 500, 1000]:
@@ -40,6 +51,13 @@ for bc in H100:
             m = name(bc, eta, H)
             try: d = np.loadtxt('text_files/withT_varH/' + m + suffix + '.txt')
             except OSError: print('missing', m); continue
+            # t <= 10: extracted_early, column 17 completed with T (T_cut, column 15 of the T files)
+            e = np.loadtxt('text_files/extracted_early/' + m + suffix + '.txt')
+            tf = np.atleast_2d(np.loadtxt('text_files/curvature_pressure_term_early/%s.z%s.txt' % (m, z)))
+            e = e[(e[:, 0] <= 10) & ((e[:, 0] >= 8) | with57)]
+            for row in e:
+                row[ss_ind] += tf[tf[:, 0] == row[0], 15][0]
+            d = np.vstack([e, d[d[:, 0] >= 11]])
             d = d[(d[:, cov_ind] == 1) & (d[:, 0] <= LAST_OUTPUT.get((bc, eta, H), 1e9))]
             # extraction failures: midplane flipped (dip ~241 deg, negative thickness) -- fixed-SP H = 130
             # at t = 9-10, before the t >= 11 the figures use; dropped (2026-10-22)
@@ -52,6 +70,8 @@ for bc in H100:
             full = (d[:, DP_ind] - d[:, anal_ind] + d[:, ss_ind] - d[:, sn_ind])/1e6
             for i in range(len(d)):
                 t = int(d[i, 0])
+                if tipmin is not None and t <= 10 and not tips.get((m, t), np.nan) >= tipmin:
+                    continue
                 rows.append(((bc, eta, H), t, tips.get((m, t), np.nan), d[i, DP_ind]/1e6, d[i, anal_ind]/1e6,
                              B, -d[i, sn_ind]/1e6, scal[i], full[i]))
 
@@ -70,13 +90,14 @@ def summary(label, sel):
 
 print('z = %s km, n = 3, L_K = %.0f km' % (z, L_K))
 for ot, otl in [(False, 'normal'), (True, 'overturned')]:
-    summary('%s, t 8-10 (early)' % otl, lambda x: (x[0] in OVERTURNED) == ot and x[1] <= 10)
+    summary('%s, t <= 10 (early)' % otl, lambda x: (x[0] in OVERTURNED) == ot and x[1] <= 10)
     summary('%s, t >= 11 (figures)' % otl, lambda x: (x[0] in OVERTURNED) == ot and x[1] >= 11)
-    summary('%s, early, tip < 600 km' % otl, lambda x: (x[0] in OVERTURNED) == ot and x[1] <= 10 and x[2] < 600)
-    summary('%s, early, tip < 550 km' % otl, lambda x: (x[0] in OVERTURNED) == ot and x[1] <= 10 and x[2] < 550)
+    for a, b in ((350, 450), (450, 500), (500, 550), (550, 600), (600, 660), (660, 800)):
+        summary('%s, early, tip %d-%d km' % (otl, a, b),
+                lambda x, a=a, b=b: (x[0] in OVERTURNED) == ot and x[1] <= 10 and a <= x[2] < b)
 
 print('\nnormal models, dQ/ds vs scaling spread and misfit (MPa):')
-for lab, sel in [('t 8-10', lambda x: x[1] <= 10), ('t >= 11', lambda x: x[1] >= 11)]:
+for lab, sel in [('t <= 10', lambda x: x[1] <= 10), ('t >= 11', lambda x: x[1] >= 11)]:
     r = [x for x in rows if x[0] not in OVERTURNED and sel(x)]
     s = np.array([x[7] for x in r]); q = np.array([x[6] for x in r])
     print('  %-8s scal range %.1f-%.1f (sd %.2f)  dQ/ds sd %.2f  rms(dQ/ds - scal) %.2f' % (lab, s.min(), s.max(), s.std(), q.std(), np.sqrt(np.mean((q-s)**2))))
@@ -150,6 +171,6 @@ cax = fig.add_axes([0.13, 0.985, 0.22, 0.025])
 cb = fig.colorbar(mpl.cm.ScalarMappable(norm=normT, cmap=cmap), cax=cax, orientation='horizontal', extend='max')
 cb.ax.tick_params(labelsize=6, length=2.5, pad=1)
 cb.set_label('slab tip depth  [km]', fontsize=7, labelpad=2)
-out = 'plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z%s' % z
+out = 'plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z%s' % z + ('.tip%d' % tipmin if tipmin else '')
 plt.savefig(out + '.png', dpi=300, bbox_inches='tight'); plt.savefig(out + '.pdf', bbox_inches='tight')
 print('wrote', out + '.png/.pdf')

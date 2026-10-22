@@ -1,7 +1,8 @@
 #!/bin/bash
-# Reviewer 2, comment 3: extract the early outputs (t = 5-8, slab tip ~380-520 km)
+# Reviewer 2, comment 3: extract the early outputs (t = 5-10, slab tip ~350-680 km)
 # of every model in Figs 3-5 at one depth, into text_files/extracted_early/.
-# t = 8 is repeated as a check against the existing extractions.
+# t = 8-10 are re-extracted too, with the current (window-fixed) code: the H = 130
+# extractions of t = 8-10 in extracted_varH predate the fix.
 # Same arguments as many_property-extractions.varH.sh, plus first_time = 5.
 #
 # Usage:  bash many_property-extractions.early.sh [depth_m]   (default 300.0e3)
@@ -41,7 +42,7 @@ done
 
 for m in "${MODELS[@]}"; do
   PYTHONNOUSERSITE=1 python3 -W ignore extract_properties.py \
-      "$m" 9 "$DEPTH" 10.0e3 10.0e3 1.0e3 "$OUTDIR" legacy noplots 50 5 \
+      "$m" 11 "$DEPTH" 10.0e3 10.0e3 1.0e3 "$OUTDIR" legacy noplots 50 5 \
       > "$LOGDIR/$m.z$ZKM.log" 2>&1 &
   while [ "$(jobs -rp | wc -l)" -ge "$MAX_JOBS" ]; do wait -n; done
 done

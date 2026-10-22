@@ -4,12 +4,10 @@ Supplement figure: slab shape at the last analysed output of every model in the
 variable-H compilation (fixed SP, free, fixed OP x H = 70/100/130 km x
 eta' = 250/500/1000), the basis of the normal / overturned classification used
 in Figs 3-5 (OVERTURNED in plot_forces.varH.py; overturned runs drawn dashed).
-Each panel overlays the c_llith = 0.5 contour (5 km grid, x relative to where
-the slab top crosses 300 km depth) for the three eta' at one (plates, H).
-The printed table gives, for the deepest 600 km of the slab, the horizontal
-offset of the tip from the slab's furthest-right point: a tip well to the LEFT
-(negative offset) means the slab folded back toward the SP.  The
-classification itself is the judgement call recorded in OVERTURNED.
+Each panel overlays the 0.5 contour of c_ulith + c_llith, the whole plate below its
+8 km crust (5 km grid, x relative to where the slab top crosses 300 km depth) for the three eta' at one (plates, H).
+The printed table gives the depth of each slab tip.  The classification is the
+judgement call recorded in OVERTURNED.
 Usage: python3 plot_varH_final_shapes.py   (from analysis/)
 Writes plots/DP-comparisons/compilations/manuscript_figs/final_shapes_supp.png/.pdf
 """
@@ -39,18 +37,19 @@ def contour(key):
     fn = 'csv_outputs/%s/full.%d.csv' % (m, t)
     hdr = open(fn).readline().strip().replace('"', '').split(',')
     d = np.loadtxt(fn, delimiter=',', skiprows=1)
-    xc, yc, lc = hdr.index('Points:0'), hdr.index('Points:1'), hdr.index('llith')
+    xc, yc = hdr.index('Points:0'), hdr.index('Points:1')
+    # upper + lower lithosphere: c_llith alone is only the lower half of the plate (H/2 + 4 km to H), so
+    # its flat part sat below the surface; the crust is left out (it becomes mantle below 100 km)
+    lith = d[:, hdr.index('ulith')] + d[:, hdr.index('llith')]
     X, Y = np.meshgrid(np.arange(1000e3, 5000e3 + 1, 5e3), np.arange(0, YMAX + 1, 5e3))
-    ll = griddata((d[:, xc], d[:, yc]), d[:, lc], (X, Y), method='linear')
+    ll = griddata((d[:, xc], d[:, yc]), lith, (X, Y), method='linear')
     cs = plt.contour(X / 1e3, (YMAX - Y) / 1e3, ll, levels=[0.5])
-    seg = max(cs.allsegs[0], key=len)          # the SP + slab contour
+    seg = max(cs.allsegs[0], key=lambda c: c[:, 1].max())   # the SP + slab contour: the one reaching deepest
     plt.close('all')
     slab = seg[seg[:, 1] > 150]                 # below the plates
     x_ref = seg[np.abs(seg[:, 1] - 300) < 5, 0].max()   # slab top at 300 km (the plates end above 150 km)
     tip = slab[np.argmax(slab[:, 1])]
-    deep = slab[slab[:, 1] > tip[1] - 600]
-    offset = tip[0] - deep[:, 0].max()          # km; strongly negative = folded back
-    return key, seg, x_ref, tip[1], offset
+    return key, seg, x_ref, tip[1]
 
 OVERTURNED = {('free', 1000, 100), ('free', 500, 130), ('free', 1000, 130),
               ('FixedOP', 500, 100), ('FixedOP', 1000, 100),
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     bc_label = {'FixedSP': 'fixed SP', 'free': 'free plates', 'FixedOP': 'fixed OP'}
     col = {250: 'peru', 500: 'maroon', 1000: 'black'}                  # the paper's eta' colours
     fig, axs = plt.subplots(3, 3, figsize=(7.0, 5.6), sharex=True, sharey=True)
-    print('%-8s %5s %4s  %-45s %7s %10s  %s' % ('bc', 'eta', 'H', 'model (last output)', 'tip km', 'tip offset km', ''))
+    print('%-8s %5s %4s  %-45s %7s  %s' % ('bc', 'eta', 'H', 'model (last output)', 'tip km', ''))
     n = 0
     for i, bc in enumerate(bcs):
         for j, H in enumerate(Hs):
@@ -82,12 +81,12 @@ if __name__ == '__main__':
             for eta in [250, 500, 1000]:
                 key = (bc, eta, H)
                 if key not in out: continue
-                _, seg, x_ref, ztip, off = out[key]
+                _, seg, x_ref, ztip = out[key]
                 ot = key in OVERTURNED
                 ax.plot(seg[:, 0] - x_ref, seg[:, 1], color=col[eta], lw=0.9, ls=(0, (3, 1.5)) if ot else '-',
                         zorder=3 if ot else 4)
-                print('%-8s %5d %4d  %-45s %7.0f %10.0f  %s' % (bc, eta, H, MODELS[key][0].replace('2D_compositional_subd_', '')
-                      + ' (%d)' % (MODELS[key][1] - 1), ztip, off, 'overturned' if ot else ''))
+                print('%-8s %5d %4d  %-45s %7.0f  %s' % (bc, eta, H, MODELS[key][0].replace('2D_compositional_subd_', '')
+                      + ' (%d)' % (MODELS[key][1] - 1), ztip, 'overturned' if ot else ''))
             ax.axhline(660, color='gray', lw=0.5, ls=':', zorder=1)
             ax.set_xlim(-800, 1200); ax.set_ylim(1450, 0); ax.set_aspect('equal')
             ax.set_xticks([-500, 0, 500, 1000]); ax.set_yticks([0, 500, 1000])

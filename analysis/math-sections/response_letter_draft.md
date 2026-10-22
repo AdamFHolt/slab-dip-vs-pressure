@@ -17,7 +17,7 @@ fontsize: 11pt
 
 ## Reviewer 2
 
-# Comment 1 — thermal diffusion
+### Comment 1 — thermal diffusion
 > *The first is related to neglecting thermal diffusion. The assumptions around this were stated very clearly, but I feel like I would have benefited from a little more justification around this. Looking at the length of the model runs (~20 Myr) and the reference thermal diffusivity used (8.0e-7 m^2/s), slab temperatures could diffuse over length scales of ~20 km. This would definitely change the buoyancy force predicted from the models. For me a simple enough test to see the impact of ignoring thermal diffusion would be to re-run a single well behaved model with a non-zero diffusivity and see what this does to the force balance presented in Figure 4.*
 
 We thank the reviewer for raising this. Our original description did not make clear that the slab buoyancy in our models is compositional, not thermal. The models are isothermal: temperature is a uniform 1573 K at the start and on every boundary. Density depends only on composition, with the lithosphere 50 kg m⁻³ denser than the mantle, and viscosity is set by composition and depth. There is therefore no temperature gradient for diffusion to act on. A rerun with κ = 8 × 10⁻⁷ m² s⁻¹ would give the same solution, and the Figure 4 force balance would be unchanged. We have revised Section 2.2 to say this explicitly and to write out the governing equations, which also responds to Reviewer 1.
@@ -38,6 +38,14 @@ The reviewer's underlying point still applies to Earth's slabs, where buoyancy i
 
 ### Comment 3 — shallow slabs
 > *My third concern is that the authors choose to extract information from their numerical models once the slab tip passes 600 km depth, which they then apply to subduction zones globally. However, not all subduction zones have slabs that reach 600 km depth (Cascadia, Scotia, Aleutians, Central America). I think this could be an issue because the numerical models used in this study have a high viscosity lower mantle at 660 km depth. As the slab tip approaches the lower mantle, the high viscosity layer could start to support the subducting plate, which I imagine would change the stress distribution within the slab and also the mantle wedge. At the aforementioned subduction zones, which only get down to depths of 300-400 km or so, this effect would not be present. Some additional discussion on this, and perhaps testing what happens if you re-run the same force balance calculation on your model output but once the slab reaches a depth of 400-500 km, would help to clarify this.*
+
+We agree that this is an important consideration, and that the seismically active part of these slabs ends at 300–400 km depth. We would note, though, that tomographic models image fast anomalies continuing below the seismicity at several of these margins, in many cases to the base of the transition zone (e.g., the compilation of Goes et al., 2017, their Figure 2, which includes Cascadia, the Aleutians and Central America), although the deeper geometry is less certain at some of them, including Cascadia. Interaction with the upper–lower mantle transition may therefore be relevant to more slabs than their seismicity alone suggests.
+
+Nevertheless, we have tested the reviewer's point directly in the models. *[PLACEHOLDER — model test: force balance (closure), ΔP vs B_slab and the dQ_s/ds scaling for outputs before the slab tip reaches 660 km, coloured by tip depth (new supplementary figure; plot_early_outputs_supp.py). To be written once the t = 5–7 extraction (tips ~400–500 km) is processed. Key points so far (t = 8–10, tips 467–680 km, 300 km depth): ΔP ≈ B_slab holds before the tip reaches the lower mantle and the Λ < 0.1 criterion still applies; the closure degrades only while 300 km is still in the initial bend (tips < 550 km).]*
+
+**Change to the manuscript:** *[PLACEHOLDER — one or two sentences in the Discussion on slabs that are aseismic below 300–400 km, citing Goes et al. (2017), and the new supplementary figure.]*
+
+**Reference added:** Goes, S., Agrusta, R., van Hunen, J., & Garel, F. (2017). Subduction-transition zone interaction: A review. *Geosphere*, 13(3), 644–664. https://doi.org/10.1130/GES01476.1
 
 
 

@@ -60,6 +60,8 @@ dz = float(sys.argv[6])                 # m (height used to extract horizontal p
 #   argv[10] slab-mantle density contrast drho [kg/m3] for the analytical
 #            buoyancy B_slab = drho*g*H*cos(dip) (default 50; the B-matched
 #            run new_500plates_H70km_drho71 needs 71.43)
+#   argv[11] first timestep to extract (default 8); earlier ones were added
+#            for the tip-depth test of reviewer 2 (2026-10-22)
 #
 # Columns 0-29 are unchanged.  Columns 30-37 are new midplane diagnostics; see
 # the header written alongside the data.
@@ -112,7 +114,7 @@ xmin_plot2=2500.e3; xmax_plot2=3750.e3
 ymin_plot2=ymax-600.e3; grid_res2=0.25e3
 window_step=500.e3
 
-first_time=8
+first_time = int(sys.argv[11]) if len(sys.argv) > 11 else 8
 saved_stresses = np.zeros(((max_time-first_time),39))
 
 ind = 0

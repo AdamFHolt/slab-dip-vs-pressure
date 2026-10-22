@@ -7,7 +7,8 @@ column 17, as make_withT.py does.  n = 3, L_K = 200 km.
 
 Usage:  python3 plot_early_outputs_supp.py 300.0 plots/tmp/slab_tip_depths.varH_early.txt [no57] [tipmin=<km>]
         ("no57" leaves out the t = 5-7 outputs; "tipmin=450" keeps only early outputs whose slab tip
-        is at least 450 km deep, ".tip450" in the output name)
+        is at least 450 km deep, ".tip450" in the output name; "dist" colours by the distance of the
+        tip below the analysis depth in plate thicknesses, ".dist")
 Writes plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z<z>.png/pdf
 """
 import sys, numpy as np
@@ -105,7 +106,8 @@ for lab, sel in [('t <= 10', lambda x: x[1] <= 10), ('t >= 11', lambda x: x[1] >
 # --- figure, in the style of Figs 3 and 5 (plot_forces.varH.py closure / fig5), every early output
 # (t <= 10) coloured by slab tip depth, marker = plate configuration, overturned hollow; the t >= 11
 # outputs of the manuscript figures pale grey behind.  a) closure DP + sigma_slab vs B_slab (Fig. 3),
-# b) DP vs B_slab (Fig. 5a), c) dQ/ds vs the scaling (Fig. 5b).
+# b) DP vs B_slab (Fig. 5a).  The dQ/ds-scaling panel was dropped (Adam, 2026-10-22); its numbers are
+# still printed above.
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -115,16 +117,21 @@ mpl.rcParams.update({'font.family': 'Myriad Pro', 'font.size': 7, 'axes.labelsiz
                      'xtick.labelsize': 7.5, 'ytick.labelsize': 7.5})
 bc_marker = {'FixedSP': 'v', 'free': 'o', 'FixedOP': '^'}
 bc_label = {'free': 'free plates', 'FixedSP': 'fixed SP', 'FixedOP': 'fixed OP'}
-cmap = cmc.navia_r
+# "dist": colour by the distance of the slab tip below the analysis depth in plate thicknesses,
+# (tip - z)/H, instead of the tip depth
+dist = 'dist' in sys.argv[3:]
+cval = (lambda x: (x[2] - float(z))/x[0][2]) if dist else (lambda x: x[2])
 early_tips = [x[2] for x in rows if x[1] <= 10]
-normT = mpl.colors.Normalize(vmin=50*np.floor(np.nanmin(early_tips)/50), vmax=700)
-fig, (axC, axP, axQ) = plt.subplots(1, 3, figsize=(7.0, 2.6))
+# distance: diverging about 2 plate thicknesses (roma: red within 2 H of the tip, blue beyond), so the
+# condition in the text reads at a glance; tip depth: sequential navia
+cmap = cmc.roma if dist else cmc.navia_r
+normT = mpl.colors.TwoSlopeNorm(vmin=0, vcenter=2, vmax=5) if dist else \
+        mpl.colors.Normalize(vmin=50*np.floor(np.nanmin(early_tips)/50), vmax=700)
+fig, (axC, axP) = plt.subplots(1, 2, figsize=(4.7, 2.6))
 panels = [(axC, lambda x: x[4], lambda x: x[8] + x[4], (-2.5, 40, -2.5, 40),
            r'$B_{slab}$   [MPa]', r'$\Delta P + \sigma_{slab}$   [MPa]', 'a'),
           (axP, lambda x: x[4], lambda x: x[3], (-3, 40, -3, 40),
-           r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'b'),
-          (axQ, lambda x: x[7], lambda x: x[6], (-5, 40, -10, 30),
-           r'$\eta H^3 K v_c / (3 L_K^3)$   [MPa]', r'$-dQ_{s}/ds$   [MPa]', 'c')]
+           r'$B_{slab}$   [MPa]', r'$\Delta P$   [MPa]', 'b')]
 for ax, fx, fy, (x0, x1, y0, y1), xlab, ylab, lab in panels:
     n_off = 0
     for (bc, eta, H) in sorted({x[0] for x in rows}):
@@ -133,7 +140,7 @@ for ax, fx, fy, (x0, x1, y0, y1), xlab, ylab, lab in panels:
         late = [x for x in rk if x[1] >= 11]; early = [x for x in rk if x[1] <= 10]
         xl, yl = [fx(x) for x in late], [fy(x) for x in late]
         xe, ye = np.array([fx(x) for x in early]), np.array([fy(x) for x in early])
-        te = np.array([x[2] for x in early])
+        te = np.array([cval(x) for x in early])
         if ot:
             ax.scatter(xl, yl, s=5, facecolors='none', edgecolor='0.8', marker=m, linewidth=0.3, zorder=1)
             ax.scatter(xe, ye, s=10, facecolors='none', edgecolor=cmap(normT(te)), marker=m, linewidth=0.5,
@@ -148,7 +155,7 @@ for ax, fx, fy, (x0, x1, y0, y1), xlab, ylab, lab in panels:
         ax.plot([x0, x1], [x0, x1], color='black', linewidth=1, zorder=2)
     else:
         ax.plot([x0, x1], [x0, x1], color='gray', linestyle='--', linewidth=1, zorder=1)
-    ax.set_xticks([0, 10, 20, 30, 40]); ax.set_yticks([-10, 0, 10, 20, 30] if ax is axQ else [0, 10, 20, 30, 40])
+    ax.set_xticks([0, 10, 20, 30, 40]); ax.set_yticks([0, 10, 20, 30, 40])
     ax.axhline(0, color='lightgray', linewidth=1, zorder=0); ax.axvline(0, color='lightgray', linewidth=1, zorder=0)
     ax.grid(True, color='lightgray', linestyle='--', linewidth=0.5, zorder=0)
     ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
@@ -163,14 +170,17 @@ handles = [Line2D([], [], marker=bc_marker[b], color='gray', markeredgecolor='bl
           [Line2D([], [], marker='o', markerfacecolor='none', markeredgecolor='gray', linestyle='', markersize=4,
                   label='overturned'),
            Line2D([], [], marker='o', color='0.8', linestyle='', markersize=3, label='t ≥ 11 (Figs 3, 5)')]
-leg = fig.legend(handles=handles, ncol=len(handles), loc='lower left', bbox_to_anchor=(0.47, 0.93), fontsize=6.5,
+leg = fig.legend(handles=handles, ncol=3, loc='lower left', bbox_to_anchor=(0.53, 0.93), fontsize=6.5,
                  frameon=True, fancybox=False, edgecolor='black', facecolor='white', framealpha=1, borderpad=0.5,
                  handletextpad=0.1, handlelength=1.2, columnspacing=1.0)
 leg.get_frame().set_linewidth(0.5)
-cax = fig.add_axes([0.13, 0.985, 0.22, 0.025])
+cax = fig.add_axes([0.10, 1.02, 0.36, 0.03])
 cb = fig.colorbar(mpl.cm.ScalarMappable(norm=normT, cmap=cmap), cax=cax, orientation='horizontal', extend='max')
 cb.ax.tick_params(labelsize=6, length=2.5, pad=1)
-cb.set_label('slab tip depth  [km]', fontsize=7, labelpad=2)
-out = 'plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z%s' % z + ('.tip%d' % tipmin if tipmin else '')
+if dist:
+    cb.set_ticks([0, 1, 2, 3, 4, 5])
+    cb.ax.axvline(2, color='black', linewidth=0.8)
+cb.set_label('slab tip below analysis depth  [plate thicknesses]' if dist else 'slab tip depth  [km]', fontsize=7, labelpad=2)
+out = 'plots/DP-comparisons/compilations/manuscript_figs/early_outputs_supp.z%s' % z + ('.tip%d' % tipmin if tipmin else '') + ('.dist' if dist else '')
 plt.savefig(out + '.png', dpi=300, bbox_inches='tight'); plt.savefig(out + '.pdf', bbox_inches='tight')
 print('wrote', out + '.png/.pdf')

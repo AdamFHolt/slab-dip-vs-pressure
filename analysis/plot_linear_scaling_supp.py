@@ -90,6 +90,8 @@ def load(bc, eta, H):
     d = np.loadtxt(f)[tmin:]
     d = d[d[:, cov_ind] == 1]
     d = d[d[:, 0] <= LAST_OUTPUT.get((bc, eta, H), 1e9)]
+    # flipped-midplane extraction failures (dip ~250 deg), as in plot_forces.varH.py
+    d = d[d[:, 5] <= 180]
     Hn = nominal_plate_thickness(m)
     base = d[:, K_ind] * eta * mant_visc * d[:, vc_ind] * cmyr_to_ms * 1e-6      # eta*K*v_c  [MPa/km]
     return dict(lin=Hn * base,                                # eta*H*K*v_c, divide by L [km] for MPa

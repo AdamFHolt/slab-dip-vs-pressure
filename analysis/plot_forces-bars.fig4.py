@@ -102,6 +102,8 @@ def averages(bc, eta, H):
     d = np.loadtxt('text_files/withT_varH/' + name(bc, eta, H) + suffix + '.txt')[tmin:]
     d = d[d[:, cov_ind] == 1]
     d = d[d[:, 0] <= LAST_OUTPUT.get((bc, eta, H), 1e9)]
+    # flipped-midplane extraction failures (dip ~250 deg), as in plot_forces.varH.py
+    d = d[d[:, 5] <= 180]
     DP    = d[:, DP_ind] / 1.e6
     dqds  = -d[:, sn_ind] / 1.e6               # paper sign
     KQn   = d[:, ss_ind] / 1.e6

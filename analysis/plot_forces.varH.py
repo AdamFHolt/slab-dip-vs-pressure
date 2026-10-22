@@ -193,6 +193,10 @@ def load(bc, eta, H):
     d = np.loadtxt(f)[tmin:]
     d = d[d[:, cov_ind] == 1]
     d = d[d[:, 0] <= LAST_OUTPUT.get((bc, eta, H), 1e9)]
+    # extraction failures the coverage flag misses: the midplane comes out flipped
+    # (dip ~250 deg, negative thickness).  In the figure range only fixed-OP
+    # 1000/130 at t = 11, 300 km (overturned); dropped 2026-10-22
+    d = d[d[:, 5] <= 180]
     Hn = nominal_plate_thickness(m)                       # km
     B = DRHO.get(bc, drho) * g * Hn * 1.e3 * 1e-6         # MPa
     # n = 1: eta*H*K*v_c/L_eff;  n > 1: eta*H^n*K*v_c/(n*L^n)   [MPa]

@@ -182,6 +182,8 @@ DRHO = {'drho71': 71.43}
 # eta' = 50 fixed-SP slab necks at 250 km on its final output (thickness 66 ->
 # 44 km, dQ/ds jumping to 6.5 MPa), so that output is left out (2026-10-12)
 LAST_OUTPUT = {('FixedSP', 50, 100): 22}
+# single outputs dropped as failed extractions: (plates, eta', H, depth km, output)
+FAILED = {('FixedOP', 1000, 130, 350.0, 11)}
 
 def load(bc, eta, H):
     m = name(bc, eta, H)
@@ -197,6 +199,9 @@ def load(bc, eta, H):
     # (dip ~250 deg, negative thickness).  In the figure range only fixed-OP
     # 1000/130 at t = 11, 300 km (overturned); dropped 2026-10-22
     d = d[d[:, 5] <= 180]
+    # the same output at 350 km is not flipped (dip 88 deg) but is taken as the
+    # same extraction failure (residual 142 MPa); dropped 2026-10-29
+    d = d[[(bc, eta, H, analysis_depth/1.e3, t) not in FAILED for t in d[:, 0]]]
     Hn = nominal_plate_thickness(m)                       # km
     B = DRHO.get(bc, drho) * g * Hn * 1.e3 * 1e-6         # MPa
     # n = 1: eta*H*K*v_c/L_eff;  n > 1: eta*H^n*K*v_c/(n*L^n)   [MPa]

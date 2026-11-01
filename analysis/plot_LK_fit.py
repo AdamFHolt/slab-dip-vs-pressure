@@ -5,8 +5,10 @@ Supplement figure: how the bending length L_K of the n = 3 scaling is fitted.
 dQ_s/ds = eta*H^3*K*v_c / (3*L_K^3) is fitted through the origin (least squares
 in MPa) to every normal output of the Fig. 5 selection: text_files/withT_varH/,
 t >= 11, coverage flag, the fixed-SP eta' = 50 trim, all five eta' at H = 100,
-no drho71 run, overturned models left out.  The models, the overturned set and
-the trim are read from plot_forces.varH.py so the two cannot drift apart.
+no drho71 run, overturned models left out, flipped-midplane rows (dip > 180)
+and failed extractions dropped.  The models, the overturned set, the trim and
+the failed outputs are read from plot_forces.varH.py so the two cannot drift
+apart.
 
   (a) rms misfit against L_K at 250/300/350 km, H = the nominal plate thickness
       (as in Fig. 5 and the Earth maps)
@@ -35,11 +37,11 @@ mpl.rcParams.update({'font.size': 9, 'axes.labelsize': 9, 'xtick.labelsize': 7.5
 
 L_adopted = float(sys.argv[1]) if len(sys.argv) > 1 else 200.
 
-# model names, OVERTURNED and LAST_OUTPUT from plot_forces.varH.py (that script
+# model names, OVERTURNED, LAST_OUTPUT and FAILED from plot_forces.varH.py (that script
 # runs on import, so only these blocks are executed)
 src = open('plot_forces.varH.py').read()
 ns = {}
-for blk in ('H100 = {', 'def name(', 'OVERTURNED = {', 'LAST_OUTPUT = {'):
+for blk in ('H100 = {', 'def name(', 'OVERTURNED = {', 'LAST_OUTPUT = {', 'FAILED = {'):
     i = src.index(blk)
     exec(src[i:src.index('\n\n', i)], ns)
 
@@ -65,6 +67,9 @@ def load(z):
                 d = np.loadtxt(f)[tmin:]
                 d = d[d[:, cov_ind] == 1]
                 d = d[d[:, 0] <= ns['LAST_OUTPUT'].get((bc, e, H), 1e9)]
+                # as in plot_forces.varH.py: flipped midplanes and failed extractions
+                d = d[d[:, 5] <= 180]
+                d = d[[(bc, e, H, float(z), t) not in ns['FAILED'] for t in d[:, 0]]]
                 out[(bc, e, H)] = dict(Xn=e * mant_visc * d[:, K_ind] * d[:, vc_ind] * cmyr_to_ms
                                           * (nominal_plate_thickness(m)*1e3)**3, y=-d[:, sn_ind])
     return out
